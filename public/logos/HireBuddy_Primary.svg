@@ -1,0 +1,9 @@
+
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+<rect width="512" height="512" rx="72" fill="#22C55E"/>
+<circle cx="256" cy="220" r="96" fill="#FFFFFF"/>
+<circle cx="226" cy="210" r="10" fill="#0A2540"/>
+<circle cx="286" cy="210" r="10" fill="#0A2540"/>
+<path d="M226 250 Q256 270 286 250" stroke="#0A2540" stroke-width="6" fill="none"/>
+<text x="256" y="420" text-anchor="middle" font-size="40" fill="#0A2540" font-family="Inter, Arial">HireBuddy</text>
+</svg>

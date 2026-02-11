@@ -1,0 +1,6 @@
+
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+<rect width="512" height="512" rx="72" fill="#FFFFFF"/>
+<path d="M140 320 L240 220 L300 260 L380 180" stroke="#0A2540" stroke-width="18" fill="none"/>
+<text x="256" y="410" text-anchor="middle" font-size="40" fill="#0A2540" font-family="Inter, Arial">Hiring Journey</text>
+</svg>
