@@ -10,13 +10,14 @@ const navigation = {
   ],
   company: [
     { name: "About", href: "/about" },
-    { name: "Blog", href: "#" },
-    { name: "Careers", href: "#" },
+    { name: "Blog", href: "/blog" },
+    { name: "Careers", href: "/careers" },
+    { name: "Contact", href: "/contact" },
   ],
   legal: [
-    { name: "Privacy", href: "#" },
-    { name: "Terms", href: "#" },
-    { name: "Cookie Policy", href: "#" },
+    { name: "Privacy", href: "/legal/privacy" },
+    { name: "Terms", href: "/legal/terms" },
+    { name: "Cookie Policy", href: "/legal/cookie-policy" },
   ],
   social: [
     {

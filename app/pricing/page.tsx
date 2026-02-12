@@ -1,7 +1,9 @@
 import { PricingHero } from "@/components/pricing/pricing-hero";
 import { PricingPlans } from "@/components/pricing/pricing-plans";
 import { CreditSystem } from "@/components/pricing/credit-system";
+import { ROICalculator } from "@/components/sections/roi-calculator";
 import { PricingFAQ } from "@/components/pricing/pricing-faq";
+import { CTABanner } from "@/components/sections/cta-banner";
 
 export const metadata = {
   title: "Pricing - Hiring Journey",
@@ -16,7 +18,13 @@ export default function PricingPage() {
       <PricingHero />
       <PricingPlans />
       <CreditSystem />
+      <ROICalculator />
       <PricingFAQ />
+      <div className="py-16">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <CTABanner />
+        </div>
+      </div>
     </div>
   );
 }

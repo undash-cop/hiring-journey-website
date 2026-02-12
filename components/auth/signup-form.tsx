@@ -2,38 +2,74 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowRight, Mail, Lock, User, Key } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  inviteCode: z.string().min(4, "Invite code is required").optional(),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
+  inviteCode: z.string().min(4, "Invite code must be at least 4 characters").optional().or(z.literal("")),
+  root: z.string().optional(),
 });
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
 export function SignupForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { addToast } = useToast();
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setError,
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
   });
 
   const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true);
-    // TODO: Integrate with backend API
-    console.log("Signup data:", data);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    // Redirect to dashboard would happen here
+    try {
+      // TODO: Integrate with backend API
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      // Simulate validation
+      if (data.inviteCode && data.inviteCode.length < 4) {
+        setError("inviteCode", { message: "Invalid invite code format" });
+        addToast("Please check your invite code and try again.", "error");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Simulate success
+      const mockSuccess = true; // Replace with actual API response
+      
+      if (mockSuccess) {
+        addToast("Account created successfully! Redirecting to dashboard...", "success");
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 1000);
+      } else {
+        setError("root", { message: "Account creation failed. Please try again." });
+        addToast("Account creation failed. Please try again.", "error");
+      }
+    } catch (error) {
+      setError("root", { message: "An error occurred. Please try again." });
+      addToast("An error occurred. Please try again.", "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -100,13 +136,13 @@ export function SignupForm() {
           <p className="mt-2 text-sm text-red-600 dark:text-red-400">{errors.password.message}</p>
         )}
         <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-          Must be at least 8 characters
+          Must contain uppercase, lowercase, and number
         </p>
       </div>
 
       <div>
         <label htmlFor="inviteCode" className="block text-sm font-medium leading-6 text-gray-900 dark:text-white">
-          Invite Code <span className="text-gray-500 dark:text-gray-400">(Optional for paid plans)</span>
+          Invite Code <span className="text-gray-500 dark:text-gray-400">(Optional)</span>
         </label>
         <div className="mt-2 relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -123,9 +159,15 @@ export function SignupForm() {
           <p className="mt-2 text-sm text-red-600 dark:text-red-400">{errors.inviteCode.message}</p>
         )}
         <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-          Required for free plan access. Get one from existing users or join our waitlist.
+          Have an invite code? Enter it here to get started faster.
         </p>
       </div>
+
+      {errors.root && (
+        <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
+          <p className="text-sm text-red-800 dark:text-red-200">{errors.root.message}</p>
+        </div>
+      )}
 
       <div>
         <button

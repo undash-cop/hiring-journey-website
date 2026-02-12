@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { FileText, TrendingUp, Sparkles, Calendar, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import { QuickActions } from "@/components/dashboard/quick-actions";
+import { ApplicationTimeline } from "@/components/dashboard/application-timeline";
 
 // Mock data - Replace with API calls
 const mockData = {
@@ -19,7 +21,8 @@ export function DashboardWidgets() {
 
   return (
     <div className="mx-auto max-w-7xl px-6 lg:px-8 py-8">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <QuickActions />
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-8">
         {/* Resume Score Widget */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -141,20 +144,14 @@ export function DashboardWidgets() {
         </motion.div>
       </div>
 
-      {/* Application Timeline Placeholder */}
+      {/* Application Timeline */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
-        className="mt-8 rounded-2xl bg-white dark:bg-gray-950 p-6 shadow-sm ring-1 ring-gray-200 dark:ring-gray-800"
+        className="mt-8"
       >
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Application Timeline</h2>
-        <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400">Application timeline will appear here</p>
-          <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">
-            Track your applications from submission to offer
-          </p>
-        </div>
+        <ApplicationTimeline />
       </motion.div>
     </div>
   );

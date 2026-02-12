@@ -160,7 +160,27 @@ export function FeatureDetails() {
   return (
     <div className="bg-gray-50 dark:bg-gray-900 py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="space-y-8">
+        <div className="mx-auto max-w-2xl lg:text-center mb-16">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-3xl font-display font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl"
+          >
+            Powerful Features for Every Step
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300"
+          >
+            Explore our comprehensive suite of tools designed to make your job search smooth and successful.
+          </motion.p>
+        </div>
+        <div className="space-y-6">
           {features.map((feature, index) => {
             const isExpanded = expandedId === feature.id;
 
@@ -171,7 +191,7 @@ export function FeatureDetails() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="rounded-2xl bg-white dark:bg-gray-950 p-8 shadow-sm ring-1 ring-gray-200 dark:ring-gray-800"
+                className="group rounded-2xl bg-white dark:bg-gray-950 p-8 shadow-sm ring-1 ring-gray-200 dark:ring-gray-800 hover:shadow-lg hover:ring-primary-500 dark:hover:ring-primary-400 transition-all"
               >
                 <button
                   onClick={() => setExpandedId(isExpanded ? null : feature.id)}

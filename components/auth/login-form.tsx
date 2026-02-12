@@ -2,36 +2,59 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowRight, Mail, Lock } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  root: z.string().optional(),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { addToast } = useToast();
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setError,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
-    // TODO: Integrate with backend API
-    console.log("Login data:", data);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    // Redirect to dashboard would happen here
+    try {
+      // TODO: Integrate with backend API
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      // Simulate success/error scenarios
+      const mockSuccess = true; // Replace with actual API response
+      
+      if (mockSuccess) {
+        addToast("Login successful! Redirecting to dashboard...", "success");
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 1000);
+      } else {
+        setError("root", { message: "Invalid email or password" });
+        addToast("Invalid email or password. Please try again.", "error");
+      }
+    } catch (error) {
+      setError("root", { message: "An error occurred. Please try again." });
+      addToast("An error occurred. Please try again.", "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -87,6 +110,12 @@ export function LoginForm() {
           <p className="mt-2 text-sm text-red-600 dark:text-red-400">{errors.password.message}</p>
         )}
       </div>
+
+      {errors.root && (
+        <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
+          <p className="text-sm text-red-800 dark:text-red-200">{errors.root.message}</p>
+        </div>
+      )}
 
       <div>
         <button

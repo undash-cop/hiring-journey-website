@@ -9,3 +9,4 @@
   NODE_VERSION = "22"
 
 # Next.js handles routing automatically, no manual redirects needed
+# The @netlify/plugin-nextjs plugin handles Next.js optimization automatically
