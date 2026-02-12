@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowRight, Mail, Lock, User, Key } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { analytics } from "@/lib/analytics";
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -56,6 +57,9 @@ export function SignupForm() {
       const mockSuccess = true; // Replace with actual API response
       
       if (mockSuccess) {
+        // Track signup event
+        analytics.signup();
+        
         addToast("Account created successfully! Redirecting to dashboard...", "success");
         setTimeout(() => {
           router.push("/dashboard");

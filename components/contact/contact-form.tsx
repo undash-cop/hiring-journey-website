@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowRight, Mail, User, MessageSquare } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { analytics } from "@/lib/analytics";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -35,6 +36,9 @@ export function ContactForm() {
     try {
       // TODO: Integrate with backend API
       await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      // Track form submission
+      analytics.contactFormSubmit();
       
       addToast("Thank you! We'll get back to you soon.", "success");
       reset();

@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowRight, Mail, Lock } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { analytics } from "@/lib/analytics";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -41,6 +42,9 @@ export function LoginForm() {
       const mockSuccess = true; // Replace with actual API response
       
       if (mockSuccess) {
+        // Track login event
+        analytics.login();
+        
         addToast("Login successful! Redirecting to dashboard...", "success");
         setTimeout(() => {
           router.push("/dashboard");

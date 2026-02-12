@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Check, ArrowRight, Sparkles } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { analytics } from "@/lib/analytics";
 
 const plans = [
   {
@@ -80,10 +82,16 @@ const plans = [
 
 export function PricingPlans() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const router = useRouter();
 
   const savings = (monthly: number, yearly: number) => {
     const monthlyTotal = monthly * 12;
     return Math.round(((monthlyTotal - yearly) / monthlyTotal) * 100);
+  };
+
+  const handlePlanClick = (planName: string) => {
+    analytics.planSelected(planName);
+    router.push("/auth/signup");
   };
 
   return (
@@ -216,9 +224,9 @@ export function PricingPlans() {
                     ))}
                   </ul>
                 </div>
-                <Link
-                  href="/auth/signup"
-                  className={`mt-8 block rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 transition-colors ${
+                <button
+                  onClick={() => handlePlanClick(plan.name)}
+                  className={`mt-8 w-full rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 transition-colors ${
                     plan.popular
                       ? "bg-white text-primary-600 hover:bg-primary-50"
                       : plan.price === 0
@@ -228,7 +236,7 @@ export function PricingPlans() {
                 >
                   {plan.cta}
                   <ArrowRight className="inline-block ml-2 h-4 w-4" />
-                </Link>
+                </button>
               </motion.div>
             );
           })}
