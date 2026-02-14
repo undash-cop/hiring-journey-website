@@ -1,0 +1,307 @@
+# Hiring Journey - LLMs.txt
+
+## About This Website
+
+**Name**: Hiring Journey
+**Company**: Undash-cop Private Limited
+**Website**: https://hiringjourney.com
+**Parent Company**: https://undash-cop.com
+**Type**: AI-Powered SaaS Platform
+**Target Market**: India
+**Launch**: 2026 Q1
+
+## Purpose
+
+Hiring Journey is a comprehensive AI-powered career success platform designed specifically for India's job seekers. The platform guides candidates through their entire hiring journey from resume optimization to job offers, negotiation, and legal readiness.
+
+## Core Features
+
+### 1. AI Resume Fixer
+- Resume analysis and optimization
+- ATS (Applicant Tracking System) compatibility checking
+- Resume version management
+- Export and download capabilities
+
+### 2. Smart Job Discovery
+- AI-powered job matching
+- Personalized job recommendations
+- Job application tracking
+- Multiple job board integrations
+
+### 3. Skill-capped Auto Apply
+- Automated job application submission
+- Application customization
+- Bulk application management
+- Application status tracking
+
+### 4. Application Journey Tracker
+- Real-time application status updates
+- Interview scheduling and reminders
+- Application analytics and insights
+- Performance metrics
+
+### 5. Screening/Technical Interview Prep
+- Interview question bank
+- Mock interview practice
+- Technical assessment preparation
+- Industry-specific guidance
+
+### 6. Coding Arena
+- Coding challenge practice
+- Algorithm and data structure problems
+- Real-time code execution
+- Performance analysis
+
+### 7. HR Negotiation
+- Salary negotiation guidance
+- Offer comparison tools
+- Negotiation templates
+- Market salary insights
+
+### 8. Legal Readiness Validation
+- Employment contract review
+- Legal document analysis
+- Compliance checking
+- Risk assessment
+
+### 9. Invite-based Credit System
+- Credit-based monetization model
+- Free tier with limited credits
+- Paid plans with credit packages
+- Credit usage tracking
+
+## Target Users
+
+### Primary Users
+- **Freshers**: Recent graduates and entry-level job seekers
+- **Experienced Professionals**: Mid to senior-level professionals seeking career growth
+- **Career Changers**: Professionals transitioning between industries
+
+### Geographic Focus
+- **Primary**: India
+- **Secondary**: Indian diaspora globally
+
+## Technology Stack
+
+### Frontend
+- **Framework**: Next.js 15 (App Router)
+- **React**: 19.0.0
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Animations**: Framer Motion
+- **Icons**: Lucide React
+- **Forms**: React Hook Form + Zod
+- **Deployment**: Netlify
+
+### Backend (Planned)
+- RESTful API architecture
+- Authentication: JWT-based
+- Database: PostgreSQL (planned)
+- AI Services: Integration with LLM APIs
+- Payment Gateway: Razorpay/Stripe (planned)
+
+## Website Structure
+
+### Public Pages
+- `/` - Landing page with hero, features, pricing preview, testimonials, FAQ
+- `/features` - Detailed feature descriptions and journey visualizations
+- `/pricing` - Pricing plans, credit system, ROI calculator
+- `/about` - Company story, team, vision, mission, impact
+- `/blog` - Blog posts about career advice, AI, job market trends
+- `/careers` - Job openings at Undash-cop Private Limited
+- `/contact` - Contact form and information
+- `/legal/privacy` - Privacy policy (DPDP Act 2023, GDPR compliant)
+- `/legal/terms` - Terms of service
+- `/legal/cookie-policy` - Cookie policy
+
+### Authentication Pages
+- `/auth/login` - User login
+- `/auth/signup` - User registration with invite code
+- `/auth/forgot-password` - Password recovery
+
+### Dashboard Pages (Protected)
+- `/dashboard` - Main dashboard overview
+- `/dashboard/resume` - Resume management and optimization
+- `/dashboard/applications` - Job application tracking
+- `/dashboard/interviews` - Interview preparation and scheduling
+- `/dashboard/settings` - User settings and preferences
+
+## Monetization Model
+
+### Credit-Based System
+- All features consume AI credits
+- Credits are purchased through subscription plans
+- Free tier includes limited credits
+- Pay-as-you-go options available
+
+### Pricing Tiers
+1. **Free Plan**: Limited credits, basic features
+2. **Starter Plan**: Monthly subscription with credit allocation
+3. **Professional Plan**: Higher credit allocation, advanced features
+4. **Enterprise Plan**: Custom credit packages, dedicated support
+
+## Key Differentiators
+
+1. **India-First Approach**: Built specifically for the Indian job market
+2. **End-to-End Journey**: Covers entire hiring process from resume to offer
+3. **AI-Powered**: Leverages AI for resume optimization, job matching, and interview prep
+4. **Credit System**: Flexible, pay-as-you-go model
+5. **Legal Compliance**: DPDP Act 2023, GDPR, Consumer Protection Act compliant
+
+## Content Themes
+
+### Blog Topics
+- AI and technology in job searching
+- Career advice for freshers and experienced professionals
+- Indian job market trends and insights
+- Interview preparation tips
+- Resume optimization strategies
+- Salary negotiation guidance
+- Legal aspects of employment
+
+### Content Tone
+- Professional yet approachable
+- India-focused with local context
+- Actionable and practical advice
+- Trust-building and transparent
+
+## Design System
+
+### Colors
+- **Primary**: Blue tones (primary-600, primary-700)
+- **Secondary**: Purple/indigo tones (secondary-600)
+- **CTA**: Orange/amber tones (cta-500)
+- **Dark Mode**: Full support with custom color palette
+
+### Typography
+- **Sans**: Inter (Google Fonts)
+- **Display**: Inter (Satoshi planned for future)
+
+### UI Principles
+- Mobile-first responsive design
+- Accessibility (ARIA labels, keyboard navigation)
+- Smooth animations with Framer Motion
+- Loading states and error boundaries
+- Toast notifications for user feedback
+
+## SEO & Metadata
+
+- **Locale**: en_IN (English - India)
+- **Metadata**: Comprehensive OpenGraph and Twitter Card support
+- **Sitemap**: Auto-generated XML sitemap
+- **Robots.txt**: Configured for search engine crawling
+- **Analytics**: Google Analytics 4 and Plausible Analytics support
+
+## Compliance & Legal
+
+### Data Protection
+- **DPDP Act 2023**: Compliant with India's Digital Personal Data Protection Act
+- **GDPR**: Compliant with EU General Data Protection Regulation
+- **Consumer Protection Act 2019**: Compliant with Indian consumer protection laws
+
+### Legal Pages
+- Privacy Policy (DPDP & GDPR compliant)
+- Terms of Service
+- Cookie Policy
+
+## Development Status
+
+### Completed ✅
+- Frontend website (100%)
+- All public pages
+- Authentication UI
+- Dashboard skeleton
+- Dark mode
+- Responsive design
+- SEO optimization
+- Analytics integration
+
+### In Progress 🔄
+- Backend API development
+- Authentication integration
+- Payment gateway integration
+- AI service integration
+
+## Contact Information
+
+- **Email**: hello@hiringjourney.com
+- **Phone**: +91-8660-158001
+- **Company**: Undash-cop Private Limited
+- **Location**: India
+- **Website**: https://hiringjourney.com
+- **Parent Company**: https://undash-cop.com
+
+## API Endpoints (Planned)
+
+### Authentication
+- `POST /api/auth/login` - User login
+- `POST /api/auth/signup` - User registration
+- `POST /api/auth/forgot-password` - Password recovery
+- `POST /api/auth/logout` - User logout
+
+### Resume
+- `POST /api/resume/upload` - Upload resume
+- `POST /api/resume/analyze` - Analyze resume with AI
+- `GET /api/resume/:id` - Get resume details
+- `PUT /api/resume/:id` - Update resume
+
+### Jobs
+- `GET /api/jobs` - Get job listings
+- `GET /api/jobs/:id` - Get job details
+- `POST /api/jobs/apply` - Apply to job
+- `GET /api/jobs/applications` - Get user's applications
+
+### Credits
+- `GET /api/credits` - Get credit balance
+- `POST /api/credits/purchase` - Purchase credits
+- `GET /api/credits/usage` - Get credit usage history
+
+## File Structure
+
+```
+/
+├── app/                    # Next.js App Router pages
+│   ├── about/              # About page
+│   ├── auth/               # Authentication pages
+│   ├── blog/               # Blog pages
+│   ├── careers/            # Careers pages
+│   ├── contact/            # Contact page
+│   ├── dashboard/          # Dashboard pages
+│   ├── features/           # Features page
+│   ├── legal/              # Legal pages
+│   └── pricing/            # Pricing page
+├── components/              # React components
+│   ├── about/              # About page components
+│   ├── analytics/          # Analytics components
+│   ├── auth/               # Auth components
+│   ├── dashboard/          # Dashboard components
+│   ├── features/           # Features components
+│   ├── layout/             # Layout components (Header, Footer)
+│   ├── pricing/            # Pricing components
+│   └── sections/           # Landing page sections
+├── lib/                    # Utility functions
+├── public/                 # Static assets
+│   └── logos/              # Logo files
+└── styles/                 # Global styles
+```
+
+## Version Information
+
+- **Version**: 1.0.0
+- **Node.js**: >= 22.0.0
+- **npm**: >= 10.0.0
+- **Next.js**: 15.5.9
+- **React**: 19.0.0
+- **TypeScript**: 5.7.2
+
+## Additional Resources
+
+- **Documentation**: See README.md for setup instructions
+- **Deployment**: See DEPLOYMENT.md for Netlify deployment guide
+- **Analytics**: See ANALYTICS_SETUP.md for analytics configuration
+- **Next Steps**: See NEXT_STEPS.md for development roadmap
+
+---
+
+Last Updated: February 2026
+For questions or updates, contact: hello@hiringjourney.com

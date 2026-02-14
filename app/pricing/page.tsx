@@ -5,10 +5,14 @@ import { ROICalculator } from "@/components/sections/roi-calculator";
 import { PricingFAQ } from "@/components/pricing/pricing-faq";
 import { CTABanner } from "@/components/sections/cta-banner";
 
-export const metadata = {
-  title: "Pricing - Hiring Journey",
-  description: "Choose the perfect plan for your career journey. Transparent pricing with AI credit-based usage.",
-};
+import type { Metadata } from "next";
+import { generateMetadataWithCanonical } from "@/lib/metadata";
+
+export const metadata: Metadata = generateMetadataWithCanonical(
+  "/pricing",
+  "Pricing - Hiring Journey",
+  "Choose the perfect plan for your career journey. Transparent pricing with AI credit-based usage."
+);
 
 export const dynamic = "force-dynamic";
 

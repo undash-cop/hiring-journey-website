@@ -7,10 +7,14 @@ import { TeamSection } from "@/components/about/team-section";
 import { CompanyInfo } from "@/components/about/company-info";
 import { CTABanner } from "@/components/sections/cta-banner";
 
-export const metadata = {
-  title: "About - Hiring Journey",
-  description: "Learn about Hiring Journey's mission to transform India's job market and help job seekers succeed.",
-};
+import type { Metadata } from "next";
+import { generateMetadataWithCanonical } from "@/lib/metadata";
+
+export const metadata: Metadata = generateMetadataWithCanonical(
+  "/about",
+  "About - Hiring Journey",
+  "Learn about Hiring Journey's mission to transform India's job market and help job seekers succeed."
+);
 
 export default function AboutPage() {
   return (

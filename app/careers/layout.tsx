@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { generateMetadataWithCanonical } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-  title: "Careers - Hiring Journey",
-  description: "Join the Hiring Journey team and help transform India's job market.",
-};
+export const metadata: Metadata = generateMetadataWithCanonical(
+  "/careers",
+  "Careers - Hiring Journey",
+  "Join the Hiring Journey team and help transform India's job market."
+);
 
 export default function CareersLayout({
   children,

@@ -60,9 +60,9 @@ export function SignupForm() {
         // Track signup event
         analytics.signup();
         
-        addToast("Account created successfully! Redirecting to dashboard...", "success");
+        addToast("Account created successfully! Redirecting...", "success");
         setTimeout(() => {
-          router.push("/dashboard");
+          router.push("/");
         }, 1000);
       } else {
         setError("root", { message: "Account creation failed. Please try again." });

@@ -2,10 +2,14 @@ import Link from "next/link";
 import { SignupForm } from "@/components/auth/signup-form";
 import { LogoServer } from "@/components/logo-server";
 
-export const metadata = {
-  title: "Sign Up - Hiring Journey",
-  description: "Create your Hiring Journey account and start your career success journey. Invite code required for free access.",
-};
+import type { Metadata } from "next";
+import { generateMetadataWithCanonical } from "@/lib/metadata";
+
+export const metadata: Metadata = generateMetadataWithCanonical(
+  "/auth/signup",
+  "Sign Up - Hiring Journey",
+  "Create your Hiring Journey account and start your career success journey. Invite code required for free access."
+);
 
 export const dynamic = "force-dynamic";
 

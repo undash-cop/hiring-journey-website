@@ -9,6 +9,7 @@ interface LogoServerProps {
   theme?: "light" | "dark";
   showText?: boolean;
   textClassName?: string;
+  priority?: boolean;
 }
 
 export function LogoServer({ 
@@ -18,7 +19,8 @@ export function LogoServer({
   variant = "primary", 
   theme = "light",
   showText = true,
-  textClassName
+  textClassName,
+  priority = false
 }: LogoServerProps) {
   // Determine which logo to use based on variant and theme
   const getLogoSrc = () => {
@@ -42,7 +44,7 @@ export function LogoServer({
         width={width}
         height={height}
         className="object-contain"
-        priority
+        priority={priority}
       />
       {showText && (
         <span className={cn(

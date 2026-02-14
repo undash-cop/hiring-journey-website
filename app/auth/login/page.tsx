@@ -2,10 +2,14 @@ import Link from "next/link";
 import { LoginForm } from "@/components/auth/login-form";
 import { LogoServer } from "@/components/logo-server";
 
-export const metadata = {
-  title: "Login - Hiring Journey",
-  description: "Sign in to your Hiring Journey account to continue your career success journey.",
-};
+import type { Metadata } from "next";
+import { generateMetadataWithCanonical } from "@/lib/metadata";
+
+export const metadata: Metadata = generateMetadataWithCanonical(
+  "/auth/login",
+  "Login - Hiring Journey",
+  "Sign in to your Hiring Journey account to continue your career success journey."
+);
 
 export const dynamic = "force-dynamic";
 

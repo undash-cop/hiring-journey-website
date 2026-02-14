@@ -12,6 +12,7 @@ interface LogoProps {
   forceTheme?: "light" | "dark";
   showText?: boolean;
   textClassName?: string;
+  priority?: boolean;
 }
 
 export function Logo({ 
@@ -21,7 +22,8 @@ export function Logo({
   variant = "primary", 
   forceTheme,
   showText = true,
-  textClassName
+  textClassName,
+  priority = false
 }: LogoProps) {
   const { resolvedTheme } = useTheme();
   const theme = forceTheme || resolvedTheme;
@@ -40,15 +42,20 @@ export function Logo({
     return "/logos/Hiring_Journey_Primary.svg";
   };
 
+  const logoSrc = getLogoSrc();
+  
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <Image
-        src={getLogoSrc()}
+        src={logoSrc}
         alt="Hiring Journey"
         width={width}
         height={height}
         className="object-contain"
-        priority
+        priority={priority}
+        // Only preload if priority is true AND we're using a static source
+        // Dynamic theme-based logos shouldn't use priority to avoid preload warnings
+        fetchPriority={priority ? "high" : "auto"}
       />
       {showText && (
         <span className={cn(

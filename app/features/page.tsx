@@ -7,10 +7,14 @@ import { ExperiencedJourney } from "@/components/features/experienced-journey";
 import { IndiaMarket } from "@/components/features/india-market";
 import { FeatureDetails } from "@/components/features/feature-details";
 
-export const metadata = {
-  title: "Features - Hiring Journey",
-  description: "Discover all the powerful features that make Hiring Journey your complete career success platform.",
-};
+import type { Metadata } from "next";
+import { generateMetadataWithCanonical } from "@/lib/metadata";
+
+export const metadata: Metadata = generateMetadataWithCanonical(
+  "/features",
+  "Features - Hiring Journey",
+  "Discover all the powerful features that make Hiring Journey your complete career success platform."
+);
 
 export default function FeaturesPage() {
   return (

@@ -190,17 +190,26 @@ export async function generateStaticParams() {
   }));
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+import type { Metadata } from "next";
+import { getCanonicalUrl } from "@/lib/metadata";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const job = jobOpenings[id];
   if (!job) {
     return {
       title: "Job Not Found - Hiring Journey",
+      alternates: {
+        canonical: getCanonicalUrl(`/careers/${id}`),
+      },
     };
   }
   return {
     title: `${job.title} - Careers | Hiring Journey`,
     description: `Join Hiring Journey as a ${job.title} in ${job.department}. ${job.location}`,
+    alternates: {
+      canonical: getCanonicalUrl(`/careers/${id}`),
+    },
   };
 }
 

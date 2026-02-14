@@ -1190,17 +1190,26 @@ export async function generateStaticParams() {
   }));
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+import type { Metadata } from "next";
+import { getCanonicalUrl } from "@/lib/metadata";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const post = blogPosts[id];
   if (!post) {
     return {
       title: "Post Not Found - Hiring Journey",
+      alternates: {
+        canonical: getCanonicalUrl(`/blog/${id}`),
+      },
     };
   }
   return {
     title: `${post.title} - Blog | Hiring Journey`,
     description: post.excerpt,
+    alternates: {
+      canonical: getCanonicalUrl(`/blog/${id}`),
+    },
   };
 }
 

@@ -5,11 +5,19 @@ import { Building2, Heart, MapPin, Mail, Phone, Globe, Award, Users } from "luci
 import { Logo } from "@/components/logo";
 import Link from "next/link";
 
-const companyDetails = [
+type CompanyDetail = {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  href?: string;
+};
+
+const companyDetails: CompanyDetail[] = [
   {
     icon: Building2,
     label: "Company Name",
     value: "Undash-cop Private Limited",
+    href: "https://undash-cop.com",
   },
   {
     icon: MapPin,
@@ -38,7 +46,7 @@ const contactInfo = [
   {
     icon: Phone,
     label: "Phone",
-    value: "+91-XXXX-XXXXXX",
+    value: "+91-8660-158001",
     href: "tel:+91XXXXXXXXXX",
   },
   {
@@ -68,11 +76,27 @@ export function CompanyInfo() {
               </div>
               <div className="flex-1">
                 <h3 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-4">
-                  Built by Undash-cop Private Limited
+                  Built by{" "}
+                  <a
+                    href="https://undash-cop.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors underline decoration-2 underline-offset-4"
+                  >
+                    Undash-cop Private Limited
+                  </a>
                 </h3>
                 <p className="text-lg leading-7 text-gray-700 dark:text-gray-300 mb-6">
-                  Hiring Journey is a product of Undash-cop Private Limited, a company dedicated to building
-                  innovative solutions for India&apos;s workforce. We combine cutting-edge AI technology with deep
+                  Hiring Journey is a product of{" "}
+                  <a
+                    href="https://undash-cop.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors font-semibold"
+                  >
+                    Undash-cop Private Limited
+                  </a>
+                  , a company dedicated to building innovative solutions for India&apos;s workforce. We combine cutting-edge AI technology with deep
                   understanding of the Indian job market to create tools that truly make a difference.
                 </p>
                 <p className="text-base leading-7 text-gray-600 dark:text-gray-400 mb-6">
@@ -105,7 +129,18 @@ export function CompanyInfo() {
                   </div>
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{detail.label}</span>
                 </div>
-                <div className="text-lg font-semibold text-gray-900 dark:text-white">{detail.value}</div>
+                {detail.href ? (
+                  <a
+                    href={detail.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-lg font-semibold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                  >
+                    {detail.value}
+                  </a>
+                ) : (
+                  <div className="text-lg font-semibold text-gray-900 dark:text-white">{detail.value}</div>
+                )}
               </motion.div>
             ))}
           </div>

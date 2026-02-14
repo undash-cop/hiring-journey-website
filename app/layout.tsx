@@ -6,6 +6,7 @@ import { ToastProvider } from "@/components/ui/toast";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Analytics } from "@/components/analytics/analytics";
+import { metadataBase, getCanonicalUrl } from "@/lib/metadata";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,10 +25,6 @@ const satoshi = Inter({
   fallback: ["system-ui", "arial", "sans-serif"],
   adjustFontFallback: true,
 });
-
-const metadataBase = process.env.NEXT_PUBLIC_APP_URL 
-  ? new URL(process.env.NEXT_PUBLIC_APP_URL)
-  : new URL("https://hiringjourney.com");
 
 export const metadata: Metadata = {
   metadataBase,
@@ -48,12 +45,16 @@ export const metadata: Metadata = {
     icon: "/logos/Hiring_Journey_Primary.svg",
     apple: "/logos/Hiring_Journey_Primary.svg",
   },
+  alternates: {
+    canonical: getCanonicalUrl("/"),
+  },
   openGraph: {
     title: "Hiring Journey - Your Complete Career Success Platform",
     description:
       "End-to-end guided hiring journey for India's job seekers. AI-powered resume optimization, smart job matching, and interview preparation.",
     type: "website",
     locale: "en_IN",
+    url: getCanonicalUrl("/"),
     images: [
       {
         url: "/logos/Hiring_Journey_Primary.svg",

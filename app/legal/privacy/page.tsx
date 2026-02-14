@@ -1,7 +1,11 @@
-export const metadata = {
-  title: "Privacy Policy - Hiring Journey",
-  description: "Privacy Policy for Hiring Journey - Learn how we collect, use, and protect your personal information.",
-};
+import type { Metadata } from "next";
+import { generateMetadataWithCanonical } from "@/lib/metadata";
+
+export const metadata: Metadata = generateMetadataWithCanonical(
+  "/legal/privacy",
+  "Privacy Policy - Hiring Journey",
+  "Privacy Policy for Hiring Journey - Learn how we collect, use, and protect your personal information."
+);
 
 export default function PrivacyPage() {
   return (

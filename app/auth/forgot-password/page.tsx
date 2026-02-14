@@ -2,10 +2,14 @@ import Link from "next/link";
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
 import { LogoServer } from "@/components/logo-server";
 
-export const metadata = {
-  title: "Forgot Password - Hiring Journey",
-  description: "Reset your Hiring Journey account password.",
-};
+import type { Metadata } from "next";
+import { generateMetadataWithCanonical } from "@/lib/metadata";
+
+export const metadata: Metadata = generateMetadataWithCanonical(
+  "/auth/forgot-password",
+  "Forgot Password - Hiring Journey",
+  "Reset your Hiring Journey account password."
+);
 
 export const dynamic = "force-dynamic";
 

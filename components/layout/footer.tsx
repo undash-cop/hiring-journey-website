@@ -2,6 +2,12 @@ import Link from "next/link";
 import { Github, Twitter, Linkedin, Mail } from "lucide-react";
 import { Logo } from "@/components/logo";
 
+type NavItem = {
+  name: string;
+  href: string;
+  external?: boolean;
+};
+
 const navigation = {
   product: [
     { name: "Features", href: "/features" },
@@ -13,7 +19,8 @@ const navigation = {
     { name: "Blog", href: "/blog" },
     { name: "Careers", href: "/careers" },
     { name: "Contact", href: "/contact" },
-  ],
+    { name: "Undash-cop", href: "https://undash-cop.com", external: true },
+  ] as NavItem[],
   legal: [
     { name: "Privacy", href: "/legal/privacy" },
     { name: "Terms", href: "/legal/terms" },
@@ -90,12 +97,23 @@ export function Footer() {
                 <ul role="list" className="mt-6 space-y-4">
                   {navigation.company.map((item) => (
                     <li key={item.name}>
-                      <Link
-                        href={item.href}
-                        className="text-sm leading-6 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                      >
-                        {item.name}
-                      </Link>
+                      {item.external ? (
+                        <a
+                          href={item.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm leading-6 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                        >
+                          {item.name}
+                        </a>
+                      ) : (
+                        <Link
+                          href={item.href}
+                          className="text-sm leading-6 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                        >
+                          {item.name}
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -122,7 +140,16 @@ export function Footer() {
         </div>
         <div className="mt-16 border-t border-gray-900/10 dark:border-gray-100/10 pt-8 sm:mt-20 lg:mt-24">
           <p className="text-xs leading-5 text-gray-500 dark:text-gray-400">
-            &copy; {new Date().getFullYear()} Undash-cop Private Limited. All rights reserved.
+            © {new Date().getFullYear()}{" "}
+            <a
+              href="https://undash-cop.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+            >
+              Undash-cop Private Limited
+            </a>
+            . All rights reserved.
           </p>
         </div>
       </div>

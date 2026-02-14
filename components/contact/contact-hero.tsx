@@ -58,7 +58,7 @@ export function ContactHero() {
             </a>
             <a href="tel:+91XXXXXXXXXX" className="flex items-center gap-2 hover:text-white transition-colors">
               <Phone className="h-5 w-5" />
-              <span>+91-XXXX-XXXXXX</span>
+              <span>+91-8660-158001</span>
             </a>
           </motion.div>
         </motion.div>

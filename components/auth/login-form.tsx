@@ -45,9 +45,9 @@ export function LoginForm() {
         // Track login event
         analytics.login();
         
-        addToast("Login successful! Redirecting to dashboard...", "success");
+        addToast("Login successful! Redirecting...", "success");
         setTimeout(() => {
-          router.push("/dashboard");
+          router.push("/");
         }, 1000);
       } else {
         setError("root", { message: "Invalid email or password" });

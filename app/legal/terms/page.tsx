@@ -1,7 +1,11 @@
-export const metadata = {
-  title: "Terms of Service - Hiring Journey",
-  description: "Terms of Service for Hiring Journey - Read our terms and conditions for using our platform.",
-};
+import type { Metadata } from "next";
+import { generateMetadataWithCanonical } from "@/lib/metadata";
+
+export const metadata: Metadata = generateMetadataWithCanonical(
+  "/legal/terms",
+  "Terms of Service - Hiring Journey",
+  "Terms of Service for Hiring Journey - Read our terms and conditions for using our platform."
+);
 
 export default function TermsPage() {
   return (

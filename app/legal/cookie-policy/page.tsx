@@ -1,7 +1,11 @@
-export const metadata = {
-  title: "Cookie Policy - Hiring Journey",
-  description: "Cookie Policy for Hiring Journey - Learn how we use cookies and similar technologies.",
-};
+import type { Metadata } from "next";
+import { generateMetadataWithCanonical } from "@/lib/metadata";
+
+export const metadata: Metadata = generateMetadataWithCanonical(
+  "/legal/cookie-policy",
+  "Cookie Policy - Hiring Journey",
+  "Cookie Policy for Hiring Journey - Learn how we use cookies and similar technologies."
+);
 
 export default function CookiePolicyPage() {
   return (

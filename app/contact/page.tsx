@@ -2,10 +2,14 @@ import { ContactForm } from "@/components/contact/contact-form";
 import { ContactHero } from "@/components/contact/contact-hero";
 import { Mail, Phone, MapPin, Clock, MessageSquare, HelpCircle } from "lucide-react";
 
-export const metadata = {
-  title: "Contact Us - Hiring Journey",
-  description: "Get in touch with Hiring Journey. We're here to help you succeed in your career journey.",
-};
+import type { Metadata } from "next";
+import { generateMetadataWithCanonical } from "@/lib/metadata";
+
+export const metadata: Metadata = generateMetadataWithCanonical(
+  "/contact",
+  "Contact Us - Hiring Journey",
+  "Get in touch with Hiring Journey. We're here to help you succeed in your career journey."
+);
 
 const contactMethods = [
   {
@@ -56,7 +60,7 @@ const officeInfo = [
   {
     icon: Phone,
     label: "Phone",
-    value: "+91-XXXX-XXXXXX",
+    value: "+91-8660-158001",
   },
 ];
 
