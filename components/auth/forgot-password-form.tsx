@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowRight, Mail, CheckCircle } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { requestPasswordReset } from "@/lib/app-api";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -30,23 +31,22 @@ export function ForgotPasswordForm() {
   const onSubmit = async (data: ForgotPasswordFormData) => {
     setIsLoading(true);
     try {
-      // TODO: Integrate with backend API
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // Simulate success
-      const mockSuccess = true; // Replace with actual API response
-      
-      if (mockSuccess) {
+      // Call app subdomain API to request password reset
+      const response = await requestPasswordReset({
+        email: data.email,
+      });
+
+      if (response.success) {
         setIsSubmitted(true);
         addToast("Password reset link sent to your email!", "success");
       } else {
-        setError("root", { message: "Email not found. Please check and try again." });
-        addToast("Email not found. Please check and try again.", "error");
+        setError("root", { message: response.message || "Email not found. Please check and try again." });
+        addToast(response.message || "Email not found. Please check and try again.", "error");
       }
-    } catch (error) {
-      setError("root", { message: "An error occurred. Please try again." });
-      addToast("An error occurred. Please try again.", "error");
+    } catch (error: any) {
+      const errorMessage = error?.message || "An error occurred. Please try again.";
+      setError("root", { message: errorMessage });
+      addToast(errorMessage, "error");
     } finally {
       setIsLoading(false);
     }

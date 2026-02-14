@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Target, Zap, Shield, TrendingUp } from "lucide-react";
 
 export function HeroSection() {
   return (
     <div className="relative isolate overflow-hidden bg-gradient-to-b from-primary-50/50 dark:from-primary-950/20 pt-14">
       <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80" aria-hidden="true">
         <div
-          className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-primary-400 to-secondary-400 opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
+          className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-primary-600 to-secondary-600 opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
           style={{
             clipPath:
               "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
@@ -74,74 +74,53 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="max-w-3xl flex-none sm:max-w-5xl lg:max-w-none"
           >
-            <div className="-m-2 rounded-xl bg-gray-900/5 dark:bg-gray-100/5 p-2 ring-1 ring-inset ring-gray-900/10 dark:ring-gray-100/10 lg:-m-4 lg:rounded-2xl lg:p-4">
-              <div className="relative aspect-[16/9] overflow-hidden rounded-lg bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-gray-900/10 dark:ring-gray-100/10">
-                {/* Dashboard Preview Mockup */}
-                <div className="h-full p-6 flex flex-col">
-                  {/* Header */}
-                  <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-800">
-                    <div>
+            <div className="-m-2 rounded-xl bg-gray-900/5 p-2 ring-1 ring-inset ring-gray-900/10 dark:ring-gray-100/10 lg:-m-4 lg:rounded-2xl lg:p-4">
+              <div className="relative flex items-center justify-center rounded-lg bg-white dark:bg-gray-900 p-8 sm:p-16 shadow-2xl ring-1 ring-gray-900/10 dark:ring-gray-100/10">
+                <div className="w-full space-y-6">
+                  {/* Dashboard Preview Mockup */}
+                  <div className="rounded-lg bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-primary-950/30 dark:to-secondary-950/30 p-6">
+                    <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Dashboard</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Welcome back!</p>
-                    </div>
-                    <div className="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900/30"></div>
-                  </div>
-                  
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-950/50 dark:to-primary-900/30 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Resume Score</p>
-                          <p className="text-2xl font-bold text-gray-900 dark:text-white">78</p>
-                        </div>
-                        <div className="h-10 w-10 rounded-lg bg-primary-500/20 flex items-center justify-center">
-                          <div className="h-5 w-5 rounded bg-primary-500"></div>
-                        </div>
+                      <div className="flex gap-2">
+                        <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                        <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
+                        <div className="h-3 w-3 rounded-full bg-red-500"></div>
                       </div>
                     </div>
-                    <div className="bg-gradient-to-br from-secondary-50 to-secondary-100 dark:from-secondary-950/50 dark:to-secondary-900/30 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Applications</p>
-                          <p className="text-2xl font-bold text-gray-900 dark:text-white">12</p>
-                        </div>
-                        <div className="h-10 w-10 rounded-lg bg-secondary-500/20 flex items-center justify-center">
-                          <div className="h-5 w-5 rounded bg-secondary-500"></div>
-                        </div>
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                      <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
+                        <div className="h-8 bg-primary-200 dark:bg-primary-800 rounded mb-2"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
+                        <div className="h-8 bg-secondary-200 dark:bg-secondary-800 rounded mb-2"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
+                        <div className="h-8 bg-cta-200 dark:bg-cta-800 rounded mb-2"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
                       </div>
                     </div>
-                  </div>
-                  
-                  {/* Progress Bar */}
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">AI Credits</span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">145/200</span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2">
-                      <div className="bg-gradient-to-r from-primary-500 to-secondary-500 h-2 rounded-full" style={{ width: '72.5%' }}></div>
-                    </div>
-                  </div>
-                  
-                  {/* Timeline Preview */}
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Recent Activity</p>
                     <div className="space-y-2">
-                      <div className="flex items-center gap-3">
-                        <div className="h-2 w-2 rounded-full bg-primary-500"></div>
-                        <div className="flex-1">
-                          <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-3/4 mb-1"></div>
-                          <div className="h-2 bg-gray-100 dark:bg-gray-900 rounded w-1/2"></div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="h-2 w-2 rounded-full bg-secondary-500"></div>
-                        <div className="flex-1">
-                          <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3 mb-1"></div>
-                          <div className="h-2 bg-gray-100 dark:bg-gray-900 rounded w-1/3"></div>
-                        </div>
-                      </div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-4/6"></div>
+                    </div>
+                  </div>
+                  
+                  {/* Feature Icons */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="flex flex-col items-center p-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm">
+                      <Target className="h-8 w-8 text-primary-600 dark:text-primary-400 mb-2" />
+                      <span className="text-xs text-gray-600 dark:text-gray-400">Smart Match</span>
+                    </div>
+                    <div className="flex flex-col items-center p-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm">
+                      <Zap className="h-8 w-8 text-secondary-600 dark:text-secondary-400 mb-2" />
+                      <span className="text-xs text-gray-600 dark:text-gray-400">AI Powered</span>
+                    </div>
+                    <div className="flex flex-col items-center p-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm">
+                      <Shield className="h-8 w-8 text-cta-600 dark:text-cta-400 mb-2" />
+                      <span className="text-xs text-gray-600 dark:text-gray-400">Secure</span>
                     </div>
                   </div>
                 </div>

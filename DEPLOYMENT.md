@@ -1,6 +1,6 @@
 # Deployment Guide - Hiring Journey Website
 
-This guide will help you deploy the Hiring Journey website to Netlify.
+Complete guide for deploying the Hiring Journey website to Netlify.
 
 ## Prerequisites
 
@@ -8,40 +8,63 @@ This guide will help you deploy the Hiring Journey website to Netlify.
 2. **Netlify Account**: Sign up at [netlify.com](https://www.netlify.com)
 3. **Node.js 22+**: Ensure your local environment matches
 
-## Deployment Steps
+## Pre-Deployment Checklist
+
+### 1. Build Verification
+- ✅ Build passes locally (`npm run build`)
+- ✅ No TypeScript errors
+- ✅ All pages render correctly
+
+### 2. Git Repository Status
+Your code needs to be committed and pushed to Git before deploying to Netlify.
+
+```bash
+# Stage all changes
+git add .
+
+# Commit with a message
+git commit -m "Ready for deployment"
+
+# Push to repository
+git push origin main
+```
+
+### 3. Netlify Configuration
+- ✅ `netlify.toml` is configured correctly
+- ✅ Node.js version set to 22
+- ✅ Build command: `npm run build`
+- ✅ Next.js plugin configured
+
+## Deployment Methods
 
 ### Option 1: Deploy via Netlify UI (Recommended for First Time)
 
-1. **Push Code to Git Repository**
-   ```bash
-   git add .
-   git commit -m "Ready for deployment"
-   git push origin main
-   ```
-
-2. **Connect Repository to Netlify**
+1. **Connect Repository to Netlify**
    - Go to [Netlify Dashboard](https://app.netlify.com)
    - Click "Add new site" → "Import an existing project"
    - Connect your Git provider (GitHub/GitLab/Bitbucket)
    - Select your repository
 
-3. **Configure Build Settings**
+2. **Configure Build Settings**
    Netlify should auto-detect Next.js, but verify:
    - **Build command**: `npm run build`
    - **Publish directory**: `.next` (handled by plugin)
    - **Node version**: `22` (set in netlify.toml)
 
-4. **Set Environment Variables**
+3. **Set Environment Variables**
    In Netlify Dashboard → Site settings → Environment variables, add:
    ```
    NEXT_PUBLIC_APP_URL=https://your-site-name.netlify.app
    ```
    (Replace with your actual Netlify URL after first deployment)
 
-5. **Deploy**
+4. **Deploy**
    - Click "Deploy site"
-   - Wait for build to complete
+   - Wait for build to complete (~2-5 minutes)
    - Your site will be live at `https://your-site-name.netlify.app`
+
+5. **Update Environment Variable**
+   After first deploy, update `NEXT_PUBLIC_APP_URL` to your actual Netlify URL
 
 ### Option 2: Deploy via Netlify CLI
 
@@ -85,6 +108,16 @@ Set these in Netlify Dashboard → Site settings → Environment variables:
 NEXT_PUBLIC_APP_URL=https://your-actual-domain.com
 ```
 
+### Optional (for app subdomain integration)
+
+```env
+# App subdomain URL (for API calls)
+NEXT_PUBLIC_APP_SUBDOMAIN_URL=https://app.hiringjourney.com
+
+# Optional: Redirect login to app subdomain
+NEXT_PUBLIC_REDIRECT_LOGIN_TO_APP=false
+```
+
 ### Optional (for future backend integration)
 
 ```env
@@ -93,6 +126,7 @@ NEXT_PUBLIC_API_URL=https://api.your-domain.com
 
 # Analytics (when ready)
 NEXT_PUBLIC_GA_ID=your-google-analytics-id
+NEXT_PUBLIC_PLAUSIBLE_DOMAIN=your-domain.com
 ```
 
 ## Post-Deployment Checklist
@@ -103,8 +137,8 @@ NEXT_PUBLIC_GA_ID=your-google-analytics-id
 - [ ] Verify dark mode works
 - [ ] Test form submissions (Contact form)
 - [ ] Check SEO metadata (view page source)
-- [ ] Verify sitemap.xml is accessible
-- [ ] Check robots.txt
+- [ ] Verify sitemap.xml is accessible (`/sitemap.xml`)
+- [ ] Check robots.txt (`/robots.txt`)
 - [ ] Test navigation and links
 - [ ] Verify images load correctly
 
@@ -131,6 +165,13 @@ The current setup includes:
 - ✅ Node.js 22 specified in netlify.toml
 - ✅ Automatic image optimization
 - ✅ Static page generation where possible
+
+## Continuous Deployment
+
+Netlify automatically deploys when you push to your main branch:
+- Push to `main` → Automatic deploy
+- Create pull request → Deploy preview
+- Merge PR → Production deploy
 
 ## Troubleshooting
 
@@ -167,20 +208,14 @@ The current setup includes:
 2. **Enable Netlify Analytics**:
    - Site settings → Analytics → Enable
 
-## Continuous Deployment
-
-Netlify automatically deploys when you push to your main branch:
-- Push to `main` → Automatic deploy
-- Create pull request → Deploy preview
-- Merge PR → Production deploy
-
 ## Next Steps After Deployment
 
 1. **Set up Custom Domain** (if you have one)
-2. **Configure Analytics** (Google Analytics, Plausible, etc.)
+2. **Configure Analytics** (see `ANALYTICS_SETUP.md`)
 3. **Set up Error Monitoring** (Sentry)
 4. **Configure Backend APIs** (when ready)
 5. **Set up Payment Gateway** (when ready)
+6. **Set up App Subdomain** (see `APP_SUBDOMAIN_SETUP.md`)
 
 ## Support
 
@@ -188,7 +223,8 @@ For issues:
 1. Check Netlify build logs
 2. Review Next.js documentation
 3. Check Netlify status page
-4. Contact Netlify support if needed
+4. See `TROUBLESHOOTING.md` for common issues
+5. Contact Netlify support if needed
 
 ---
 

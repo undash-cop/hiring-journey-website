@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowRight, Mail, Lock, User, Key } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { analytics } from "@/lib/analytics";
+import { signupUser, verifyInviteCode } from "@/lib/app-api";
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -28,7 +29,17 @@ type SignupFormData = z.infer<typeof signupSchema>;
 export function SignupForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { addToast } = useToast();
+  
+  // Get plan data from URL params (if coming from pricing page)
+  // Using useMemo to stabilize values for Fast Refresh compatibility
+  const selectedPlan = searchParams?.get("plan") || null; // e.g., "free", "starter", "pro", "elite"
+  const billingCycleParam = searchParams?.get("billing");
+  const billingCycle = billingCycleParam === "monthly" || billingCycleParam === "yearly" 
+    ? billingCycleParam 
+    : null;
+  
   const {
     register,
     handleSubmit,
@@ -41,36 +52,63 @@ export function SignupForm() {
   const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true);
     try {
-      // TODO: Integrate with backend API
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // Simulate validation
-      if (data.inviteCode && data.inviteCode.length < 4) {
-        setError("inviteCode", { message: "Invalid invite code format" });
-        addToast("Please check your invite code and try again.", "error");
-        setIsLoading(false);
-        return;
+      // Verify invite code if provided
+      if (data.inviteCode && data.inviteCode.length > 0) {
+        try {
+          await verifyInviteCode(data.inviteCode);
+        } catch (error) {
+          setError("inviteCode", { message: "Invalid invite code" });
+          addToast("Invalid invite code. Please check and try again.", "error");
+          setIsLoading(false);
+          return;
+        }
       }
-      
-      // Simulate success
-      const mockSuccess = true; // Replace with actual API response
-      
-      if (mockSuccess) {
+
+      // Call app subdomain API to create account
+      // Include plan data if coming from pricing page
+      const signupPayload: {
+        name: string;
+        email: string;
+        password: string;
+        inviteCode?: string;
+        planName?: string;
+        billingCycle?: "monthly" | "yearly";
+      } = {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        inviteCode: data.inviteCode,
+      };
+
+      // Add plan data if available from URL params
+      if (selectedPlan) {
+        signupPayload.planName = selectedPlan;
+      }
+      if (billingCycle && (billingCycle === "monthly" || billingCycle === "yearly")) {
+        signupPayload.billingCycle = billingCycle;
+      }
+
+      const response = await signupUser(signupPayload);
+
+      if (response.success) {
         // Track signup event
         analytics.signup();
         
-        addToast("Account created successfully! Redirecting...", "success");
+        addToast("Account created successfully! Redirecting to app...", "success");
+        
+        // Redirect to app subdomain after successful signup
+        const appUrl = process.env.NEXT_PUBLIC_APP_SUBDOMAIN_URL || process.env.NEXT_PUBLIC_APP_URL || "https://app.hiringjourney.com";
         setTimeout(() => {
-          router.push("/");
+          window.location.href = `${appUrl}/dashboard`;
         }, 1000);
       } else {
-        setError("root", { message: "Account creation failed. Please try again." });
-        addToast("Account creation failed. Please try again.", "error");
+        setError("root", { message: response.message || "Account creation failed. Please try again." });
+        addToast(response.message || "Account creation failed. Please try again.", "error");
       }
-    } catch (error) {
-      setError("root", { message: "An error occurred. Please try again." });
-      addToast("An error occurred. Please try again.", "error");
+    } catch (error: any) {
+      const errorMessage = error?.message || "An error occurred. Please try again.";
+      setError("root", { message: errorMessage });
+      addToast(errorMessage, "error");
     } finally {
       setIsLoading(false);
     }
@@ -166,6 +204,23 @@ export function SignupForm() {
           Have an invite code? Enter it here to get started faster.
         </p>
       </div>
+
+      {/* Show selected plan info if coming from pricing page */}
+      {selectedPlan && (
+        <div className="rounded-md bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 p-4">
+          <p className="text-sm font-semibold text-primary-900 dark:text-primary-100">
+            Selected Plan: {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}
+            {billingCycle && (
+              <span className="ml-2 text-primary-700 dark:text-primary-300">
+                ({billingCycle === "yearly" ? "Yearly" : "Monthly"} billing)
+              </span>
+            )}
+          </p>
+          <p className="mt-1 text-xs text-primary-700 dark:text-primary-300">
+            Your plan will be activated after account creation.
+          </p>
+        </div>
+      )}
 
       {errors.root && (
         <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">

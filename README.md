@@ -50,6 +50,18 @@ npm run build
 npm start
 ```
 
+## Documentation
+
+- **[Deployment Guide](DEPLOYMENT.md)** - Complete guide for deploying to Netlify
+- **[App Subdomain Setup](APP_SUBDOMAIN_SETUP.md)** - Setting up the app subdomain architecture
+- **[Architecture Decisions](ARCHITECTURE_DECISION.md)** - Key architectural decisions
+- **[Pricing to Signup Flow](PRICING_TO_SIGNUP_FLOW.md)** - How plan selection flows to signup
+- **[Analytics Setup](ANALYTICS_SETUP.md)** - Setting up Google Analytics and Plausible
+- **[Middleware Setup](MIDDLEWARE_SETUP.md)** - Configuring optional redirects
+- **[Troubleshooting](TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Team Data](TEAM_DATA.md)** - Updating team member information
+- **[Next Steps](NEXT_STEPS.md)** - Development roadmap and backend integration
+
 ## Deployment
 
-This project is configured for Netlify deployment. Push to your repository and Netlify will automatically build and deploy.
+This project is configured for Netlify deployment. See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.

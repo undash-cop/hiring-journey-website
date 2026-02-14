@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SignupForm } from "@/components/auth/signup-form";
 import { LogoServer } from "@/components/logo-server";
+import { Suspense } from "react";
 
 import type { Metadata } from "next";
 import { generateMetadataWithCanonical } from "@/lib/metadata";
@@ -12,6 +13,23 @@ export const metadata: Metadata = generateMetadataWithCanonical(
 );
 
 export const dynamic = "force-dynamic";
+
+function SignupFormWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8 bg-white dark:bg-gray-950">
+        <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+          <div className="animate-pulse space-y-4">
+            <div className="h-12 bg-gray-200 dark:bg-gray-800 rounded"></div>
+            <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded"></div>
+          </div>
+        </div>
+      </div>
+    }>
+      <SignupForm />
+    </Suspense>
+  );
+}
 
 export default function SignupPage() {
   return (
@@ -28,7 +46,7 @@ export default function SignupPage() {
         </p>
       </div>
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <SignupForm />
+        <SignupFormWrapper />
       </div>
     </div>
   );

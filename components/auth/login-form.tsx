@@ -9,6 +9,7 @@ import { z } from "zod";
 import { ArrowRight, Mail, Lock } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { analytics } from "@/lib/analytics";
+import { loginUser } from "@/lib/app-api";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -34,28 +35,31 @@ export function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      // TODO: Integrate with backend API
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // Simulate success/error scenarios
-      const mockSuccess = true; // Replace with actual API response
-      
-      if (mockSuccess) {
+      // Call app subdomain API to authenticate
+      const response = await loginUser({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (response.success) {
         // Track login event
         analytics.login();
         
-        addToast("Login successful! Redirecting...", "success");
+        addToast("Login successful! Redirecting to app...", "success");
+        
+        // Redirect to app subdomain after successful login
+        const appUrl = process.env.NEXT_PUBLIC_APP_SUBDOMAIN_URL || process.env.NEXT_PUBLIC_APP_URL || "https://app.hiringjourney.com";
         setTimeout(() => {
-          router.push("/");
+          window.location.href = `${appUrl}/dashboard`;
         }, 1000);
       } else {
-        setError("root", { message: "Invalid email or password" });
-        addToast("Invalid email or password. Please try again.", "error");
+        setError("root", { message: response.message || "Invalid email or password" });
+        addToast(response.message || "Invalid email or password. Please try again.", "error");
       }
-    } catch (error) {
-      setError("root", { message: "An error occurred. Please try again." });
-      addToast("An error occurred. Please try again.", "error");
+    } catch (error: any) {
+      const errorMessage = error?.message || "An error occurred. Please try again.";
+      setError("root", { message: errorMessage });
+      addToast(errorMessage, "error");
     } finally {
       setIsLoading(false);
     }

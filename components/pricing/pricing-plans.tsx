@@ -51,14 +51,14 @@ const plans = [
     description: "For serious job seekers",
     features: [
       "Unlimited resume fixes",
-      "Smart job matching",
-      "Limited auto-apply",
+      "Smart job matching (multiple titles)",
+      "Unlimited auto-apply",
       "Interview prep (QA + Tech)",
       "Application tracking",
-      "Monthly AI credit cap",
+      "Higher AI credit limits",
     ],
     credits: 500,
-    cta: "Most Popular",
+    cta: "Get Started",
     popular: true,
   },
   {
@@ -91,7 +91,12 @@ export function PricingPlans() {
 
   const handlePlanClick = (planName: string) => {
     analytics.planSelected(planName);
-    router.push("/auth/signup");
+    // Pass plan data to signup page via URL params
+    const params = new URLSearchParams({
+      plan: planName.toLowerCase(), // e.g., "free", "starter", "pro", "elite"
+      billing: billingCycle, // "monthly" or "yearly"
+    });
+    router.push(`/auth/signup?${params.toString()}`);
   };
 
   return (
@@ -126,11 +131,12 @@ export function PricingPlans() {
           </div>
         </div>
 
-        <div className="grid max-w-lg grid-cols-1 gap-y-6 sm:mt-20 lg:max-w-none lg:grid-cols-4 lg:gap-x-8 lg:gap-y-0">
+        {/* Pricing Cards */}
+        <div className="mx-auto grid max-w-lg grid-cols-1 gap-y-6 sm:mt-20 lg:max-w-7xl lg:grid-cols-4 lg:gap-x-8 lg:gap-y-0">
           {plans.map((plan, index) => {
             const displayPrice = billingCycle === "yearly" ? plan.yearlyPrice : plan.price;
             const monthlyEquivalent = billingCycle === "yearly" ? Math.round(plan.yearlyPrice / 12) : plan.price;
-            const showSavings = billingCycle === "yearly" && plan.price > 0;
+            const yearlySavings = plan.price > 0 ? savings(plan.price, plan.yearlyPrice) : 0;
 
             return (
               <motion.div
@@ -172,38 +178,36 @@ export function PricingPlans() {
                   >
                     {plan.description}
                   </p>
-                  <div className="mt-6">
-                    <p className="flex items-baseline gap-x-1">
+                  <p className="mt-6 flex items-baseline gap-x-1">
+                    <span
+                      className={`text-4xl font-display font-bold tracking-tight ${
+                        plan.popular ? "text-white" : "text-gray-900 dark:text-white"
+                      }`}
+                    >
+                      {displayPrice === 0 ? "Free" : formatCurrency(monthlyEquivalent)}
+                    </span>
+                    {displayPrice > 0 && (
                       <span
-                        className={`text-4xl font-display font-bold tracking-tight ${
-                          plan.popular ? "text-white" : "text-gray-900 dark:text-white"
+                        className={`text-sm font-semibold leading-6 ${
+                          plan.popular ? "text-primary-100" : "text-gray-600 dark:text-gray-300"
                         }`}
                       >
-                        {plan.price === 0 ? "Free" : formatCurrency(displayPrice)}
+                        /month
                       </span>
-                      {plan.price > 0 && (
-                        <span
-                          className={`text-sm font-semibold leading-6 ${
-                            plan.popular ? "text-primary-100" : "text-gray-600 dark:text-gray-300"
-                          }`}
-                        >
-                          /{billingCycle === "yearly" ? "year" : "month"}
-                        </span>
-                      )}
-                    </p>
-                    {showSavings && (
-                      <p className="mt-2 text-sm text-primary-600 dark:text-primary-400 font-semibold">
-                        Save {savings(plan.price, plan.yearlyPrice)}% • {formatCurrency(monthlyEquivalent)}/month
-                      </p>
                     )}
-                    <div className="mt-4 flex items-center gap-2 text-sm">
-                      <Sparkles className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                      <span
-                        className={plan.popular ? "text-primary-100" : "text-gray-600 dark:text-gray-300"}
-                      >
-                        {plan.credits} AI credits/month
-                      </span>
-                    </div>
+                  </p>
+                  {billingCycle === "yearly" && plan.price > 0 && yearlySavings > 0 && (
+                    <p className="mt-2 text-sm text-primary-600 dark:text-primary-400">
+                      Save {yearlySavings}% annually
+                    </p>
+                  )}
+                  <div className="mt-4 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                    <span
+                      className={plan.popular ? "text-primary-100" : "text-gray-600 dark:text-gray-300"}
+                    >
+                      {plan.credits} AI credits/month
+                    </span>
                   </div>
                   <ul
                     role="list"
