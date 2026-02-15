@@ -52,15 +52,23 @@ npm start
 
 ## Documentation
 
+### Setup & Deployment
 - **[Deployment Guide](DEPLOYMENT.md)** - Complete guide for deploying to Netlify
 - **[App Subdomain Setup](APP_SUBDOMAIN_SETUP.md)** - Setting up the app subdomain architecture
+- **[App Subdomain Cursor Rules](APP_SUBDOMAIN_CURSOR_RULES.md)** - Comprehensive guide for building app.hiringjourney.com
+
+### Architecture & Features
 - **[Architecture Decisions](ARCHITECTURE_DECISION.md)** - Key architectural decisions
 - **[Pricing to Signup Flow](PRICING_TO_SIGNUP_FLOW.md)** - How plan selection flows to signup
-- **[Analytics Setup](ANALYTICS_SETUP.md)** - Setting up Google Analytics and Plausible
 - **[Middleware Setup](MIDDLEWARE_SETUP.md)** - Configuring optional redirects
-- **[Troubleshooting](TROUBLESHOOTING.md)** - Common issues and solutions
+
+### Configuration
+- **[Analytics Setup](ANALYTICS_SETUP.md)** - Setting up Google Analytics and Plausible
 - **[Team Data](TEAM_DATA.md)** - Updating team member information
+
+### Development
 - **[Next Steps](NEXT_STEPS.md)** - Development roadmap and backend integration
+- **[Troubleshooting](TROUBLESHOOTING.md)** - Common issues and solutions
 
 ## Deployment
 
