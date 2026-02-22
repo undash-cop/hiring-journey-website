@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
@@ -7,6 +8,13 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Analytics } from "@/components/analytics/analytics";
 import { metadataBase, getCanonicalUrl } from "@/lib/metadata";
+import GTMPageTracker from "@/components/analytics/gtm-page-tracker";
+import { Suspense } from "react";
+
+const gtmId =
+  process.env.NODE_ENV === "production"
+    ? process.env.NEXT_PUBLIC_GTM_ID
+    : undefined;
 
 const inter = Inter({
   subsets: ["latin"],
@@ -84,8 +92,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      {gtmId && <GoogleTagManager gtmId={gtmId} />}
       <body className={`${inter.variable} ${satoshi.variable} font-sans antialiased`}>
         <Analytics />
+        <Suspense fallback={null}>
+          <GTMPageTracker />
+        </Suspense>
         <ThemeProvider>
           <ToastProvider>
             <div className="flex min-h-screen flex-col">
