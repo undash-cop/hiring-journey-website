@@ -1,19 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
 import { Search, X } from "lucide-react";
 
-const categories = ["All", "Resume Tips", "Interview Prep", "Career Growth", "Technology", "Salary Negotiation"];
-
 interface BlogFiltersProps {
+  categories: string[];
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
 }
 
-export function BlogFilters({ selectedCategory, onCategoryChange, searchQuery, onSearchChange }: BlogFiltersProps) {
+export function BlogFilters({
+  categories,
+  selectedCategory,
+  onCategoryChange,
+  searchQuery,
+  onSearchChange,
+}: BlogFiltersProps) {
   return (
     <div className="sticky top-0 z-10 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 py-6">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">

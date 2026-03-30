@@ -54,10 +54,22 @@ export async function loginUser(data: {
   email: string;
   password: string;
 }) {
-  return callAppAPI("/auth/login", {
+  // Route login through same-origin API to avoid browser CORS/preflight issues
+  // when the frontend is opened via a different hostname (e.g. local IP).
+  const response = await fetch("/api/auth/login", {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(data),
   });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "Request failed" }));
+    throw new Error(error.message || `API request failed: ${response.statusText}`);
+  }
+
+  return response.json();
 }
 
 /**

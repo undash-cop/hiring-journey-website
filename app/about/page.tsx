@@ -6,15 +6,17 @@ import { ImpactSection } from "@/components/about/impact-section";
 import { TeamSection } from "@/components/about/team-section";
 import { CompanyInfo } from "@/components/about/company-info";
 import { CTABanner } from "@/components/sections/cta-banner";
+import { createPageMetadata } from "@/lib/seo";
 
 import type { Metadata } from "next";
-import { generateMetadataWithCanonical } from "@/lib/metadata";
-
-export const metadata: Metadata = generateMetadataWithCanonical(
-  "/about",
-  "About - Hiring Journey",
-  "Learn about Hiring Journey's mission to transform India's job market and help job seekers succeed."
-);
+export const metadata: Metadata = createPageMetadata({
+  path: "/about",
+  title: "About - Hiring Journey",
+  description: "Learn about Hiring Journey's India-first mission for career success at scale.",
+  keywords: ["career growth India", "job preparation platform", "Hiring Journey company"],
+});
+export const dynamic = "force-static";
+export const revalidate = false;
 
 export default function AboutPage() {
   return (

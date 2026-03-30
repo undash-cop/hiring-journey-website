@@ -2,132 +2,40 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { ArrowRight, Mail, Lock } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
-import { analytics } from "@/lib/analytics";
-import { loginUser } from "@/lib/app-api";
-
-const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  root: z.string().optional(),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+import { redirectToLogin, redirectToRegister } from "@/lib/keycloak";
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const { addToast } = useToast();
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setError,
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-  });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const handleSignIn = () => {
     setIsLoading(true);
-    try {
-      // Call app subdomain API to authenticate
-      const response = await loginUser({
-        email: data.email,
-        password: data.password,
+    void redirectToLogin()
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Could not start sign-in.";
+        addToast(msg, "error");
+        setIsLoading(false);
       });
-
-      if (response.success) {
-        // Track login event
-        analytics.login();
-        
-        addToast("Login successful! Redirecting to app...", "success");
-        
-        // Redirect to app subdomain after successful login
-        const appUrl = process.env.NEXT_PUBLIC_APP_SUBDOMAIN_URL || process.env.NEXT_PUBLIC_APP_URL || "https://app.hiringjourney.com";
-        setTimeout(() => {
-          window.location.href = `${appUrl}/dashboard`;
-        }, 1000);
-      } else {
-        setError("root", { message: response.message || "Invalid email or password" });
-        addToast(response.message || "Invalid email or password. Please try again.", "error");
-      }
-    } catch (error: any) {
-      const errorMessage = error?.message || "An error occurred. Please try again.";
-      setError("root", { message: errorMessage });
-      addToast(errorMessage, "error");
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900 dark:text-white">
-          Email address
-        </label>
-        <div className="mt-2 relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Mail className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            {...register("email")}
-            type="email"
-            autoComplete="email"
-            className="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 dark:bg-gray-900 dark:text-white dark:ring-gray-700"
-            placeholder="you@example.com"
-          />
-        </div>
-        {errors.email && (
-          <p className="mt-2 text-sm text-red-600 dark:text-red-400">{errors.email.message}</p>
-        )}
-      </div>
+    <div className="space-y-6">
+      <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+        You will be redirected to our secure sign-in page to continue.
+      </p>
 
-      <div>
-        <div className="flex items-center justify-between">
-          <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900 dark:text-white">
-            Password
-          </label>
-          <div className="text-sm">
-            <Link
-              href="/auth/forgot-password"
-              className="font-semibold text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
-            >
-              Forgot password?
-            </Link>
-          </div>
-        </div>
-        <div className="mt-2 relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Lock className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            {...register("password")}
-            type="password"
-            autoComplete="current-password"
-            className="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 dark:bg-gray-900 dark:text-white dark:ring-gray-700"
-            placeholder="••••••••"
-          />
-        </div>
-        {errors.password && (
-          <p className="mt-2 text-sm text-red-600 dark:text-red-400">{errors.password.message}</p>
-        )}
-      </div>
-
-      {errors.root && (
-        <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
-          <p className="text-sm text-red-800 dark:text-red-200">{errors.root.message}</p>
+      {isLoading && (
+        <div className="rounded-md bg-primary-50 dark:bg-primary-900/20 p-4">
+          <p className="text-sm text-primary-800 dark:text-primary-200">Redirecting to sign in…</p>
         </div>
       )}
 
       <div>
         <button
-          type="submit"
+          type="button"
+          onClick={handleSignIn}
           disabled={isLoading}
           className="flex w-full justify-center rounded-md bg-primary-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
@@ -173,14 +81,29 @@ export function LoginForm() {
       </div>
 
       <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-        Don&apos;t have an account?{" "}
         <Link
-          href="/auth/signup"
+          href="/auth/forgot-password"
+          className="font-semibold text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
+        >
+          Forgot password?
+        </Link>
+      </p>
+
+      <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+        Don&apos;t have an account?{" "}
+        <button
+          type="button"
+          onClick={() => {
+            void redirectToRegister().catch((err: unknown) => {
+              const msg = err instanceof Error ? err.message : "Could not start registration.";
+              addToast(msg, "error");
+            });
+          }}
           className="font-semibold text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
         >
           Sign up
-        </Link>
+        </button>
       </p>
-    </form>
+    </div>
   );
 }

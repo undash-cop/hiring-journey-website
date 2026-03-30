@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, Target, Zap, Shield, TrendingUp } from "lucide-react";
+import { redirectToRegister } from "@/lib/keycloak";
 
 export function HeroSection() {
   return (
@@ -41,13 +42,18 @@ export function HeroSection() {
               with AI-powered tools that get you hired faster.
             </p>
             <div className="mt-10 flex items-center gap-x-6">
-              <Link
-                href="/auth/signup"
+              <button
+                type="button"
+                onClick={() => {
+                  void redirectToRegister().catch((err: unknown) => {
+                    console.error(err);
+                  });
+                }}
                 className="rounded-md bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors flex items-center gap-2"
               >
                 Start Free
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </button>
               <Link
                 href="/pricing"
                 className="text-sm font-semibold leading-6 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"

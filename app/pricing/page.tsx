@@ -4,21 +4,26 @@ import { CreditSystem } from "@/components/pricing/credit-system";
 import { ROICalculator } from "@/components/sections/roi-calculator";
 import { PricingFAQ } from "@/components/pricing/pricing-faq";
 import { CTABanner } from "@/components/sections/cta-banner";
+import { JsonLd } from "@/components/seo/json-ld";
+import { createPageMetadata, schema } from "@/lib/seo";
 
 import type { Metadata } from "next";
-import { generateMetadataWithCanonical } from "@/lib/metadata";
+export const metadata: Metadata = createPageMetadata({
+  path: "/pricing",
+  title: "Pricing - Hiring Journey",
+  description: "Transparent AI credit pricing for resume, interview prep, and career growth tools.",
+  keywords: ["AI job tools India", "resume tools pricing", "interview preparation platform India"],
+});
 
-export const metadata: Metadata = generateMetadataWithCanonical(
-  "/pricing",
-  "Pricing - Hiring Journey",
-  "Choose the perfect plan for your career journey. Transparent pricing with AI credit-based usage."
-);
-
-export const dynamic = "force-dynamic";
+export const dynamic = "force-static";
+export const revalidate = false;
 
 export default function PricingPage() {
   return (
     <div className="flex flex-col">
+      <JsonLd
+        data={schema.product("Hiring Journey Pro Plans", "AI-powered career platform pricing plans", "/pricing")}
+      />
       <PricingHero />
       <PricingPlans />
       <CreditSystem />

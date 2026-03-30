@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Check, ArrowRight, Sparkles } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { analytics } from "@/lib/analytics";
+import { redirectToRegister } from "@/lib/keycloak";
 
 const plans = [
   {
@@ -82,7 +82,6 @@ const plans = [
 
 export function PricingPlans() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
-  const router = useRouter();
 
   const savings = (monthly: number, yearly: number) => {
     const monthlyTotal = monthly * 12;
@@ -91,12 +90,9 @@ export function PricingPlans() {
 
   const handlePlanClick = (planName: string) => {
     analytics.planSelected(planName);
-    // Pass plan data to signup page via URL params
-    const params = new URLSearchParams({
-      plan: planName.toLowerCase(), // e.g., "free", "starter", "pro", "elite"
-      billing: billingCycle, // "monthly" or "yearly"
+    void redirectToRegister().catch((err: unknown) => {
+      console.error(err);
     });
-    router.push(`/auth/signup?${params.toString()}`);
   };
 
   return (

@@ -9,7 +9,8 @@ export default function GTMPageTracker() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const url = pathname + searchParams.toString();
+    const query = searchParams.toString();
+    const url = query ? `${pathname}?${query}` : pathname;
     pageview(url);
   }, [pathname, searchParams]);
 

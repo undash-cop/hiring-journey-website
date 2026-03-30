@@ -61,11 +61,47 @@ const milestones = [
   {
     year: "2026",
     quarter: "Q1",
-    title: "Current: Scaling & Innovation",
+    title: "Foundation for Scale",
     description:
-      "Continuing to expand to more cities, adding career coaching services, and building strategic partnerships. On track to reach 1 million users by end of 2026.",
+      "Stabilized core platform architecture, expanded SEO-first content systems, and strengthened analytics for faster India-first growth.",
     icon: Award,
     color: "from-yellow-500 to-orange-500",
+  },
+  {
+    year: "2026",
+    quarter: "Q2",
+    title: "Q2 Plan: AI Tool Expansion",
+    description:
+      "Launch role-specific AI tools for resume optimization and interview preparation, improve personalization, and scale high-intent landing pages.",
+    icon: Zap,
+    color: "from-sky-500 to-blue-600",
+  },
+  {
+    year: "2026",
+    quarter: "Q3",
+    title: "Q3 Plan: Career Intelligence",
+    description:
+      "Expand career roadmaps, salary insights, and interview question hubs across major India job roles and city clusters with programmatic SEO.",
+    icon: Target,
+    color: "from-violet-500 to-fuchsia-500",
+  },
+  {
+    year: "2026",
+    quarter: "Q4",
+    title: "Q4 Plan: Global Readiness",
+    description:
+      "Prepare for global scale with stronger localization support, enterprise partnerships, and reliability upgrades for 100k+ active users.",
+    icon: TrendingUp,
+    color: "from-emerald-500 to-teal-600",
+  },
+  {
+    year: "2027",
+    quarter: "Q1",
+    title: "Q1 Plan: Platform Intelligence at Scale",
+    description:
+      "Launch advanced AI career copilots, deepen hiring ecosystem integrations, and optimize retention loops to accelerate sustainable global growth.",
+    icon: Award,
+    color: "from-amber-500 to-rose-500",
   },
 ];
 

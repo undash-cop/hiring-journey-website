@@ -8,5 +8,18 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# Next.js handles routing automatically, no manual redirects needed
-# The @netlify/plugin-nextjs plugin handles Next.js optimization automatically
+[[redirects]]
+  from = "/api/backend/*"
+  to = "https://api.hiringjourney.com/:splat"
+  status = 200
+  force = true
+
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/logos/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

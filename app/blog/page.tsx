@@ -6,111 +6,42 @@ import Image from "next/image";
 import { Calendar, ArrowRight, User, Clock } from "lucide-react";
 import { BlogHero } from "@/components/blog/blog-hero";
 import { BlogFilters } from "@/components/blog/blog-filters";
-
-// Mock blog posts - Replace with API calls
-const blogPosts = [
-  {
-    id: 1,
-    title: "How AI Resume Analyzers Are Revolutionizing Job Applications in 2026",
-    excerpt:
-      "Discover how AI-powered resume analysis tools are helping candidates optimize their resumes for ATS systems and land more interviews in India's competitive job market.",
-    author: "Hiring Journey Team",
-    date: "2026-02-08",
-    category: "AI & Technology",
-    readTime: "6 min read",
-    featured: true,
-    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop",
-    imageAlt: "AI analyzing resume documents",
-  },
-  {
-    id: 2,
-    title: "AI Mock Interviews: The Future of Interview Preparation",
-    excerpt:
-      "Learn how AI-powered mock interview platforms are transforming interview prep, providing instant feedback and personalized coaching for technical and HR rounds.",
-    author: "Hiring Journey Team",
-    date: "2026-02-01",
-    category: "AI & Technology",
-    readTime: "7 min read",
-    featured: true,
-    image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop",
-    imageAlt: "AI-powered interview preparation",
-  },
-  {
-    id: 3,
-    title: "Smart Job Matching: How AI Finds Your Perfect Role",
-    excerpt:
-      "Explore how machine learning algorithms analyze your skills, experience, and preferences to match you with the right opportunities in India's tech sector.",
-    author: "Hiring Journey Team",
-    date: "2026-01-25",
-    category: "AI & Technology",
-    readTime: "5 min read",
-    featured: false,
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
-    imageAlt: "AI job matching technology",
-  },
-  {
-    id: 4,
-    title: "AI-Powered Auto-Apply: Streamlining Your Job Search",
-    excerpt:
-      "Understand how intelligent automation is helping candidates apply to multiple positions efficiently while maintaining personalized application quality.",
-    author: "Hiring Journey Team",
-    date: "2026-01-18",
-    category: "AI & Technology",
-    readTime: "6 min read",
-    featured: false,
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop",
-    imageAlt: "Automated job application process",
-  },
-  {
-    id: 5,
-    title: "The Role of AI in HR Negotiation: Getting Better Offers",
-    excerpt:
-      "Discover how AI tools analyze market data and provide negotiation strategies to help you secure competitive salary packages in Indian tech companies.",
-    author: "Hiring Journey Team",
-    date: "2026-01-12",
-    category: "AI & Technology",
-    readTime: "8 min read",
-    featured: false,
-    image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&h=600&fit=crop",
-    imageAlt: "AI-assisted salary negotiation",
-  },
-  {
-    id: 6,
-    title: "AI Credit Systems: Understanding Usage-Based Pricing in Career Platforms",
-    excerpt:
-      "Learn how AI credit systems work, why they're cost-effective for job seekers, and how to maximize your credits for resume fixes, interviews, and applications.",
-    author: "Hiring Journey Team",
-    date: "2026-01-05",
-    category: "AI & Technology",
-    readTime: "7 min read",
-    featured: false,
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
-    imageAlt: "AI credit system dashboard",
-  },
-];
+import { blogSummaries } from "@/lib/content-data";
 
 export default function BlogPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
+  const categoryOptions = useMemo(() => {
+    const unique = Array.from(new Set(blogSummaries.map((post) => post.category)));
+    return ["All", ...unique.sort((a, b) => a.localeCompare(b))];
+  }, []);
+
   const filteredPosts = useMemo(() => {
-    return blogPosts.filter((post) => {
-      const matchesCategory = selectedCategory === "All" || post.category === selectedCategory;
-      const matchesSearch =
-        searchQuery === "" ||
-        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
+    return blogSummaries
+      .filter((post) => {
+        const matchesCategory = selectedCategory === "All" || post.category === selectedCategory;
+        const matchesSearch =
+          searchQuery === "" ||
+          post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          post.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [selectedCategory, searchQuery]);
 
-  const featuredPosts = filteredPosts.filter((post) => post.featured);
-  const regularPosts = filteredPosts.filter((post) => !post.featured);
+  const featuredPosts = filteredPosts.slice(0, 2);
+  const regularPosts = filteredPosts.slice(2);
+
+  const getBlogHref = (post: (typeof blogSummaries)[number]) => {
+    return `/blog/${post.categorySlug}/${post.slug}`;
+  };
 
   return (
     <div className="bg-white dark:bg-gray-950">
       <BlogHero />
       <BlogFilters
+        categories={categoryOptions}
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
         searchQuery={searchQuery}
@@ -126,7 +57,7 @@ export default function BlogPage() {
               {featuredPosts.map((post) => (
                 <Link
                   key={post.id}
-                  href={`/blog/${post.id}`}
+                  href={getBlogHref(post)}
                   className="group relative flex flex-col rounded-2xl bg-white dark:bg-gray-950 overflow-hidden ring-1 ring-gray-200 dark:ring-gray-800 hover:ring-primary-500 dark:hover:ring-primary-400 hover:shadow-lg transition-all"
                 >
                   <div className="relative aspect-video w-full overflow-hidden bg-gray-100 dark:bg-gray-900">
@@ -228,7 +159,7 @@ export default function BlogPage() {
                     </div>
                     <div className="group relative max-w-xl">
                       <h3 className="text-xl font-display font-bold leading-6 text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors mb-3">
-                        <Link href={`/blog/${post.id}`}>
+                        <Link href={getBlogHref(post)}>
                           <span className="absolute inset-0" />
                           {post.title}
                         </Link>
@@ -249,7 +180,7 @@ export default function BlogPage() {
                         </div>
                       </div>
                       <Link
-                        href={`/blog/${post.id}`}
+                        href={getBlogHref(post)}
                         className="inline-flex items-center gap-2 text-sm font-semibold text-primary-600 hover:text-primary-500 dark:text-primary-400"
                       >
                         Read More

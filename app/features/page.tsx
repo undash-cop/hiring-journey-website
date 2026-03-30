@@ -6,19 +6,23 @@ import { FresherJourney } from "@/components/features/fresher-journey";
 import { ExperiencedJourney } from "@/components/features/experienced-journey";
 import { IndiaMarket } from "@/components/features/india-market";
 import { FeatureDetails } from "@/components/features/feature-details";
+import { JsonLd } from "@/components/seo/json-ld";
+import { createPageMetadata, schema } from "@/lib/seo";
 
 import type { Metadata } from "next";
-import { generateMetadataWithCanonical } from "@/lib/metadata";
-
-export const metadata: Metadata = generateMetadataWithCanonical(
-  "/features",
-  "Features - Hiring Journey",
-  "Discover all the powerful features that make Hiring Journey your complete career success platform."
-);
+export const metadata: Metadata = createPageMetadata({
+  path: "/features",
+  title: "Features - Hiring Journey",
+  description: "Explore AI resume, interview, salary and roadmap features built for India's job market.",
+  keywords: ["AI career tools India", "job preparation roadmap India", "resume optimization India"],
+});
+export const dynamic = "force-static";
+export const revalidate = false;
 
 export default function FeaturesPage() {
   return (
     <div className="flex flex-col">
+      <JsonLd data={schema.softwareApplication("Hiring Journey Features", "AI career tools for job seekers", "/features")} />
       <FeaturesHero />
       <CandidateJourney />
       <ProcessFlow />

@@ -1,15 +1,17 @@
 import { ContactForm } from "@/components/contact/contact-form";
 import { ContactHero } from "@/components/contact/contact-hero";
 import { Mail, Phone, MapPin, Clock, MessageSquare, HelpCircle } from "lucide-react";
+import { createPageMetadata } from "@/lib/seo";
 
 import type { Metadata } from "next";
-import { generateMetadataWithCanonical } from "@/lib/metadata";
-
-export const metadata: Metadata = generateMetadataWithCanonical(
-  "/contact",
-  "Contact Us - Hiring Journey",
-  "Get in touch with Hiring Journey. We're here to help you succeed in your career journey."
-);
+export const metadata: Metadata = createPageMetadata({
+  path: "/contact",
+  title: "Contact - Hiring Journey",
+  description: "Contact Hiring Journey for support, partnerships, and career platform assistance.",
+  keywords: ["Hiring Journey contact", "career platform support India"],
+});
+export const dynamic = "force-static";
+export const revalidate = false;
 
 const contactMethods = [
   {
