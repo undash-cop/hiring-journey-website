@@ -1,6 +1,6 @@
+# Next.js on Netlify: @netlify/plugin-nextjs manages output; do not set publish to .next.
 [build]
   command = "npm run build"
-  publish = ".next"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

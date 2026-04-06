@@ -2,14 +2,13 @@
 
 ## Overview
 
-The middleware is configured at the root level (`middleware.ts`). It provides **optional** redirects from the marketing website to the app subdomain.
-
-**Important:** By default, redirects are **disabled**. Pricing and Signup pages stay on the marketing site for SEO benefits. Only the login page can optionally redirect to the app subdomain.
+Edge logic lives in **`proxy.ts`** (Next.js 16 convention in this repo). It provides **optional** redirect from `/auth/login` to the app login route (same or different host). **`/app/*` auth is handled in the browser** (Keycloak-js + `components/app`); there is no edge cookie gate in this monorepo.
 
 ## How It Works
 
-The middleware intercepts requests to:
-- `/auth/login` route (optional redirect only)
+The proxy runs for:
+
+- `/auth/login` — optional redirect to `NEXT_PUBLIC_APP_SUBDOMAIN_URL` + `NEXT_PUBLIC_APP_LOGIN_PATH` (default `/app/login`).
 
 **Note:** Pricing and Signup pages remain on the marketing site and communicate with the app subdomain via API calls (see `APP_SUBDOMAIN_SETUP.md`).
 
@@ -28,9 +27,9 @@ NEXT_PUBLIC_APP_SUBDOMAIN_URL=https://app.hiringjourney.com
 
 When redirects are enabled:
 
-| Marketing Site Route | App Subdomain Route |
+| Marketing Site Route | App route (default) |
 |---------------------|---------------------|
-| `/auth/login` | `/login` |
+| `/auth/login` | `{APP_SUBDOMAIN}/app/login` (`NEXT_PUBLIC_APP_LOGIN_PATH`) |
 
 **Note:** Signup and Pricing pages stay on the marketing site (`/auth/signup`, `/pricing`) and communicate with the app subdomain via API calls.
 
@@ -44,14 +43,9 @@ When redirects are enabled:
    # Runs on http://localhost:3000
    ```
 
-2. **Start the app subdomain (in a separate terminal):**
-   ```bash
-   cd ../hiring-journey-app
-   npm run dev -p 3001
-   # Runs on http://localhost:3001
-   ```
+2. **Product app routes:** The migrated app lives in this repo under `/app/*` (see `app/app/` and `components/app/`). For local dev you can use the same `npm run dev` server; optional subdomain deploy still uses `NEXT_PUBLIC_APP_SUBDOMAIN_URL` when split-hosting.
 
-3. **Update `.env.local` in marketing site:**
+3. **Update `.env.local` in marketing site (subdomain split only):**
    ```env
    NEXT_PUBLIC_APP_SUBDOMAIN_URL=http://localhost:3001
    ```

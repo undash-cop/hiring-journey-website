@@ -2,25 +2,16 @@
 
 import Keycloak from "keycloak-js";
 import type { KeycloakAdapter, KeycloakRedirectUriOptions, KeycloakServerConfig } from "keycloak-js";
+import { getKeycloakJsConfig } from "@/lib/keycloak-client-config";
+import { getAuthCallbackRedirectUri } from "@/lib/keycloak-oauth-redirect";
 
 /** Where to land on the app after Keycloak returns to `/auth/callback`. */
 export const KC_POST_AUTH_TARGET_KEY = "hj_kc_post_auth_target";
 
 const PKCE_SESSION_KEY = "hj_oidc_code_verifier";
 
-function normalizeKeycloakBaseUrl(raw: string | undefined): string {
-  if (!raw) return "";
-  const trimmed = raw.replace(/\/$/, "");
-  if (trimmed.endsWith("/auth")) return trimmed;
-  return `${trimmed}`;
-}
-
 function resolveKeycloakServerConfig(): KeycloakServerConfig {
-  return {
-    url: normalizeKeycloakBaseUrl(process.env.NEXT_PUBLIC_KEYCLOAK_URL),
-    realm: process.env.NEXT_PUBLIC_KEYCLOAK_REALM ?? "",
-    clientId: process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID ?? "",
-  };
+  return getKeycloakJsConfig();
 }
 
 function assertKeycloakConfigured(config: KeycloakServerConfig): void {
@@ -38,25 +29,25 @@ function assertKeycloakConfigured(config: KeycloakServerConfig): void {
 export const keycloakServerConfig = resolveKeycloakServerConfig();
 export const keycloak = new Keycloak(keycloakServerConfig);
 
-/**
- * OIDC redirect_uri sent to Keycloak. Must exactly match a "Valid redirect URI" on the client.
- * Defaults to the current browser origin; override when the public URL differs (proxy, preview host, etc.).
- */
+/** OIDC redirect_uri for `/auth/callback` — must match Keycloak "Valid redirect URIs". */
 function getCallbackUrl(): string {
-  const explicit = process.env.NEXT_PUBLIC_KEYCLOAK_REDIRECT_ORIGIN?.replace(/\/$/, "");
-  if (explicit) {
-    return `${explicit}/auth/callback`;
-  }
-  return `${window.location.origin}/auth/callback`;
+  return getAuthCallbackRedirectUri();
 }
 
-/** Base URL for the authenticated app (dashboard / onboarding). */
+/**
+ * Legacy: app hosted on another origin (subdomain) with routes at `/dashboard`, `/onboarding`.
+ * Unified: same Next app — post-login is always `/app/dashboard` on the current origin.
+ */
 export function getAppPostLoginOrigin(): string {
-  const fromEnv =
-    process.env.NEXT_PUBLIC_APP_SUBDOMAIN_URL?.replace(/\/$/, "") ||
-    process.env.NEXT_PUBLIC_APP_POST_LOGIN_ORIGIN?.replace(/\/$/, "");
-  if (fromEnv) return fromEnv;
-  return "https://app.domain.com";
+  return window.location.origin?.replace(/\/$/, "") || "";
+}
+
+/** Full URL after `/auth/callback` (or when already authenticated during register). */
+export function resolvePostLoginHref(target: "dashboard" | "onboarding"): string {
+  const explicit =
+    window.location.origin?.replace(/\/$/, "") || "";
+  const path = target === "onboarding" ? "/app/dashboard" : "/app/dashboard";
+  return `${explicit}${path}`;
 }
 
 /**
@@ -147,7 +138,7 @@ export async function redirectToRegister(): Promise<void> {
   if (!kc.authenticated) {
     await kc.register({ redirectUri: getCallbackUrl() });
   } else {
-    window.location.assign(`${getAppPostLoginOrigin()}/onboarding`);
+    window.location.assign(resolvePostLoginHref("onboarding"));
   }
 }
 
@@ -177,6 +168,6 @@ export async function exchangeKeycloakCallback(): Promise<void> {
   }
   const target = window.sessionStorage.getItem(KC_POST_AUTH_TARGET_KEY);
   window.sessionStorage.removeItem(KC_POST_AUTH_TARGET_KEY);
-  const path = target === "onboarding" ? "/onboarding" : "/dashboard";
-  window.location.replace(`${getAppPostLoginOrigin()}${path}`);
+  const mode = target === "onboarding" ? "onboarding" : "dashboard";
+  window.location.replace(resolvePostLoginHref(mode));
 }

@@ -5,7 +5,7 @@
  * while keeping pricing and signup pages on the marketing site for SEO.
  */
 
-const APP_API_URL = process.env.NEXT_PUBLIC_APP_SUBDOMAIN_URL || process.env.NEXT_PUBLIC_APP_URL || "https://app.hiringjourney.com";
+const APP_API_URL = process.env.NEXT_PUBLIC_APP_URL || "https://hiringjourney.com";
 
 /**
  * Make an API call to the app subdomain

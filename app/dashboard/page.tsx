@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 async function getDashboardData() {
   // SSR: user-specific, auth-gated data should not be statically cached.
   const isAuthenticated = true;
-  if (!isAuthenticated) redirect("/auth/login");
+  if (!isAuthenticated) redirect("/app/login");
   return {
     profileCompletion: 82,
     applications: 14,

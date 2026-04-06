@@ -34,6 +34,10 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: "/app/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
         source: "/:all*(svg|jpg|jpeg|png|webp|avif|gif|ico)",
         headers: [
           {

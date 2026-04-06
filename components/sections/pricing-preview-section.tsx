@@ -183,7 +183,7 @@ export function PricingPreviewSection() {
                 </ul>
               </div>
               <Link
-                href="/pricing"
+                href="/app/signup"
                 className={`mt-8 block rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 transition-colors ${
                   plan.popular
                     ? "bg-white text-primary-600 hover:bg-primary-50"

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { redirectToRegister } from "@/lib/keycloak";
 
 export function CTABanner() {
   return (
@@ -27,18 +26,13 @@ export function CTABanner() {
             Join thousands of job seekers who are landing their dream jobs with Hiring Journey. Get started in minutes.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-              type="button"
-              onClick={() => {
-                void redirectToRegister().catch((err: unknown) => {
-                  console.error(err);
-                });
-              }}
+            <Link
+              href="/app/signup"
               className="rounded-md bg-primary-600 px-8 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-all hover:scale-105 flex items-center gap-2"
             >
               Get Started Free
               <ArrowRight className="h-4 w-4" />
-            </button>
+            </Link>
             <Link
               href="/pricing"
               className="rounded-md bg-white dark:bg-gray-900 px-8 py-3 text-sm font-semibold text-gray-900 dark:text-white ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"

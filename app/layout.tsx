@@ -4,8 +4,7 @@ import { GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
+import { RouteShell } from "@/components/layout/route-shell";
 import { Analytics } from "@/components/analytics/analytics";
 import { metadataBase, getCanonicalUrl } from "@/lib/metadata";
 import GTMPageTracker from "@/components/analytics/gtm-page-tracker";
@@ -93,18 +92,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       {gtmId && <GoogleTagManager gtmId={gtmId} />}
-      <body className={`${inter.variable} ${satoshi.variable} font-sans antialiased`}>
+      <body
+        className={`${inter.variable} ${satoshi.variable} font-sans antialiased`}
+        suppressHydrationWarning
+      >
         <Analytics />
         <Suspense fallback={null}>
           <GTMPageTracker />
         </Suspense>
         <ThemeProvider>
           <ToastProvider>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
+            <RouteShell>{children}</RouteShell>
           </ToastProvider>
         </ThemeProvider>
       </body>

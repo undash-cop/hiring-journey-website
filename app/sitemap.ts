@@ -7,6 +7,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://hiringjourney.com";
   const now = new Date();
 
+  // Product app lives under /app/* — intentionally omitted (noindex; not for organic search).
+
   const staticPages: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: now, changeFrequency: "daily", priority: 1.0 },
     { url: `${baseUrl}/features`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },

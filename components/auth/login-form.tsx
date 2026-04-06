@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
-import { redirectToLogin, redirectToRegister } from "@/lib/keycloak";
+import { redirectToLogin } from "@/lib/keycloak";
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -91,18 +91,12 @@ export function LoginForm() {
 
       <p className="text-center text-sm text-gray-600 dark:text-gray-400">
         Don&apos;t have an account?{" "}
-        <button
-          type="button"
-          onClick={() => {
-            void redirectToRegister().catch((err: unknown) => {
-              const msg = err instanceof Error ? err.message : "Could not start registration.";
-              addToast(msg, "error");
-            });
-          }}
+        <Link
+          href="/app/signup"
           className="font-semibold text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
         >
           Sign up
-        </button>
+        </Link>
       </p>
     </div>
   );

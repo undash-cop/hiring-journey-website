@@ -1,5 +1,7 @@
 # App Subdomain Setup Guide
 
+> **Note:** The product UI is now part of this monorepo (`/app/*` routes, `components/app/`). Older steps that mention a separate `hiring-journey-app` folder refer to the pre-merge layout; use the same deployment or a second Next deploy for `app.` as needed.
+
 This guide explains how to set up a separate webapp at `https://app.hiringjourney.com` that works with the marketing website.
 
 ## Architecture Overview

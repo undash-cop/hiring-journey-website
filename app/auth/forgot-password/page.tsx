@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
         <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
           Remember your password?{" "}
           <Link
-            href="/auth/login"
+            href="/app/login"
             className="font-semibold text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
           >
             Sign in

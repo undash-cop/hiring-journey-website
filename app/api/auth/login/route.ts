@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 
 const APP_API_URL =
-  process.env.NEXT_PUBLIC_APP_SUBDOMAIN_URL ||
   process.env.NEXT_PUBLIC_APP_URL ||
-  "https://app.hiringjourney.com";
+  "https://hiringjourney.com";
 
 export async function POST(request: Request) {
   try {

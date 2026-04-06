@@ -96,10 +96,11 @@ export function SignupForm() {
         
         addToast("Account created successfully! Redirecting to app...", "success");
         
-        // Redirect to app subdomain after successful signup
-        const appUrl = process.env.NEXT_PUBLIC_APP_SUBDOMAIN_URL || process.env.NEXT_PUBLIC_APP_URL || "https://app.hiringjourney.com";
+        const subdomain = process.env.NEXT_PUBLIC_APP_SUBDOMAIN_URL?.replace(/\/$/, "");
         setTimeout(() => {
-          window.location.href = `${appUrl}/dashboard`;
+          window.location.href = subdomain
+            ? `${subdomain}/dashboard`
+            : `${window.location.origin}/app/dashboard`;
         }, 1000);
       } else {
         setError("root", { message: response.message || "Account creation failed. Please try again." });
@@ -278,7 +279,7 @@ export function SignupForm() {
       <p className="text-center text-sm text-gray-600 dark:text-gray-400">
         Already have an account?{" "}
         <Link
-          href="/auth/login"
+          href="/app/login"
           className="font-semibold text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
         >
           Sign in

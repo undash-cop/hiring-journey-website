@@ -1,0 +1,192 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
+import type { KeycloakProfile } from 'keycloak-js';
+import keycloak from '../lib/keycloak';
+import { ensureKeycloakInit } from '../lib/keycloakInit';
+import { redirectToLogin } from '@/lib/keycloak';
+import { useAuthStore } from '../store/authStore';
+import type { User, UserRole } from '../types';
+
+/** Post-logout landing (must be allowed in Keycloak post-logout redirect URIs). */
+function getLogoutRedirectUri(): string {
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/app/login`;
+  }
+  return (
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ||
+    process.env.NEXT_PUBLIC_AUTH_URL?.replace(/\/$/, '') ||
+    'http://localhost:3000/app/login'
+  );
+}
+
+const REFRESH_INTERVAL_MS = 50_000;
+const TOKEN_MIN_VALIDITY_SEC = 60;
+
+function profileToUser(profile: KeycloakProfile, tokenSub: string | undefined): User {
+  const realmRoles = keycloak.tokenParsed?.realm_access?.roles ?? [];
+  const role: UserRole = realmRoles.includes('admin') ? 'admin' : 'candidate';
+  const name =
+    [profile.firstName, profile.lastName].filter(Boolean).join(' ').trim() ||
+    profile.username ||
+    profile.email ||
+    'User';
+  const idRaw = profile.id ?? tokenSub ?? '0';
+  const id = /^\d+$/.test(idRaw) ? Number(idRaw) : 0;
+
+  return {
+    id,
+    name,
+    email: profile.email ?? profile.username ?? '',
+    role,
+  };
+}
+
+export interface AuthContextType {
+  authenticated: boolean;
+  token: string | undefined;
+  userInfo: Record<string, unknown> | undefined;
+  login: () => void;
+  logout: () => void;
+  initialized: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [initialized, setInitialized] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [userInfo, setUserInfo] = useState<Record<string, unknown> | undefined>(
+    undefined,
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void ensureKeycloakInit()
+      .then(async (ok) => {
+        if (cancelled) {
+          return;
+        }
+        setAuthenticated(ok);
+        if (!ok) {
+          setUserInfo(undefined);
+          useAuthStore.getState().logout();
+          return;
+        }
+        try {
+          const profile = await keycloak.loadUserProfile();
+          if (cancelled) {
+            return;
+          }
+          setUserInfo({ ...profile } as Record<string, unknown>);
+          useAuthStore.getState().login({
+            token: keycloak.token ?? '',
+            user: profileToUser(profile, keycloak.tokenParsed?.sub),
+          });
+        } catch {
+          if (cancelled) {
+            return;
+          }
+          setUserInfo(
+            keycloak.tokenParsed
+              ? ({ ...keycloak.tokenParsed } as Record<string, unknown>)
+              : undefined,
+          );
+          useAuthStore.getState().login({
+            token: keycloak.token ?? '',
+            user: {
+              id: 0,
+              name:
+                (keycloak.tokenParsed?.preferred_username as string | undefined) ?? 'User',
+              email: (keycloak.tokenParsed?.email as string | undefined) ?? '',
+              role: (keycloak.tokenParsed?.realm_access?.roles ?? []).includes('admin')
+                ? 'admin'
+                : 'candidate',
+            },
+          });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAuthenticated(false);
+          setUserInfo(undefined);
+          useAuthStore.getState().logout();
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setInitialized(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!initialized || !authenticated) {
+      return;
+    }
+
+    const id = window.setInterval(() => {
+      void keycloak
+        .updateToken(TOKEN_MIN_VALIDITY_SEC)
+        .then((refreshed) => {
+          if (refreshed && keycloak.token) {
+            const { user } = useAuthStore.getState();
+            if (user) {
+              useAuthStore.setState({ token: keycloak.token });
+            }
+          }
+        })
+        .catch(() => {
+          keycloak.logout({ redirectUri: getLogoutRedirectUri() });
+        });
+    }, REFRESH_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(id);
+    };
+  }, [initialized, authenticated]);
+
+  const login = useCallback(() => {
+    void redirectToLogin().catch(() => {
+      // no-op: UI can remain on login screen if redirect fails
+    });
+  }, []);
+
+  const logout = useCallback(() => {
+    useAuthStore.getState().logout();
+    void keycloak.logout({ redirectUri: getLogoutRedirectUri() });
+  }, []);
+
+  const value = useMemo<AuthContextType>(
+    () => ({
+      authenticated,
+      token: keycloak.token,
+      userInfo,
+      login,
+      logout,
+      initialized,
+    }),
+    [authenticated, initialized, login, logout, userInfo],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth(): AuthContextType {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return ctx;
+}
