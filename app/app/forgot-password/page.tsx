@@ -1,7 +1,12 @@
 "use client";
 
-import ForgotPasswordPage from "@/components/app/features/auth/ForgotPasswordPage";
+import { useEffect } from "react";
+import { redirectToLogin } from "@/lib/keycloak";
 
 export default function AppForgotPasswordPage() {
-  return <ForgotPasswordPage />;
+  useEffect(() => {
+    void redirectToLogin();
+  }, []);
+
+  return null;
 }

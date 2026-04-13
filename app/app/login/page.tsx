@@ -1,7 +1,12 @@
 "use client";
 
-import LoginPage from "@/components/app/features/auth/LoginPage";
+import { useEffect } from "react";
+import { redirectToLogin } from "@/lib/keycloak";
 
 export default function AppLoginPage() {
-  return <LoginPage />;
+  useEffect(() => {
+    void redirectToLogin();
+  }, []);
+
+  return null;
 }

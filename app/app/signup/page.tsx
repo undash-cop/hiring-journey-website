@@ -1,7 +1,12 @@
 "use client";
 
-import SignupPage from "@/components/app/features/auth/SignupPage";
+import { useEffect } from "react";
+import { redirectToRegister } from "@/lib/keycloak";
 
 export default function AppSignupPage() {
-  return <SignupPage />;
+  useEffect(() => {
+    void redirectToRegister();
+  }, []);
+
+  return null;
 }
