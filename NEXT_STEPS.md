@@ -1,58 +1,86 @@
 # Next Steps & Product Roadmap
 
-## Current Baseline
+This roadmap reflects the current architecture decision:
+- Single web app on `https://hiringjourney.com`
+- Product routes under `https://hiringjourney.com/app`
+- Keycloak-owned authentication (no local auth form stack)
 
-- Marketing website is production-ready.
-- Product shell exists under `/app/*`.
-- Auth entry routes are Keycloak-only redirects:
-  - `/app/login` -> `redirectToLogin()`
-  - `/app/signup` -> `redirectToRegister()`
-  - `/app/forgot-password` -> `redirectToLogin()`
-- Duplicate local auth form pages/components were removed.
+## Current Implementation Snapshot
 
-## Product Decisions (Locked)
+- [x] Product shell and route structure exist under `/app/*`
+- [x] Keycloak redirect entry routes are active (`/app/login`, `/app/signup`, `/app/forgot-password`)
+- [x] Legacy duplicate auth pages/components removed
+- [ ] Most product pages still need full backend-driven behavior and QA hardening
 
-1. **Identity Provider:** Keycloak is the source of truth for authentication.
-2. **Marketing vs Product Split:** Marketing pages stay on main site, product experience runs under `/app/*`.
-3. **No local auth forms in this repo:** Keep auth UI/logic in Keycloak unless explicitly reintroduced by product decision.
+## Execution Principles
 
-## Phase 1 (Now): Stabilize Auth + Core APIs
+Each page is considered complete only when all items pass:
+- [ ] Real API/data wiring complete (no placeholder or hardcoded demo state)
+- [ ] Loading, empty, error, and success states implemented
+- [ ] Primary user actions work end-to-end
+- [ ] Basic analytics instrumentation added
+- [ ] Accessibility checks pass (keyboard/labels/contrast)
+- [ ] Route-level QA test coverage exists
 
-### Must ship
-- [ ] Validate end-to-end callback reliability (`/auth/callback` -> `/app/dashboard`).
-- [ ] Implement/verify server session validation for protected app routes.
-- [ ] Add auth error telemetry (redirect failures, callback failures).
-- [ ] Finalize Keycloak client settings for all environments.
+## Phase 1 (Weeks 1-2): Auth and Platform Stabilization
 
-### Supporting work
-- [ ] Update stale docs to remove legacy `/api/auth/*` expectations for this repo.
-- [ ] Add integration tests for `/app/login` and `/app/signup` redirect behavior.
+- [ ] Validate full auth callback path (`/app/login` -> Keycloak -> `/auth/callback` -> `/app/dashboard`)
+- [ ] Enforce protected route access checks across `/app/*`
+- [ ] Add auth error observability (redirect failures, callback failures, session expiry)
+- [ ] Confirm environment parity (local, preview, production) for Keycloak settings
+- [ ] Add integration tests for auth entry routes and callback handling
 
-## Phase 2: Core Product Functionality
+## Phase 2 (Weeks 2-4): Marketing Pages Full Completion
 
-### Dashboard APIs
-- [ ] Resume management APIs and upload flow.
-- [ ] Job application tracking APIs.
-- [ ] Credits and usage APIs.
-- [ ] Interview prep APIs.
+Routes: `/`, `/features`, `/pricing`, `/about`, `/blog/*`, `/careers/*`, `/contact`, legal pages
 
-### UX completion
-- [ ] Replace placeholder/mock data in app dashboard views.
-- [ ] Add empty/error/loading states across all key product pages.
+- [ ] Final content/data source wiring for each page
+- [ ] CTA and form paths verified against `/app/*` routes
+- [ ] SEO completion (title, description, canonical, OpenGraph, schema where needed)
+- [ ] Performance pass on key landing routes
+- [ ] Responsive and accessibility QA complete
 
-## Phase 3: Monetization + Billing
+## Phase 3 (Weeks 4-8): Candidate App Pages Full Completion
 
-- [ ] Pricing plans API source of truth.
-- [ ] Checkout/session creation flow.
-- [ ] Subscription lifecycle handling (upgrade/downgrade/cancel).
-- [ ] Billing history + invoices.
+Routes: `/app/dashboard`, `/app/resume`, `/app/jobs`, `/app/auto-apply`, `/app/interview`, `/app/tracker`, `/app/negotiation`, `/app/legal`, `/app/coding-arena`, `/app/credits`, `/app/profile`, `/app/settings`
 
-## Phase 4: Reliability + Quality
+- [ ] Replace all placeholder blocks with real API-driven modules
+- [ ] Implement core user actions per page (create, update, filter, save, submit flows)
+- [ ] Add unified state handling (loading/empty/error) for every module
+- [ ] Ensure cross-page navigation and data consistency
+- [ ] Add route-level integration tests for core journeys
 
-- [ ] Unit tests for critical helpers and auth utilities.
-- [ ] E2E tests for login -> callback -> dashboard flow.
-- [ ] Error monitoring (Sentry) and performance budgets.
-- [ ] CI gates for lint, typecheck, and tests.
+## Phase 4 (Weeks 8-10): Admin App Pages Completion
+
+Routes: `/app/admin/dashboard`, `/app/admin/jobs`, `/app/admin/publish`, `/app/admin/applications`, `/app/admin/candidates`, `/app/admin/analytics`, `/app/admin/plans`, `/app/admin/settings`
+
+- [ ] Implement role-based access controls and route guards
+- [ ] Wire admin tables, filters, and action flows to real APIs
+- [ ] Add audit-safe action handling (confirmations, failure recovery, logs where needed)
+- [ ] Add regression tests for admin critical actions
+
+## Phase 5 (Weeks 10-11): Billing and Monetization
+
+- [ ] Pricing plans source-of-truth integration
+- [ ] Checkout/session creation and redirect flow
+- [ ] Subscription lifecycle (upgrade/downgrade/cancel) in UI + APIs
+- [ ] Billing history and invoice visibility
+- [ ] Payment failure/retry UX and support-safe messaging
+
+## Phase 6 (Weeks 11-12): Quality Gate and Release Readiness
+
+- [ ] Expand E2E coverage for top user funnels
+- [ ] Add CI gates for lint, typecheck, tests, and build
+- [ ] Integrate monitoring (errors + performance) and alerting
+- [ ] Complete security and privacy checklist baseline
+- [ ] Final documentation pass across architecture, deployment, and runbooks
+
+## Milestone Targets
+
+- **M1:** Auth/platform stable + marketing pages production-ready
+- **M2:** Candidate `/app/*` pages functionally complete
+- **M3:** Admin and billing complete
+- **M4:** Release-quality hardening complete
 
 ## Environment Checklist
 
@@ -63,12 +91,14 @@ NEXT_PUBLIC_KEYCLOAK_REALM=
 NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=
 
 # App/backend
+NEXT_PUBLIC_APP_URL=https://hiringjourney.com
 NEXT_PUBLIC_API_URL=
 ```
 
-## Definition of Done (Current Milestone)
+## Definition of Done (Program-Level)
 
-- [ ] No duplicate auth surfaces in app or docs.
-- [ ] All auth entry routes consistently trigger Keycloak.
-- [ ] Callback flow works in local, preview, and production.
-- [ ] Team docs align with actual implementation choices.
+- [ ] No duplicate auth surfaces in code or docs
+- [ ] All page routes have real data + complete state handling
+- [ ] Critical funnels are covered by automated tests
+- [ ] Production monitoring is active and actionable
+- [ ] Documentation matches implemented behavior
