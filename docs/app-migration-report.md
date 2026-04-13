@@ -77,7 +77,7 @@ components/app/
 
 ## 4) Middleware / Proxy Update
 
-- `proxy.ts` matcher: `"/auth/login"` only (optional redirect to app login path).
+- `proxy.ts` matcher: `"/auth/login"` only (legacy redirect to `/app/login`).
 - `/app/*` authentication is client-side (Keycloak-js + `components/app`).
 
 ## 5) API Client

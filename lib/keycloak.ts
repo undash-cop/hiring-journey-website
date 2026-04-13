@@ -35,8 +35,7 @@ function getCallbackUrl(): string {
 }
 
 /**
- * Legacy: app hosted on another origin (subdomain) with routes at `/dashboard`, `/onboarding`.
- * Unified: same Next app — post-login is always `/app/dashboard` on the current origin.
+ * Unified single-app hosting: post-login resolves to `/app/dashboard` on current origin.
  */
 export function getAppPostLoginOrigin(): string {
   return window.location.origin?.replace(/\/$/, "") || "";

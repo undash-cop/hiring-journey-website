@@ -2,6 +2,12 @@
 
 Production-grade AI SaaS website for Hiring Journey by Undash-cop Private Limited.
 
+## Current Auth Architecture
+
+- Authentication is handled by Keycloak.
+- App entry routes `/app/login`, `/app/signup`, and `/app/forgot-password` are redirect-only handlers.
+- Local auth form pages/components are intentionally removed to avoid duplicate auth surfaces.
+
 ## Requirements
 
 - **Node.js**: >= 22.0.0
@@ -54,8 +60,6 @@ npm start
 
 ### Setup & Deployment
 - **[Deployment Guide](DEPLOYMENT.md)** - Complete guide for deploying to Netlify
-- **[App Subdomain Setup](APP_SUBDOMAIN_SETUP.md)** - Setting up the app subdomain architecture
-- **[App Subdomain Cursor Rules](APP_SUBDOMAIN_CURSOR_RULES.md)** - Comprehensive guide for building app.hiringjourney.com
 
 ### Architecture & Features
 - **[Architecture Decisions](ARCHITECTURE_DECISION.md)** - Key architectural decisions

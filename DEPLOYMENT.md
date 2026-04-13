@@ -108,16 +108,6 @@ Set these in Netlify Dashboard → Site settings → Environment variables:
 NEXT_PUBLIC_APP_URL=https://your-actual-domain.com
 ```
 
-### Optional (for app subdomain integration)
-
-```env
-# App subdomain URL (for API calls)
-NEXT_PUBLIC_APP_SUBDOMAIN_URL=https://app.hiringjourney.com
-
-# Optional: Redirect login to app subdomain
-NEXT_PUBLIC_REDIRECT_LOGIN_TO_APP=false
-```
-
 ### Optional (for future backend integration)
 
 ```env
@@ -215,7 +205,7 @@ Netlify automatically deploys when you push to your main branch:
 3. **Set up Error Monitoring** (Sentry)
 4. **Configure Backend APIs** (when ready)
 5. **Set up Payment Gateway** (when ready)
-6. **Set up App Subdomain** (see `APP_SUBDOMAIN_SETUP.md`)
+6. **Validate `/app/*` product flows** on production domain
 
 ## Support
 

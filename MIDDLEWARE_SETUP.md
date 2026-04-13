@@ -2,132 +2,19 @@
 
 ## Overview
 
-Edge logic lives in **`proxy.ts`** (Next.js 16 convention in this repo). It provides **optional** redirect from `/auth/login` to the app login route (same or different host). **`/app/*` auth is handled in the browser** (Keycloak-js + `components/app`); there is no edge cookie gate in this monorepo.
+`proxy.ts` only exists for backwards compatibility:
 
-## How It Works
+- Redirect legacy `/auth/login` -> `/app/login`.
+- Keep old links/bookmarks working after app merge onto `hiringjourney.com/app`.
 
-The proxy runs for:
+## Current Behavior
 
-- `/auth/login` — optional redirect to `NEXT_PUBLIC_APP_SUBDOMAIN_URL` + `NEXT_PUBLIC_APP_LOGIN_PATH` (default `/app/login`).
+- No subdomain routing.
+- No split-host auth toggles.
+- Product routes run on the same host under `/app/*`.
 
-**Note:** Pricing and Signup pages remain on the marketing site and communicate with the app subdomain via API calls (see `APP_SUBDOMAIN_SETUP.md`).
+## Quick Verification
 
-## Configuration
-
-### Environment Variables
-
-Add these to your `.env.local` file:
-
-```env
-# App subdomain URL (required if enabling redirects)
-NEXT_PUBLIC_APP_SUBDOMAIN_URL=https://app.hiringjourney.com
-```
-
-### Route Mappings
-
-When redirects are enabled:
-
-| Marketing Site Route | App route (default) |
-|---------------------|---------------------|
-| `/auth/login` | `{APP_SUBDOMAIN}/app/login` (`NEXT_PUBLIC_APP_LOGIN_PATH`) |
-
-**Note:** Signup and Pricing pages stay on the marketing site (`/auth/signup`, `/pricing`) and communicate with the app subdomain via API calls.
-
-## Testing
-
-### Test Locally
-
-1. **Start the marketing site:**
-   ```bash
-   npm run dev
-   # Runs on http://localhost:3000
-   ```
-
-2. **Product app routes:** The migrated app lives in this repo under `/app/*` (see `app/app/` and `components/app/`). For local dev you can use the same `npm run dev` server; optional subdomain deploy still uses `NEXT_PUBLIC_APP_SUBDOMAIN_URL` when split-hosting.
-
-3. **Update `.env.local` in marketing site (subdomain split only):**
-   ```env
-   NEXT_PUBLIC_APP_SUBDOMAIN_URL=http://localhost:3001
-   ```
-
-4. **Enable redirects in `.env.local`:**
-   ```env
-   NEXT_PUBLIC_REDIRECT_LOGIN_TO_APP=true
-   ```
-
-5. **Test redirects:**
-   - Visit `http://localhost:3000/auth/login` → Should redirect to `http://localhost:3001/login` (if enabled)
-   - Visit `http://localhost:3000/auth/signup` → Stays on marketing site
-   - Visit `http://localhost:3000/pricing` → Stays on marketing site
-
-### Test in Production
-
-1. Set environment variables in your hosting provider (Netlify/Vercel)
-2. Deploy both applications
-3. Enable redirects by setting `NEXT_PUBLIC_REDIRECT_LOGIN_TO_APP=true` in environment variables
-
-4. Test redirects:
-   - Visit `https://hiringjourney.com/auth/login` → Should redirect to `https://app.hiringjourney.com/login` (if enabled)
-   - Visit `https://hiringjourney.com/auth/signup` → Stays on marketing site (uses API calls)
-   - Visit `https://hiringjourney.com/pricing` → Stays on marketing site (uses API calls)
-
-## Troubleshooting
-
-### Middleware Not Working
-
-1. **Check file location:** Middleware must be at `middleware.ts` (root level), not in route folders
-2. **Check environment variables:** Ensure they're set correctly in `.env.local` or hosting provider
-3. **Restart dev server:** After changing `.env.local`, restart `npm run dev`
-4. **Check build output:** Look for "Middleware" in build output to confirm it's being compiled
-
-### Redirects Not Working
-
-1. **Verify environment variables are set:**
-   ```bash
-   # Check if variables are loaded
-   echo $NEXT_PUBLIC_APP_SUBDOMAIN_URL
-   ```
-
-2. **Check browser console:** Look for any errors
-
-3. **Verify app subdomain is accessible:** Ensure `https://app.hiringjourney.com` is reachable
-
-4. **Check middleware matcher:** Ensure the route matches the matcher pattern
-
-### Common Issues
-
-**Issue:** Middleware redirects to wrong URL
-- **Solution:** Check `NEXT_PUBLIC_APP_SUBDOMAIN_URL` is set correctly
-
-**Issue:** Redirects work but query parameters are lost
-- **Solution:** Already handled - middleware preserves query parameters
-
-**Issue:** Redirects work in dev but not in production
-- **Solution:** Ensure environment variables are set in hosting provider (Netlify/Vercel)
-
-## Disabling Redirects
-
-Redirects are **disabled by default**. To enable login redirect, set:
-
-```env
-NEXT_PUBLIC_REDIRECT_LOGIN_TO_APP=true
-NEXT_PUBLIC_APP_SUBDOMAIN_URL=https://app.hiringjourney.com
-```
-
-To disable, simply remove or don't set `NEXT_PUBLIC_REDIRECT_LOGIN_TO_APP`.
-
-## Current Status
-
-✅ **Middleware Location:** `middleware.ts` (root level)  
-✅ **Build Status:** Compiling successfully  
-✅ **Default Behavior:** Redirects disabled (marketing site works normally)  
-✅ **Route Coverage:** `/auth/login` only (optional redirect)  
-✅ **Pricing & Signup:** Stay on marketing site, use API calls to app subdomain
-
-## Next Steps
-
-1. Set up the app subdomain project
-2. Configure environment variables
-3. Test redirects locally
-4. Deploy both applications
-5. Enable redirects in production when ready
+1. Run `npm run dev`.
+2. Open `/auth/login` and confirm redirect to `/app/login`.
+3. Open `/app/login` and confirm Keycloak login starts.
