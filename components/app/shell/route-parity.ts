@@ -23,6 +23,7 @@ export const routeParity = [
   "/admin/applications",
   "/admin/candidates",
   "/admin/analytics",
+  "/admin/audit",
   "/admin/plans",
   "/admin/settings",
 ] as const;

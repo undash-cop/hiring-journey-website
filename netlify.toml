@@ -8,11 +8,7 @@
 [build.environment]
   NODE_VERSION = "22"
 
-[[redirects]]
-  from = "/api/backend/*"
-  to = "https://api.hiringjourney.com/:splat"
-  status = 200
-  force = true
+# API calls use NEXT_PUBLIC_API_URL directly (CORS on api.hiringjourney.com).
 
 [[headers]]
   for = "/_next/static/*"

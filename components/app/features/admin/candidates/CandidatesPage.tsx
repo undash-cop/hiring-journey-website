@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCandidates, updateCredits } from '../../../services/api';
+import { getCandidates, updateCandidateStatus, updateCredits } from '../../../services/api';
 import { Card, StatusBadge, Table, TableHead, TableBody, TableRow, TableHeader, TableCell, Button, Input, Modal, Pagination, LoadingTable } from '../../../components/ui';
 import { useToast } from '../../../contexts/ToastContext';
 import type { Candidate } from '../../../types';
@@ -10,6 +10,7 @@ export default function CandidatesPage() {
   const [creditsAmount, setCreditsAmount] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pendingStatusCandidateId, setPendingStatusCandidateId] = useState<number | null>(null);
   const itemsPerPage = 10;
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -40,6 +41,21 @@ export default function CandidatesPage() {
     },
     onError: () => {
       showToast('Failed to update credits. Please try again.', 'error');
+    },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ candidateId, status }: { candidateId: number; status: 'active' | 'suspended' }) =>
+      updateCandidateStatus(candidateId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['candidates'] });
+      showToast('Candidate status updated successfully!', 'success');
+    },
+    onError: () => {
+      showToast('Failed to update candidate status.', 'error');
+    },
+    onSettled: () => {
+      setPendingStatusCandidateId(null);
     },
   });
 
@@ -118,7 +134,18 @@ export default function CandidatesPage() {
                     <Button variant="ghost" size="sm" onClick={() => handleAdjustCredits(candidate)}>
                       Adjust Credits
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        (setPendingStatusCandidateId(candidate.id),
+                        updateStatusMutation.mutate({
+                          candidateId: candidate.id,
+                          status: candidate.status === 'active' ? 'suspended' : 'active',
+                        }))
+                      }
+                      isLoading={updateStatusMutation.isPending && pendingStatusCandidateId === candidate.id}
+                    >
                       {candidate.status === 'active' ? 'Suspend' : 'Activate'}
                     </Button>
                   </div>

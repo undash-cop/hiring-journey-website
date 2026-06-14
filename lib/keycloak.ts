@@ -4,6 +4,7 @@ import Keycloak from "keycloak-js";
 import type { KeycloakAdapter, KeycloakRedirectUriOptions, KeycloakServerConfig } from "keycloak-js";
 import { getKeycloakJsConfig } from "@/lib/keycloak-client-config";
 import { getAuthCallbackRedirectUri } from "@/lib/keycloak-oauth-redirect";
+import { reportAuthError } from "@/lib/auth-errors";
 
 /** Where to land on the app after Keycloak returns to `/auth/callback`. */
 export const KC_POST_AUTH_TARGET_KEY = "hj_kc_post_auth_target";
@@ -106,6 +107,8 @@ function newKeycloakClient(): Keycloak {
 export async function redirectToLogin(): Promise<void> {
   if (typeof window === "undefined") return;
   assertKeycloakConfigured(keycloakServerConfig);
+  const { resetKeycloakInit } = await import("@/lib/keycloak-init");
+  resetKeycloakInit();
   window.sessionStorage.setItem(KC_POST_AUTH_TARGET_KEY, "dashboard");
   const kc = newKeycloakClient();
   await kc.init({
@@ -143,30 +146,50 @@ export async function redirectToRegister(): Promise<void> {
 
 /**
  * Handles Keycloak OIDC redirect on `/auth/callback` (`?code=...`).
- * On success navigates to the app; on failure navigates to `/?error=auth_failed`.
+ * Returns post-login path on success; throws on failure.
  */
-export async function exchangeKeycloakCallback(): Promise<void> {
-  if (typeof window === "undefined") return;
+export async function exchangeKeycloakCallback(): Promise<string> {
+  if (typeof window === "undefined") {
+    throw new Error("exchangeKeycloakCallback requires a browser environment");
+  }
   assertKeycloakConfigured(keycloakServerConfig);
   const params = new URLSearchParams(window.location.search);
-  if (!params.get("code")) {
-    window.location.replace("/?error=auth_failed");
-    return;
+  const code = params.get("code");
+  const state = params.get("state");
+  if (!code || !state) {
+    reportAuthError("callback_missing_code", { search: window.location.search });
+    throw new Error("auth_failed");
   }
+
+  const handledKey = `hj_kc_handled_${state}`;
+  if (window.sessionStorage.getItem(handledKey)) {
+    const target = window.sessionStorage.getItem(KC_POST_AUTH_TARGET_KEY);
+    const mode = target === "onboarding" ? "onboarding" : "dashboard";
+    return resolvePostLoginHref(mode);
+  }
+  window.sessionStorage.setItem(handledKey, "1");
+
+  const { adoptKeycloakSession, resetKeycloakInit, syncAuthStoreFromKeycloak } =
+    await import("@/lib/keycloak-init");
+  resetKeycloakInit();
   const kc = newKeycloakClient();
-  await kc.init({
+  const authenticated = await kc.init({
     onLoad: "check-sso",
     redirectUri: getCallbackUrl(),
     pkceMethod: "S256",
     responseMode: "query",
     checkLoginIframe: false,
   });
-  if (!kc.authenticated) {
-    window.location.replace("/?error=auth_failed");
-    return;
+  if (!authenticated) {
+    reportAuthError("callback_exchange_failed", { state });
+    throw new Error("auth_failed");
   }
+
+  adoptKeycloakSession(kc);
+  syncAuthStoreFromKeycloak(kc);
+
   const target = window.sessionStorage.getItem(KC_POST_AUTH_TARGET_KEY);
   window.sessionStorage.removeItem(KC_POST_AUTH_TARGET_KEY);
   const mode = target === "onboarding" ? "onboarding" : "dashboard";
-  window.location.replace(resolvePostLoginHref(mode));
+  return resolvePostLoginHref(mode);
 }

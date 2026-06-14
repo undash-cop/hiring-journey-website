@@ -111,13 +111,28 @@ NEXT_PUBLIC_APP_URL=https://your-actual-domain.com
 ### Optional (for future backend integration)
 
 ```env
-# Backend API (when ready)
-NEXT_PUBLIC_API_URL=https://api.your-domain.com
+# Backend API (required for production builds)
+NEXT_PUBLIC_API_URL=https://api.hiringjourney.com
 
 # Analytics (when ready)
 NEXT_PUBLIC_GA_ID=your-google-analytics-id
 NEXT_PUBLIC_PLAUSIBLE_DOMAIN=your-domain.com
 ```
+
+## Backend API Deployment
+
+The FastAPI backend is deployed independently (separate server/service) at:
+
+- `https://api.hiringjourney.com`
+
+The browser calls `NEXT_PUBLIC_API_URL` directly (no Netlify API proxy). Configure `CORS_ORIGINS` on the API for your Netlify/production domain.
+
+Backend deployment docs:
+
+- `backend/DEPLOYMENT.md` — Docker, TLS, Postgres
+- `docs/STAGING.md` — staging VM and env matrix
+- `docs/M1_DEPLOYMENT_CHECKLIST.md` — first production release
+- `docs/RUNBOOK.md` — rollback, backups, HA
 
 ## Post-Deployment Checklist
 

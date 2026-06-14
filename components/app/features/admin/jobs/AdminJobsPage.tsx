@@ -1,12 +1,16 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getAdminJobs } from '../../../services/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { closeJob, getAdminJobs } from '../../../services/api';
 import { Card, Button, StatusBadge, Table, TableHead, TableBody, TableRow, TableHeader, TableCell, Pagination, LoadingTable } from '../../../components/ui';
 import type { Job } from '../../../types';
+import { useToast } from '../../../contexts/ToastContext';
 
 export default function AdminJobsPage() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [closingJobId, setClosingJobId] = useState<number | null>(null);
   const itemsPerPage = 10;
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   const { data: jobs, isLoading, isError } = useQuery({
     queryKey: ['admin-jobs'],
@@ -21,6 +25,20 @@ export default function AdminJobsPage() {
   }, [jobs, currentPage, itemsPerPage]);
 
   const totalPages = Math.ceil((jobs?.length || 0) / itemsPerPage);
+
+  const closeJobMutation = useMutation({
+    mutationFn: closeJob,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-jobs'] });
+      showToast('Job closed successfully.', 'success');
+    },
+    onError: () => {
+      showToast('Failed to close job.', 'error');
+    },
+    onSettled: () => {
+      setClosingJobId(null);
+    },
+  });
 
   if (isLoading) {
     return (
@@ -87,7 +105,17 @@ export default function AdminJobsPage() {
                 <TableCell>
                   <div className="flex gap-2">
                     <Button variant="ghost" size="sm">Edit</Button>
-                    <Button variant="ghost" size="sm">Close</Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setClosingJobId(job.id);
+                        closeJobMutation.mutate(job.id);
+                      }}
+                      isLoading={closeJobMutation.isPending && closingJobId === job.id}
+                    >
+                      Close
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>

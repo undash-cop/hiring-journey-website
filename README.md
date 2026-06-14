@@ -60,6 +60,7 @@ npm start
 
 ### Setup & Deployment
 - **[Deployment Guide](DEPLOYMENT.md)** - Complete guide for deploying to Netlify
+- **[Backend API Plan](BACKEND_API_PLAN.md)** - Independent FastAPI backend scope and endpoint plan
 
 ### Architecture & Features
 - **[Architecture Decisions](ARCHITECTURE_DECISION.md)** - Key architectural decisions
@@ -73,6 +74,25 @@ npm start
 ### Development
 - **[Next Steps](NEXT_STEPS.md)** - Development roadmap and backend integration
 - **[Troubleshooting](TROUBLESHOOTING.md)** - Common issues and solutions
+
+### Deployment & Operations
+- **[Local Development](docs/LOCAL_DEV.md)** - Dev server, auth smoke test, E2E
+- **[M1 Deployment Checklist](docs/M1_DEPLOYMENT_CHECKLIST.md)** - First production release
+- **[Staging Setup](docs/STAGING.md)** - Staging VM and env matrix
+- **[Staging First Deploy](docs/STAGING_FIRST_DEPLOY.md)** - One-time staging bring-up
+- **[Operations Runbook](docs/RUNBOOK.md)** - Rollback, backups, HA
+- **[Deploy Secrets](docs/DEPLOY_SECRETS.md)** - GitHub Actions SSH secrets
+
+## Backend API (FastAPI)
+
+An independent backend service scaffold now exists in `backend/`.
+
+- Run backend locally with FastAPI (`uvicorn app.main:app --reload --port 8000`)
+- Export OpenAPI contract from backend (`/openapi.json`)
+- Sync frontend client from spec:
+  - `npm run api:spec:download`
+  - `npm run api:client:generate`
+  - `npm run api:sync`
 
 ## Deployment
 

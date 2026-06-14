@@ -7,9 +7,16 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "validate:env": "node scripts/validate-build-env.mjs",
+    "build": "node scripts/validate-build-env.mjs && next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "api:spec:download": "curl -fsSL http://localhost:8000/openapi.json -o openapi/hiring-journey-api.openapi.json",
+    "api:client:generate": "openapi-generator-cli generate -i openapi/hiring-journey-api.openapi.json -g typescript-axios -o lib/generated/api-client --additional-properties=useSingleRequestParameter=true,withSeparateModelsAndApi=true,apiPackage=apis,modelPackage=models",
+    "api:sync": "npm run api:spec:download && npm run api:client:generate",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -33,6 +40,8 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.51.0",
+    "@openapitools/openapi-generator-cli": "^2.25.0",
     "@types/node": "^22.19.15",
     "@types/react": "^19.0.6",
     "@types/react-dom": "^19.0.2",

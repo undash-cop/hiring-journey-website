@@ -5,6 +5,7 @@ import type { User, UserRole, AuthResponse } from '../types';
 interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   role: UserRole | null;
   login: (data: AuthResponse) => void;
   logout: () => void;
@@ -16,11 +17,13 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       token: null,
+      refreshToken: null,
       role: null,
       login: (data: AuthResponse) => {
         set({
           user: data.user,
           token: data.token,
+          refreshToken: data.refreshToken ?? null,
           role: data.user.role,
         });
       },
@@ -28,6 +31,7 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: null,
           token: null,
+          refreshToken: null,
           role: null,
         });
       },

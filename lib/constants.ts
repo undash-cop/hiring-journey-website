@@ -40,9 +40,11 @@ export const TARGET_USERS = [
   "Tier-2 / Tier-3 India",
 ] as const;
 
-// Feature flags (for future use)
+/** Product feature toggles — gate routes and mock-only APIs until backend support ships. */
 export const FEATURE_FLAGS = {
   GOOGLE_OAUTH: false,
   CODING_ARENA: false,
   AUTO_APPLY: true,
 } as const;
+
+export type FeatureFlagKey = keyof typeof FEATURE_FLAGS;

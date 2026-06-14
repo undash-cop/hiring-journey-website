@@ -1,14 +1,18 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getAllApplications } from '../../../services/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getAllApplications, updateApplicationStatus } from '../../../services/api';
 import { Card, StatusBadge, Table, TableHead, TableBody, TableRow, TableHeader, TableCell, Button, Pagination, LoadingTable, SearchBar } from '../../../components/ui';
 import type { Application } from '../../../types';
+import { useToast } from '../../../contexts/ToastContext';
 
 export default function ApplicationsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [jobFilter, setJobFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [pendingAction, setPendingAction] = useState<{ id: number; status: Application['status'] } | null>(null);
   const itemsPerPage = 10;
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   const { data: applications, isLoading, isError } = useQuery({
     queryKey: ['admin-applications'],
@@ -31,6 +35,21 @@ export default function ApplicationsPage() {
   }, [filteredApplications, currentPage, itemsPerPage]);
 
   const totalPages = Math.ceil(filteredApplications.length / itemsPerPage);
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ applicationId, status }: { applicationId: number; status: Application['status'] }) =>
+      updateApplicationStatus(applicationId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-applications'] });
+      showToast('Application status updated.', 'success');
+    },
+    onError: () => {
+      showToast('Failed to update application status.', 'error');
+    },
+    onSettled: () => {
+      setPendingAction(null);
+    },
+  });
 
   if (isLoading) {
     return (
@@ -115,7 +134,30 @@ export default function ApplicationsPage() {
                 <TableCell>{app.resumeScore || 'N/A'}</TableCell>
                 <TableCell>{new Date(app.appliedAt).toLocaleDateString()}</TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="sm">View Profile</Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        (setPendingAction({ id: app.id, status: 'offer' }),
+                        updateStatusMutation.mutate({ applicationId: app.id, status: 'offer' }))
+                      }
+                      isLoading={updateStatusMutation.isPending && pendingAction?.id === app.id && pendingAction?.status === 'offer'}
+                    >
+                      Mark Offer
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        (setPendingAction({ id: app.id, status: 'rejected' }),
+                        updateStatusMutation.mutate({ applicationId: app.id, status: 'rejected' }))
+                      }
+                      isLoading={updateStatusMutation.isPending && pendingAction?.id === app.id && pendingAction?.status === 'rejected'}
+                    >
+                      Reject
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

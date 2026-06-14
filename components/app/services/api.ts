@@ -1,8 +1,14 @@
-import axios from 'axios';
+import {
+  AdminApi,
+  ApplicationsApi,
+  Configuration as GeneratedApiConfiguration,
+  DashboardApi,
+  JobsApi,
+  SettingsApi,
+  UsersApi,
+} from '@/lib/generated/api-client';
+import { useAuthStore } from '../store/authStore';
 import type {
-  LoginCredentials,
-  SignupData,
-  AuthResponse,
   DashboardStats,
   Job,
   Application,
@@ -26,296 +32,140 @@ import type {
   ResumeVersion,
   ResumeTemplate,
   ResumeBuilderData,
+  AdminAuditLog,
 } from '../types';
 
-const api = axios.create({
-  // Keep API requests same-origin in development (via Vite proxy) to avoid CORS issues.
-  baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  'http://localhost:8000';
+
+/** Phase 2+ demo data — set NEXT_PUBLIC_USE_MOCK_API=true for local demos only. */
+const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true';
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function requireMockApi(feature: string): void {
+  if (!USE_MOCK_API) {
+    throw new Error(
+      `${feature} is not available via the API yet. Set NEXT_PUBLIC_USE_MOCK_API=true for local demos only.`,
+    );
+  }
+}
+
+const generatedApiConfig = new GeneratedApiConfiguration({
+  basePath: API_BASE_URL,
+  accessToken: () => {
+    if (typeof window === 'undefined') {
+      return '';
+    }
+    const fromStore = useAuthStore.getState().token;
+    if (fromStore) {
+      return fromStore;
+    }
+    const authStorage = window.localStorage.getItem('auth-storage');
+    if (!authStorage) {
+      return '';
+    }
+    try {
+      const parsed = JSON.parse(authStorage);
+      return parsed?.state?.token ?? '';
+    } catch {
+      return '';
+    }
   },
 });
 
-// Add auth token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth-storage');
-  if (token) {
-    try {
-      const parsed = JSON.parse(token);
-      if (parsed.state?.token) {
-        config.headers.Authorization = `Bearer ${parsed.state.token}`;
-      }
-    } catch (e) {
-      // Ignore parse errors
-    }
+const jobsApi = new JobsApi(generatedApiConfig);
+const applicationsApi = new ApplicationsApi(generatedApiConfig);
+const usersApi = new UsersApi(generatedApiConfig);
+const dashboardApi = new DashboardApi(generatedApiConfig);
+const settingsApi = new SettingsApi(generatedApiConfig);
+const adminApi = new AdminApi(generatedApiConfig);
+
+const toFrontendApplicationStatus = (
+  status: string,
+): Application['status'] => {
+  switch (status) {
+    case 'interview-scheduled':
+    case 'interview-completed':
+    case 'offer':
+    case 'rejected':
+    case 'applied':
+      return status;
+    default:
+      return 'applied';
   }
-  return config;
-});
-
-// Mock delay helper
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Auth APIs
-export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
-  await delay(800);
-  return {
-    token: 'mock-jwt-token',
-    user: {
-      id: 1,
-      name: credentials.email === 'admin@test.com' ? 'Admin User' : 'Test User',
-      email: credentials.email,
-      role: credentials.email === 'admin@test.com' ? 'admin' : 'candidate',
-    },
-  };
 };
 
-export const signup = async (data: SignupData): Promise<AuthResponse> => {
-  await delay(1000);
-  return {
-    token: 'mock-jwt-token',
-    user: {
-      id: Math.floor(Math.random() * 1000),
-      name: data.name,
-      email: data.email,
-      role: data.role || 'candidate',
-    },
-  };
-};
-
-export const forgotPassword = async (_email: string): Promise<{ success: boolean }> => {
-  await delay(800);
-  return { success: true };
+const toActivityType = (
+  type: string,
+): DashboardStats['recentActivity'][number]['type'] => {
+  switch (type) {
+    case 'application':
+    case 'interview':
+    case 'offer':
+    case 'rejection':
+      return type;
+    default:
+      return 'application';
+  }
 };
 
 // Candidate APIs
 export const getCandidateDashboard = async (): Promise<DashboardStats> => {
-  await delay(600);
+  const { data } = await dashboardApi.getCandidateDashboardDashboardCandidateGet();
   return {
-    resumeScore: 85,
-    creditsRemaining: 150,
-    applicationsCount: 12,
-    interviewsCount: 3,
-    recentActivity: [
-      {
-        id: 1,
-        type: 'interview',
-        message: 'Interview scheduled for Software Engineer at Tech Corp',
-        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 2,
-        type: 'application',
-        message: 'Applied to Frontend Developer at Startup Inc',
-        timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 3,
-        type: 'offer',
-        message: 'Received offer from Big Tech Company',
-        timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ],
-    applicationsTrend: [
-      { date: '2024-01-01', count: 2 },
-      { date: '2024-01-08', count: 4 },
-      { date: '2024-01-15', count: 6 },
-      { date: '2024-01-22', count: 8 },
-      { date: '2024-01-29', count: 10 },
-      { date: '2024-02-05', count: 12 },
-    ],
+    resumeScore: data.resume_score,
+    creditsRemaining: data.credits_remaining,
+    applicationsCount: data.applications_count,
+    interviewsCount: data.interviews_count,
+    recentActivity: data.recent_activity.map((item) => ({
+      id: item.id,
+      type: toActivityType(item.type),
+      message: item.message,
+      timestamp: item.timestamp,
+    })),
+    applicationsTrend: data.applications_trend.map((item) => ({
+      date: item.date,
+      count: item.count,
+    })),
   };
 };
 
 export const getJobs = async (): Promise<Job[]> => {
-  await delay(500);
-  const now = new Date();
-  return [
-    {
-      id: 1,
-      title: 'Senior Frontend Developer',
-      description: 'We are looking for an experienced frontend developer to join our dynamic team. You will work on cutting-edge web applications using React and modern JavaScript frameworks.',
-      skills: ['React', 'TypeScript', 'Tailwind CSS', 'Next.js', 'Node.js'],
-      location: 'Bangalore, India',
-      salaryRange: { min: 1200000, max: 1800000 },
-      employmentType: 'full-time',
-      status: 'published',
-      skillMatch: 92,
-      createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      source: 'linkedin',
-      company: 'TechCorp India',
-      companySize: '501-1000 employees',
-      companyIndustry: 'Technology',
-      experienceRequired: '5-8 years',
-      externalUrl: 'https://linkedin.com/jobs/view/123456',
-      postedDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  const { data } = await jobsApi.listJobsJobsGet({ limit: 50 });
+  return data.items.map((job) => {
+    const created = job.created_at;
+    return {
+      id: job.id,
+      title: job.title,
+      description: job.description ?? '',
+      skills: job.skills ?? [],
+      location: job.location,
+      salaryRange: {
+        min: job.salary_range?.min ?? 0,
+        max: job.salary_range?.max ?? 0,
+      },
+      employmentType: job.employment_type as Job['employmentType'],
+      status: job.status as Job['status'],
+      source: (job.source ?? 'internal') as Job['source'],
+      createdAt: created,
+      postedDate: created,
       isSaved: false,
-      views: 245,
-      applicants: 12,
-    },
-    {
-      id: 2,
-      title: 'Full Stack Engineer',
-      description: 'Join our team to build amazing products. We need someone who can work across the entire stack and contribute to both frontend and backend development.',
-      skills: ['React', 'Node.js', 'PostgreSQL', 'AWS', 'Docker'],
-      location: 'Remote',
-      salaryRange: { min: 1000000, max: 1500000 },
-      employmentType: 'full-time',
-      status: 'published',
-      skillMatch: 78,
-      createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      source: 'indeed',
-      company: 'StartupHub',
-      companySize: '51-200 employees',
-      companyIndustry: 'Software Development',
-      experienceRequired: '3-6 years',
-      externalUrl: 'https://indeed.com/viewjob?jk=abc123',
-      postedDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      isSaved: false,
-      views: 189,
-      applicants: 8,
-    },
-    {
-      id: 3,
-      title: 'React Developer',
-      description: 'Looking for a React developer with strong JavaScript skills. You will be responsible for building user interfaces and reusable components.',
-      skills: ['React', 'JavaScript', 'CSS', 'Redux', 'HTML'],
-      location: 'Mumbai, India',
-      salaryRange: { min: 900000, max: 1300000 },
-      employmentType: 'full-time',
-      status: 'published',
-      skillMatch: 85,
-      createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      source: 'naukri',
-      company: 'Digital Solutions Pvt Ltd',
-      companySize: '201-500 employees',
-      companyIndustry: 'IT Services',
-      experienceRequired: '2-4 years',
-      externalUrl: 'https://naukri.com/job-listings-react-developer-12345',
-      postedDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      isSaved: false,
-      views: 156,
-      applicants: 5,
-    },
-    {
-      id: 4,
-      title: 'Frontend Engineer - React/TypeScript',
-      description: 'We are seeking a talented Frontend Engineer to join our product team. You will work on building scalable web applications.',
-      skills: ['React', 'TypeScript', 'GraphQL', 'Jest', 'Webpack'],
-      location: 'Hyderabad, India',
-      salaryRange: { min: 1100000, max: 1600000 },
-      employmentType: 'full-time',
-      status: 'published',
-      skillMatch: 88,
-      createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      source: 'glassdoor',
-      company: 'InnovateTech',
-      companySize: '1001-5000 employees',
-      companyIndustry: 'Cloud Computing',
-      experienceRequired: '3-5 years',
-      externalUrl: 'https://glassdoor.com/job-listing/frontend-engineer-xyz',
-      postedDate: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      isSaved: false,
-      views: 312,
-      applicants: 18,
-    },
-    {
-      id: 5,
-      title: 'Senior React Developer',
-      description: 'Join our engineering team to build next-generation web applications. We value clean code and best practices.',
-      skills: ['React', 'TypeScript', 'Node.js', 'MongoDB', 'Express'],
-      location: 'Delhi, India',
-      salaryRange: { min: 1300000, max: 1900000 },
-      employmentType: 'full-time',
-      status: 'published',
-      skillMatch: 90,
-      createdAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-      source: 'monster',
-      company: 'Global Tech Services',
-      companySize: '501-1000 employees',
-      companyIndustry: 'Technology',
-      experienceRequired: '4-7 years',
-      externalUrl: 'https://monster.com/jobs/senior-react-developer-123',
-      postedDate: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-      isSaved: false,
-      views: 421,
-      applicants: 25,
-    },
-    {
-      id: 6,
-      title: 'React.js Developer',
-      description: 'We are hiring a React.js Developer to work on our client-facing applications. Experience with modern React patterns required.',
-      skills: ['React', 'JavaScript', 'HTML', 'CSS', 'Bootstrap'],
-      location: 'Pune, India',
-      salaryRange: { min: 800000, max: 1200000 },
-      employmentType: 'full-time',
-      status: 'published',
-      skillMatch: 75,
-      createdAt: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString(),
-      source: 'shine',
-      company: 'WebDev Solutions',
-      companySize: '11-50 employees',
-      companyIndustry: 'Web Development',
-      experienceRequired: '1-3 years',
-      externalUrl: 'https://shine.com/jobs/react-developer-456',
-      postedDate: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString(),
-      isSaved: false,
-      views: 98,
-      applicants: 3,
-    },
-    {
-      id: 7,
-      title: 'Full Stack React Developer',
-      description: 'Looking for a full stack developer with React expertise. You will work on both frontend and backend systems.',
-      skills: ['React', 'Node.js', 'Express', 'PostgreSQL', 'REST API'],
-      location: 'Chennai, India',
-      salaryRange: { min: 950000, max: 1400000 },
-      employmentType: 'full-time',
-      status: 'published',
-      skillMatch: 82,
-      createdAt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      source: 'timesjobs',
-      company: 'Enterprise Solutions',
-      companySize: '201-500 employees',
-      companyIndustry: 'Enterprise Software',
-      experienceRequired: '2-5 years',
-      externalUrl: 'https://timesjobs.com/job-detail/full-stack-react-developer-789',
-      postedDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      isSaved: false,
-      views: 278,
-      applicants: 15,
-    },
-    {
-      id: 8,
-      title: 'React Native Developer',
-      description: 'Join our mobile team to build cross-platform applications using React Native. Experience with mobile development preferred.',
-      skills: ['React Native', 'JavaScript', 'Redux', 'Firebase', 'iOS', 'Android'],
-      location: 'Remote',
-      salaryRange: { min: 1000000, max: 1500000 },
-      employmentType: 'full-time',
-      status: 'published',
-      skillMatch: 70,
-      createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      source: 'linkedin',
-      company: 'MobileFirst Inc',
-      companySize: '51-200 employees',
-      companyIndustry: 'Mobile Development',
-      experienceRequired: '2-5 years',
-      externalUrl: 'https://linkedin.com/jobs/view/789012',
-      postedDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      isSaved: false,
-      views: 167,
-      applicants: 7,
-    },
-  ];
+    };
+  });
 };
 
-export const applyToJob = async (_jobId: number): Promise<{ success: boolean }> => {
-  await delay(800);
+export const applyToJob = async (jobId: number): Promise<{ success: boolean }> => {
+  await applicationsApi.createApplicationApplicationsPost({
+    createApplicationRequest: { job_id: jobId },
+  });
   return { success: true };
 };
 
 export const getResumeData = async (): Promise<ResumeData> => {
+  requireMockApi('Resume optimization');
   await delay(500);
   return {
     score: 85,
@@ -335,17 +185,20 @@ export const getResumeData = async (): Promise<ResumeData> => {
 };
 
 export const improveResume = async (): Promise<{ success: boolean; newScore: number }> => {
+  requireMockApi('Resume optimization');
   await delay(1500);
   return { success: true, newScore: 92 };
 };
 
 export const optimizeResumeForRole = async (_targetRole: string): Promise<{ success: boolean; newScore: number; roleSpecificScore: number }> => {
+  requireMockApi('Resume optimization');
   await delay(2000);
   return { success: true, newScore: 90, roleSpecificScore: 95 };
 };
 
 // Resume Parsing & Analysis APIs
 export const parseResume = async (_file: File): Promise<ParsedResume> => {
+  requireMockApi('Resume parsing');
   await delay(1500);
   // Mock parsing - in real app, this would parse PDF/DOCX
   return {
@@ -419,6 +272,7 @@ export const parseResume = async (_file: File): Promise<ParsedResume> => {
 };
 
 export const analyzeResume = async (_targetRole?: string): Promise<ResumeAnalysis> => {
+  requireMockApi('Resume analysis');
   await delay(1000);
   const parsed = await parseResume(new File([], 'resume.pdf'));
   return {
@@ -471,6 +325,7 @@ export const analyzeResume = async (_targetRole?: string): Promise<ResumeAnalysi
 };
 
 export const getResumeVersions = async (): Promise<ResumeVersion[]> => {
+  requireMockApi('Resume versions');
   await delay(400);
   return [
     {
@@ -504,6 +359,7 @@ export const createResumeVersion = async (data: {
   name: string;
   targetRole: string;
 }): Promise<ResumeVersion> => {
+  requireMockApi('Resume versions');
   await delay(800);
   return {
     id: Math.floor(Math.random() * 1000),
@@ -517,6 +373,7 @@ export const createResumeVersion = async (data: {
 
 // Resume Templates
 export const getResumeTemplates = async (): Promise<ResumeTemplate[]> => {
+  requireMockApi('Resume templates');
   await delay(500);
   return [
     {
@@ -568,6 +425,7 @@ export const getResumeTemplates = async (): Promise<ResumeTemplate[]> => {
 };
 
 export const getResumeBuilderData = async (_versionId?: number): Promise<ResumeBuilderData> => {
+  requireMockApi('Resume builder');
   await delay(600);
   const parsed = await parseResume(new File([], 'resume.pdf'));
   return {
@@ -592,6 +450,7 @@ export const getResumeBuilderData = async (_versionId?: number): Promise<ResumeB
 };
 
 export const getContentSuggestions = async (section: string, targetRole: string): Promise<string[]> => {
+  requireMockApi('Resume content suggestions');
   await delay(800);
   const suggestions: Record<string, string[]> = {
     summary: [
@@ -614,240 +473,205 @@ export const getContentSuggestions = async (section: string, targetRole: string)
 };
 
 export const exportResume = async (format: 'pdf' | 'docx' | 'txt'): Promise<{ url: string }> => {
+  requireMockApi('Resume export');
   await delay(1000);
   return { url: `https://api.hiringjourney.com/resume/export/${format}` };
 };
 
 export const getCreditUsage = async (): Promise<CreditUsage> => {
-  await delay(400);
+  const { data } = await settingsApi.getCreditUsageUsersMeCreditsUsageGet();
   return {
-    total: 200,
-    used: 50,
-    remaining: 150,
+    total: data.total,
+    used: data.used,
+    remaining: data.remaining,
     breakdown: {
-      resumeOptimization: 20,
-      interviewPrep: 15,
-      autoApply: 10,
-      negotiation: 5,
+      resumeOptimization: data.breakdown.resumeOptimization ?? 0,
+      interviewPrep: data.breakdown.interviewPrep ?? 0,
+      autoApply: data.breakdown.autoApply ?? 0,
+      negotiation: data.breakdown.negotiation ?? 0,
     },
   };
 };
 
 export const getApplications = async (): Promise<Application[]> => {
-  await delay(500);
-  return [
-    {
-      id: 1,
-      jobId: 1,
-      jobTitle: 'Senior Frontend Developer',
-      candidateId: 1,
-      candidateName: 'Test User',
-      status: 'interview-scheduled',
-      appliedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-      interviewDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-      resumeScore: 85,
-    },
-    {
-      id: 2,
-      jobId: 2,
-      jobTitle: 'Full Stack Engineer',
-      candidateId: 1,
-      candidateName: 'Test User',
-      status: 'applied',
-      appliedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      resumeScore: 78,
-    },
-    {
-      id: 3,
-      jobId: 3,
-      jobTitle: 'React Developer',
-      candidateId: 1,
-      candidateName: 'Test User',
-      status: 'offer',
-      appliedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-      interviewDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-      resumeScore: 90,
-    },
-  ];
+  const [{ data: applicationsResponse }, jobs] = await Promise.all([
+    applicationsApi.listApplicationsApplicationsGet(),
+    getJobs(),
+  ]);
+  const titleById = new Map(jobs.map((job) => [job.id, job.title]));
+  return applicationsResponse.items.map((application) => {
+    const jobId = application.job_id;
+    return {
+      id: application.id,
+      jobId,
+      jobTitle: titleById.get(jobId) ?? String(application.job_id),
+      candidateId: 0,
+      candidateName: 'Current User',
+      status: toFrontendApplicationStatus(application.status),
+      appliedAt: application.created_at,
+      resumeScore: 0,
+    };
+  });
 };
 
 // Admin APIs
 export const getAdminStats = async (): Promise<AdminStats> => {
-  await delay(600);
+  const { data } = await adminApi.getAdminStatsAdminStatsGet();
   return {
-    totalCandidates: 1250,
-    activeJobs: 45,
-    applications: 320,
-    creditUsage: 12500,
+    totalCandidates: data.total_candidates,
+    activeJobs: data.active_jobs,
+    applications: data.applications,
+    creditUsage: data.credit_usage,
     funnel: {
-      applied: 320,
-      interviewScheduled: 85,
-      interviewCompleted: 60,
-      offer: 25,
+      applied: data.funnel.applied || 0,
+      interviewScheduled: data.funnel.interviewScheduled || 0,
+      interviewCompleted: data.funnel.interviewCompleted || 0,
+      offer: data.funnel.offer || 0,
     },
-    jobPerformance: [
-      { jobId: 1, jobTitle: 'Senior Frontend Developer', applications: 45, conversions: 12 },
-      { jobId: 2, jobTitle: 'Full Stack Engineer', applications: 38, conversions: 8 },
-      { jobId: 3, jobTitle: 'React Developer', applications: 52, conversions: 15 },
-    ],
+    jobPerformance: data.job_performance.map((item) => ({
+      jobId: item.job_id,
+      jobTitle: item.job_title,
+      applications: item.applications,
+      conversions: item.conversions,
+    })),
   };
 };
 
 export const publishJob = async (data: PublishJobData): Promise<PublishJobResponse> => {
-  await delay(1200);
-  const response: PublishJobResponse = {
-    success: true,
+  const { data: response } = await adminApi.publishJobAdminJobsPublishPost({
+    publishJobRequest: {
+      title: data.title,
+      description: data.description,
+      skills: data.skills,
+      location: data.location,
+      salary_range: data.salaryRange,
+      employment_type: data.employmentType,
+      publish_to: data.publishTo,
+    },
+  });
+  return {
+    success: response.success,
+    externalPostingIds: response.external_posting_ids || undefined,
   };
-  if (data.publishTo.includes('linkedin')) {
-    response.externalPostingIds = { ...response.externalPostingIds, linkedin: 'mock-123' };
-  }
-  if (data.publishTo.includes('indeed')) {
-    response.externalPostingIds = {
-      ...response.externalPostingIds,
-      indeed: 'mock-456',
-    };
-  }
-  return response;
 };
 
 export const getAdminJobs = async (): Promise<Job[]> => {
-  await delay(500);
-  return [
-    {
-      id: 1,
-      title: 'Senior Frontend Developer',
-      description: 'We are looking for an experienced frontend developer...',
-      skills: ['React', 'TypeScript', 'Tailwind CSS'],
-      location: 'San Francisco, CA',
-      salaryRange: { min: 1200000, max: 1800000 },
-      employmentType: 'full-time',
-      status: 'published',
-      applicantCount: 45,
-      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      source: 'internal',
+  const { data } = await adminApi.getAdminJobsAdminJobsGet();
+  return data.map((item) => ({
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    skills: item.skills,
+    location: item.location,
+    salaryRange: {
+      min: item.salary_range?.min ?? 0,
+      max: item.salary_range?.max ?? 0,
     },
-    {
-      id: 2,
-      title: 'Full Stack Engineer',
-      description: 'Join our team to build amazing products...',
-      skills: ['React', 'Node.js', 'PostgreSQL'],
-      location: 'Remote',
-      salaryRange: { min: 1000000, max: 1500000 },
-      employmentType: 'full-time',
-      status: 'draft',
-      applicantCount: 0,
-      createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-      source: 'internal',
-    },
-    {
-      id: 3,
-      title: 'React Developer',
-      description: 'Looking for a React developer...',
-      skills: ['React', 'JavaScript', 'CSS'],
-      location: 'New York, NY',
-      salaryRange: { min: 900000, max: 1300000 },
-      employmentType: 'full-time',
-      status: 'archived',
-      applicantCount: 52,
-      createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-      source: 'internal',
-    },
-  ];
+    employmentType: item.employment_type as Job['employmentType'],
+    status: item.status as Job['status'],
+    applicantCount: item.applicant_count,
+    createdAt: item.created_at,
+    source: item.source as Job['source'],
+  }));
 };
 
 export const getAllApplications = async (): Promise<Application[]> => {
-  await delay(500);
-  return [
-    {
-      id: 1,
-      jobId: 1,
-      jobTitle: 'Senior Frontend Developer',
-      candidateId: 1,
-      candidateName: 'John Doe',
-      status: 'interview-scheduled',
-      appliedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-      interviewDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-      resumeScore: 85,
-    },
-    {
-      id: 2,
-      jobId: 2,
-      jobTitle: 'Full Stack Engineer',
-      candidateId: 2,
-      candidateName: 'Jane Smith',
-      status: 'applied',
-      appliedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      resumeScore: 78,
-    },
-    {
-      id: 3,
-      jobId: 3,
-      jobTitle: 'React Developer',
-      candidateId: 3,
-      candidateName: 'Bob Johnson',
-      status: 'offer',
-      appliedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-      interviewDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-      resumeScore: 90,
-    },
-  ];
+  const { data } = await adminApi.getAdminApplicationsAdminApplicationsGet();
+  return data.map((item) => ({
+    id: item.id,
+    jobId: item.job_id,
+    jobTitle: item.job_title,
+    candidateId: item.candidate_id,
+    candidateName: item.candidate_name,
+    status: toFrontendApplicationStatus(item.status),
+    appliedAt: item.applied_at,
+    resumeScore: item.resume_score || undefined,
+  }));
 };
 
 export const getCandidates = async (): Promise<Candidate[]> => {
-  await delay(500);
-  return [
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john@example.com',
-      resumeScore: 85,
-      creditsUsed: 50,
-      creditsTotal: 200,
-      status: 'active',
-      joinedAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      resumeScore: 92,
-      creditsUsed: 120,
-      creditsTotal: 200,
-      status: 'active',
-      joinedAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 3,
-      name: 'Bob Johnson',
-      email: 'bob@example.com',
-      resumeScore: 78,
-      creditsUsed: 30,
-      creditsTotal: 200,
-      status: 'suspended',
-      joinedAt: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-  ];
+  const { data } = await adminApi.getAdminCandidatesAdminCandidatesGet();
+  return data.map((item) => ({
+    id: item.id,
+    name: item.name,
+    email: item.email,
+    resumeScore: item.resume_score,
+    creditsUsed: item.credits_used,
+    creditsTotal: item.credits_total,
+    status: item.status as Candidate['status'],
+    joinedAt: item.joined_at,
+  }));
 };
 
 export const updateCredits = async (
-  _candidateId: number,
-  _credits: number
+  candidateId: number,
+  credits: number
 ): Promise<{ success: boolean }> => {
-  await delay(600);
-  return { success: true };
+  const { data } = await adminApi.updateCandidateCreditsAdminCandidatesCandidateIdCreditsPatch({
+    candidateId,
+    updateCandidateCreditsRequest: { credits_total: credits },
+  });
+  return { success: Boolean(data.success) };
+};
+
+export const updateCandidateStatus = async (
+  candidateId: number,
+  status: 'active' | 'suspended'
+): Promise<{ success: boolean }> => {
+  const { data } = await adminApi.updateCandidateStatusAdminCandidatesCandidateIdStatusPatch({
+    candidateId,
+    updateCandidateStatusRequest: { status },
+  });
+  return { success: Boolean(data.success) };
+};
+
+export const closeJob = async (jobId: number): Promise<{ success: boolean }> => {
+  const { data } = await adminApi.updateJobStatusAdminJobsJobIdStatusPatch({
+    jobId,
+    updateJobStatusRequest: { status: 'archived' },
+  });
+  return { success: Boolean(data.success) };
+};
+
+export const updateApplicationStatus = async (
+  applicationId: number,
+  status: Application['status']
+): Promise<{ success: boolean }> => {
+  const { data } = await adminApi.updateApplicationStatusAdminApplicationsApplicationIdStatusPatch({
+    applicationId,
+    updateApplicationStatusRequest: { status },
+  });
+  return { success: Boolean(data.success) };
 };
 
 export const getPlans = async (): Promise<Plan[]> => {
-  await delay(400);
-  return [
-    { id: 1, name: 'Basic', creditLimit: 100, price: 29000, usage: 45 },
-    { id: 2, name: 'Professional', creditLimit: 200, price: 59000, usage: 120 },
-    { id: 3, name: 'Enterprise', creditLimit: 500, price: 149000, usage: 320 },
-  ];
+  const { data } = await adminApi.getAdminPlansAdminPlansGet();
+  return data.map((item) => ({
+    id: item.id,
+    name: item.name,
+    creditLimit: item.credit_limit,
+    price: item.price,
+    usage: item.usage,
+  }));
+};
+
+export const getAdminAuditLogs = async (limit: number = 50): Promise<AdminAuditLog[]> => {
+  const { data } = await adminApi.getAdminAuditLogsAdminAuditLogsGet({ limit });
+  return data.map((item) => ({
+    id: item.id,
+    actorSub: item.actor_sub,
+    action: item.action,
+    resourceType: item.resource_type,
+    resourceId: item.resource_id,
+    oldValue: item.old_value || undefined,
+    newValue: item.new_value || undefined,
+    createdAt: item.created_at,
+  }));
 };
 
 // Legal Readiness APIs
 export const getLegalDocuments = async (): Promise<LegalDocument[]> => {
+  requireMockApi('Legal documents');
   await delay(500);
   return [
     {
@@ -876,12 +700,14 @@ export const getLegalDocuments = async (): Promise<LegalDocument[]> => {
 };
 
 export const validateLegalDocument = async (_documentId: number): Promise<{ success: boolean; issues?: string[] }> => {
+  requireMockApi('Legal document validation');
   await delay(1500);
   return { success: true, issues: [] };
 };
 
 // Coding Arena APIs
 export const getCodingChallenges = async (): Promise<CodingChallenge[]> => {
+  requireMockApi('Coding challenges');
   await delay(500);
   return [
     {
@@ -929,6 +755,7 @@ export const getCodingChallenges = async (): Promise<CodingChallenge[]> => {
 
 // Negotiation APIs
 export const getNegotiationFrameworks = async (): Promise<NegotiationFramework[]> => {
+  requireMockApi('Negotiation frameworks');
   await delay(500);
   return [
     {
@@ -985,81 +812,77 @@ export const getNegotiationFrameworks = async (): Promise<NegotiationFramework[]
 
 // User Profile APIs
 export const getUserProfile = async (): Promise<UserProfile> => {
-  await delay(500);
-  const token = localStorage.getItem('auth-storage');
-  let userEmail = 'test@example.com';
-  if (token) {
-    try {
-      const parsed = JSON.parse(token);
-      userEmail = parsed.state?.user?.email || userEmail;
-    } catch (e) {
-      // Ignore
-    }
-  }
+  const { data } = await usersApi.getMyProfileUsersMeGet();
   return {
-    id: 1,
-    name: userEmail === 'admin@test.com' ? 'Admin User' : 'Test User',
-    email: userEmail,
-    role: userEmail === 'admin@test.com' ? 'admin' : 'candidate',
-    phone: '+91 98765 43210',
-    location: 'Bangalore, India',
-    bio: 'Experienced software developer passionate about building great products.',
-    linkedinUrl: 'https://linkedin.com/in/testuser',
-    githubUrl: 'https://github.com/testuser',
-    portfolioUrl: 'https://testuser.dev',
-    experience: '5+ years of experience in full-stack development',
-    education: 'B.Tech in Computer Science',
-    resumeScore: 85,
-    applicationsCount: 12,
-    interviewsCount: 3,
-    joinedAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+    id: 0,
+    name: data.full_name || data.username || data.email || 'User',
+    email: data.email || '',
+    role: 'candidate',
+    bio: data.headline || '',
+    joinedAt: new Date(data.updated_at).toISOString(),
   };
 };
 
 export const updateUserProfile = async (data: Partial<UserProfile>): Promise<UserProfile> => {
-  await delay(800);
-  const currentProfile = await getUserProfile();
-  return { ...currentProfile, ...data };
+  await usersApi.updateMyProfileUsersMePatch({
+    updateUserProfileRequest: {
+      full_name: data.name,
+      headline: data.bio,
+    },
+  });
+  return getUserProfile();
 };
 
 export const getUserSettings = async (): Promise<UserSettings> => {
-  await delay(400);
-  const stored = localStorage.getItem('user-settings');
-  if (stored) {
-    try {
-      return JSON.parse(stored);
-    } catch (e) {
-      // Ignore
-    }
-  }
+  const { data } = await settingsApi.getUserSettingsUsersMeSettingsGet();
   return {
-    emailNotifications: true,
-    smsNotifications: false,
-    marketingEmails: false,
-    autoApplyEnabled: false,
-    skillMatchThreshold: 70,
-    preferredLocations: [],
-    preferredJobTypes: [],
-    theme: 'system',
+    emailNotifications: data.email_notifications,
+    smsNotifications: data.sms_notifications,
+    marketingEmails: data.marketing_emails,
+    autoApplyEnabled: data.auto_apply_enabled,
+    skillMatchThreshold: data.skill_match_threshold,
+    preferredLocations: data.preferred_locations,
+    preferredJobTypes: data.preferred_job_types,
+    theme: data.theme as UserSettings['theme'],
   };
 };
 
 export const updateUserSettings = async (settings: UserSettings): Promise<UserSettings> => {
-  await delay(600);
-  localStorage.setItem('user-settings', JSON.stringify(settings));
-  return settings;
+  const { data } = await settingsApi.updateUserSettingsUsersMeSettingsPut({
+    updateUserSettingsRequest: {
+      email_notifications: settings.emailNotifications,
+      sms_notifications: settings.smsNotifications,
+      marketing_emails: settings.marketingEmails,
+      auto_apply_enabled: settings.autoApplyEnabled,
+      skill_match_threshold: settings.skillMatchThreshold,
+      preferred_locations: settings.preferredLocations,
+      preferred_job_types: settings.preferredJobTypes,
+      theme: settings.theme,
+    },
+  });
+  return {
+    emailNotifications: data.email_notifications,
+    smsNotifications: data.sms_notifications,
+    marketingEmails: data.marketing_emails,
+    autoApplyEnabled: data.auto_apply_enabled,
+    skillMatchThreshold: data.skill_match_threshold,
+    preferredLocations: data.preferred_locations,
+    preferredJobTypes: data.preferred_job_types,
+    theme: data.theme as UserSettings['theme'],
+  };
 };
 
 export const changePassword = async (data: {
   currentPassword: string;
   newPassword: string;
 }): Promise<{ success: boolean }> => {
-  await delay(800);
-  // Mock validation
-  if (data.currentPassword.length < 6) {
-    throw new Error('Current password is incorrect');
-  }
-  return { success: true };
+  const response = await settingsApi.changePasswordUsersMePasswordPost({
+    changePasswordRequest: {
+      current_password: data.currentPassword,
+      new_password: data.newPassword,
+    },
+  });
+  return { success: Boolean(response.data.success) };
 };
 
 // Paginated APIs
@@ -1067,7 +890,6 @@ export const getJobsPaginated = async (
   page: number = 1,
   pageSize: number = 10
 ): Promise<PaginatedResponse<Job>> => {
-  await delay(500);
   const allJobs = await getJobs();
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
@@ -1086,7 +908,6 @@ export const getApplicationsPaginated = async (
   page: number = 1,
   pageSize: number = 10
 ): Promise<PaginatedResponse<Application>> => {
-  await delay(500);
   const allApplications = await getAllApplications();
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
@@ -1105,7 +926,6 @@ export const getCandidatesPaginated = async (
   page: number = 1,
   pageSize: number = 10
 ): Promise<PaginatedResponse<Candidate>> => {
-  await delay(500);
   const allCandidates = await getCandidates();
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
@@ -1122,6 +942,7 @@ export const getCandidatesPaginated = async (
 
 // Auto-Apply Profile APIs
 export const getAutoApplyProfiles = async (): Promise<AutoApplyProfile[]> => {
+  requireMockApi('Auto-apply profiles');
   await delay(500);
   return [
     {
@@ -1164,6 +985,7 @@ export const getAutoApplyProfiles = async (): Promise<AutoApplyProfile[]> => {
 export const createAutoApplyProfile = async (
   data: Omit<AutoApplyProfile, 'id' | 'createdAt' | 'appliedCount'>
 ): Promise<AutoApplyProfile> => {
+  requireMockApi('Auto-apply profiles');
   await delay(800);
   return {
     id: Math.floor(Math.random() * 1000),
@@ -1177,6 +999,7 @@ export const updateAutoApplyProfile = async (
   id: number,
   data: Partial<AutoApplyProfile>
 ): Promise<AutoApplyProfile> => {
+  requireMockApi('Auto-apply profiles');
   await delay(600);
   const profiles = await getAutoApplyProfiles();
   const profile = profiles.find((p) => p.id === id);
@@ -1185,6 +1008,7 @@ export const updateAutoApplyProfile = async (
 };
 
 export const deleteAutoApplyProfile = async (_id: number): Promise<{ success: boolean }> => {
+  requireMockApi('Auto-apply profiles');
   await delay(500);
   return { success: true };
 };
@@ -1194,6 +1018,7 @@ export const bulkApplyToJobs = async (request: BulkApplyRequest): Promise<{
   failed: number;
   total: number;
 }> => {
+  requireMockApi('Bulk apply');
   await delay(1000);
   const results = await Promise.allSettled(
     request.jobIds.map((id) => applyToJob(id))
@@ -1202,5 +1027,3 @@ export const bulkApplyToJobs = async (request: BulkApplyRequest): Promise<{
   const failed = results.filter((r) => r.status === 'rejected').length;
   return { success, failed, total: request.jobIds.length };
 };
-
-export default api;

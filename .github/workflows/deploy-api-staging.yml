@@ -1,0 +1,40 @@
+name: Deploy API (Staging)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-api-staging
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.STAGING_SSH_HOST != '' }}
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging VM
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            cd ${{ secrets.STAGING_DEPLOY_PATH }}
+            git fetch origin main
+            git checkout main
+            git pull origin main
+            cd backend
+            docker compose -f docker-compose.prod.yml --env-file .env.staging run --rm api alembic upgrade head
+            docker compose -f docker-compose.prod.yml --env-file .env.staging up -d --build api nginx
+
+      - name: Smoke test health
+        run: |
+          curl -fsSL "${{ secrets.STAGING_API_URL }}/health"
+          curl -fsSL "${{ secrets.STAGING_API_URL }}/ready"

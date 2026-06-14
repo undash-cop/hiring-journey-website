@@ -44,6 +44,7 @@ export interface PaginatedResponse<T> {
 
 export interface AuthResponse {
   token: string;
+  refreshToken?: string;
   user: User;
 }
 
@@ -326,6 +327,17 @@ export interface Plan {
   creditLimit: number;
   price: number;
   usage: number;
+}
+
+export interface AdminAuditLog {
+  id: number;
+  actorSub: string;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  oldValue?: string;
+  newValue?: string;
+  createdAt: string;
 }
 
 export interface AutoApplyProfile {

@@ -64,6 +64,16 @@ const adminMenuItems = [
     ),
   },
   {
+    path: '/app/admin/audit',
+    label: 'Audit Logs',
+    group: 'Insights',
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4V9m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5l2 2h3a2 2 0 012 2v8a2 2 0 01-2 2z" />
+      </svg>
+    ),
+  },
+  {
     path: '/app/admin/plans',
     label: 'Plans',
     group: 'Settings',

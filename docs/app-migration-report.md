@@ -82,7 +82,7 @@ components/app/
 
 ## 5) API Client
 
-- Added SSR-safe centralized client: `lib/api/client.ts`
+- API access: `components/app/services/api.ts` → OpenAPI client in `lib/generated/api-client/`
 - Includes:
   - auth header attach
   - `credentials: "include"`

@@ -7,12 +7,24 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { usePathname } from 'next/navigation';
 import type { KeycloakProfile } from 'keycloak-js';
-import keycloak from '../lib/keycloak';
-import { ensureKeycloakInit } from '../lib/keycloakInit';
+import { keycloak } from '@/lib/keycloak';
+import { clearAuthSession, ensureKeycloakInit } from '@/lib/keycloak-init';
 import { redirectToLogin } from '@/lib/keycloak';
+import { reportAuthError } from '@/lib/auth-errors';
 import { useAuthStore } from '../store/authStore';
 import type { User, UserRole } from '../types';
+
+const AUTH_ENTRY_PATHS = new Set([
+  '/app/login',
+  '/app/signup',
+  '/app/forgot-password',
+]);
+
+function isAuthEntryPath(pathname: string | null): boolean {
+  return pathname != null && AUTH_ENTRY_PATHS.has(pathname);
+}
 
 /** Post-logout landing (must be allowed in Keycloak post-logout redirect URIs). */
 function getLogoutRedirectUri(): string {
@@ -60,13 +72,29 @@ export interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const [initialized, setInitialized] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const [userInfo, setUserInfo] = useState<Record<string, unknown> | undefined>(
     undefined,
   );
+  const [storeHydrated, setStoreHydrated] = useState(false);
+  const storedToken = useAuthStore((state) => state.token);
 
   useEffect(() => {
+    setStoreHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!storeHydrated) return;
+
+    if (isAuthEntryPath(pathname)) {
+      setAuthenticated(false);
+      setUserInfo(undefined);
+      setInitialized(true);
+      return;
+    }
+
     let cancelled = false;
 
     void ensureKeycloakInit()
@@ -88,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUserInfo({ ...profile } as Record<string, unknown>);
           useAuthStore.getState().login({
             token: keycloak.token ?? '',
+            refreshToken: keycloak.refreshToken,
             user: profileToUser(profile, keycloak.tokenParsed?.sub),
           });
         } catch {
@@ -101,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           );
           useAuthStore.getState().login({
             token: keycloak.token ?? '',
+            refreshToken: keycloak.refreshToken,
             user: {
               id: 0,
               name:
@@ -129,10 +159,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pathname, storeHydrated]);
 
   useEffect(() => {
     if (!initialized || !authenticated) {
+      return;
+    }
+
+    if (!keycloak.refreshToken) {
       return;
     }
 
@@ -143,12 +177,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (refreshed && keycloak.token) {
             const { user } = useAuthStore.getState();
             if (user) {
-              useAuthStore.setState({ token: keycloak.token });
+              useAuthStore.setState({
+                token: keycloak.token,
+                refreshToken: keycloak.refreshToken ?? null,
+              });
             }
           }
         })
         .catch(() => {
-          keycloak.logout({ redirectUri: getLogoutRedirectUri() });
+          reportAuthError("session_expired");
+          clearAuthSession();
+          window.location.assign(getLogoutRedirectUri());
         });
     }, REFRESH_INTERVAL_MS);
 
@@ -164,20 +203,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    useAuthStore.getState().logout();
-    void keycloak.logout({ redirectUri: getLogoutRedirectUri() });
+    clearAuthSession();
+    if (typeof keycloak.logout === 'function') {
+      void keycloak.logout({ redirectUri: getLogoutRedirectUri() });
+      return;
+    }
+    window.location.assign(getLogoutRedirectUri());
   }, []);
 
   const value = useMemo<AuthContextType>(
     () => ({
-      authenticated,
-      token: keycloak.token,
+      authenticated: authenticated || !!storedToken,
+      token: keycloak.token ?? storedToken ?? undefined,
       userInfo,
       login,
       logout,
-      initialized,
+      initialized: initialized && storeHydrated,
     }),
-    [authenticated, initialized, login, logout, userInfo],
+    [authenticated, initialized, login, logout, storeHydrated, storedToken, userInfo],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
