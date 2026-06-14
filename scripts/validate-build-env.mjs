@@ -37,4 +37,9 @@ if (
   process.exit(1);
 }
 
+if (isCi && process.env.NEXT_PUBLIC_USE_MOCK_API === "true") {
+  console.error("NEXT_PUBLIC_USE_MOCK_API must not be enabled in CI builds.");
+  process.exit(1);
+}
+
 console.log("Build environment validation passed.");

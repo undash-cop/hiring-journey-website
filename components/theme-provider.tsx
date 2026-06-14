@@ -34,6 +34,8 @@ export function ThemeProvider({
         ? "dark"
         : "light";
       root.classList.add(systemTheme);
+      // Sync resolved theme after applying DOM class (external system).
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- theme DOM + context must stay aligned
       setResolvedTheme(systemTheme);
     } else {
       root.classList.add(theme);

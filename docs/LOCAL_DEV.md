@@ -44,6 +44,22 @@ Verify: `curl http://localhost:8000/health`
 
 Auth failures are logged to the browser console in dev and stored in `sessionStorage` under `hj_last_auth_error`.
 
+## Env validation
+
+```bash
+npm run validate:env:parity   # staging/local template consistency
+REQUIRE_BUILD_ENV=true npm run validate:env   # simulate CI build env check
+```
+
+## API smoke test
+
+With backend running on port 8000:
+
+```bash
+npm run smoke:api
+# or: API_BASE_URL=https://api-staging.hiringjourney.com npm run smoke:api
+```
+
 ## E2E (Playwright)
 
 ```bash

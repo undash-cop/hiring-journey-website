@@ -36,7 +36,11 @@ Verify:
 ```bash
 curl -fsSL https://api-staging.hiringjourney.com/health
 curl -fsSL https://api-staging.hiringjourney.com/ready
+# or from repo root:
+API_BASE_URL=https://api-staging.hiringjourney.com npm run smoke:api
 ```
+
+Before deploy, run `npm run validate:env:parity` to confirm frontend/backend staging templates match.
 
 ## 3. GitHub Actions (API auto-deploy)
 

@@ -195,21 +195,12 @@ export default function JobsPage() {
         return 0;
       });
 
-    // Reset to page 1 when filters change
-    if (currentPage > 1 && filtered.length <= (currentPage - 1) * itemsPerPage) {
-      setCurrentPage(1);
-    }
-
     return filtered;
-  }, [jobs, searchQuery, locationFilter, typeFilter, sourceFilter, salaryRange, sortBy, currentPage]);
+  }, [jobs, searchQuery, locationFilter, typeFilter, sourceFilter, salaryRange, sortBy]);
 
-  const paginatedJobs = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-    return filteredJobs.slice(start, end);
-  }, [filteredJobs, currentPage, itemsPerPage]);
-
-  const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / itemsPerPage));
+  const page = Math.min(currentPage, totalPages);
+  const paginatedJobs = filteredJobs.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   if (isLoading) {
     return (
@@ -533,7 +524,7 @@ export default function JobsPage() {
           {totalPages > 1 && (
             <div className="mt-6">
               <Pagination
-                currentPage={currentPage}
+                currentPage={page}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
                 totalItems={filteredJobs.length}

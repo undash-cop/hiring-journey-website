@@ -15,6 +15,10 @@ Use this checklist for the first production release: public marketing site, Keyc
 | Staging env template (`.env.staging.example`) | Done |
 | Staging first-deploy runbook ([STAGING_FIRST_DEPLOY.md](./STAGING_FIRST_DEPLOY.md)) | Done |
 | JWT `azp`/`aud` unit tests (`backend/tests/test_security.py`) | Done |
+| Env template parity check (`npm run validate:env:parity`) | Done |
+| API smoke script (`npm run smoke:api`) | Done |
+| M1 marketing routes in Playwright (`e2e/marketing.spec.ts`) | Done |
+| CI lint + env parity gates | Done |
 | Staging API + Netlify deploy | **Not started** |
 | Production M1 smoke tests | **Not started** |
 

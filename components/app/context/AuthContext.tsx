@@ -5,6 +5,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from 'react';
 import { usePathname } from 'next/navigation';
@@ -78,17 +79,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userInfo, setUserInfo] = useState<Record<string, unknown> | undefined>(
     undefined,
   );
-  const [storeHydrated, setStoreHydrated] = useState(false);
+  const storeHydrated = useSyncExternalStore(
+    (onStoreChange) => {
+      const finishHydration = useAuthStore.persist.onFinishHydration(onStoreChange);
+      onStoreChange();
+      return finishHydration;
+    },
+    () => useAuthStore.persist.hasHydrated(),
+    () => false,
+  );
   const storedToken = useAuthStore((state) => state.token);
-
-  useEffect(() => {
-    setStoreHydrated(true);
-  }, []);
 
   useEffect(() => {
     if (!storeHydrated) return;
 
     if (isAuthEntryPath(pathname)) {
+      // Auth entry routes redirect to Keycloak; skip SSO init.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- short-circuit before async Keycloak init
       setAuthenticated(false);
       setUserInfo(undefined);
       setInitialized(true);

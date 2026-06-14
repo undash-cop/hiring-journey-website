@@ -809,7 +809,7 @@ export default function ResumePage() {
             <Card>
               <div className="text-center py-8">
                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Enter a target role and click "Analyze Resume" to get AI-powered insights
+                  Enter a target role and click &ldquo;Analyze Resume&rdquo; to get AI-powered insights
                 </p>
               </div>
             </Card>

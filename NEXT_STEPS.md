@@ -27,7 +27,7 @@ Each page is considered complete only when all items pass:
 - [x] Validate full auth callback path (`/app/login` -> Keycloak -> `/auth/callback` -> `/app/dashboard`) — verified locally; staging/prod pending deploy
 - [x] Enforce protected route access checks across `/app/*`
 - [x] Add auth error observability (redirect failures, callback failures, session expiry) — `lib/auth-errors.ts`, `sessionStorage` + console in dev
-- [ ] Confirm environment parity (local, preview, production) for Keycloak settings — templates in `.env.staging.example`, [STAGING.md](./docs/STAGING.md), [STAGING_FIRST_DEPLOY.md](./docs/STAGING_FIRST_DEPLOY.md)
+- [x] Confirm environment parity (local, preview, production) for Keycloak settings — templates + `npm run validate:env:parity` (Keycloak console URIs still manual; see [keycloak-redirect-uris.md](./docs/keycloak-redirect-uris.md))
 - [x] Add integration tests for auth entry routes and callback handling — Playwright `e2e/auth-routes.spec.ts`
 
 ## Phase 2 (Weeks 2-4): Marketing Pages Full Completion
