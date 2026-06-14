@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.security import AuthUser, get_current_user
 from app.db import get_db
 from app.models import Application, Job
+from app.services.credits import JOB_APPLICATION_COST, deduct_credits, get_or_create_credit
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -46,10 +47,31 @@ async def create_application(
     if not job_exists or job_exists.status != "published":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
+    existing = db.scalar(
+        select(Application).where(
+            Application.user_sub == current_user.sub,
+            Application.job_id == payload.job_id,
+        )
+    )
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You have already applied to this job.",
+        )
+
+    credit = get_or_create_credit(db, current_user.sub)
+    try:
+        deduct_credits(db, credit, JOB_APPLICATION_COST)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="Insufficient credits to apply for this job.",
+        ) from None
+
     model = Application(
         job_id=payload.job_id,
         user_sub=current_user.sub,
-        status="submitted",
+        status="applied",
         cover_letter=payload.cover_letter,
         resume_document_id=payload.resume_document_id,
     )

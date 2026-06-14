@@ -1,7 +1,10 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getApplications } from '../../../services/api';
-import { Card, StatusBadge, Select, Pagination, LoadingCard } from '../../../components/ui';
+import { Card, StatusBadge, Select, Pagination, LoadingCard, Button } from '../../../components/ui';
+import { PageEmptyState, PageErrorState } from '../../../components/QueryStateViews';
+import Link from 'next/link';
+import { queryKeys } from '@/lib/query-keys';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import type { Application } from '../../../types';
 
@@ -9,12 +12,13 @@ const statusOrder = ['applied', 'interview-scheduled', 'interview-completed', 'o
 const COLORS = ['#0ea5e9', '#f59e0b', '#6366f1', '#10b981', '#ef4444'];
 
 export default function TrackerPage() {
+  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const { data: applications, isLoading, isError } = useQuery({
-    queryKey: ['applications'],
+  const { data: applications, isLoading, isError, error } = useQuery({
+    queryKey: queryKeys.applications,
     queryFn: getApplications,
   });
 
@@ -26,18 +30,14 @@ export default function TrackerPage() {
     });
   }, [applications, statusFilter]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredApplications.length / itemsPerPage));
+  const effectivePage = Math.min(currentPage, totalPages);
+
   const paginatedApplications = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
+    const start = (effectivePage - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     return filteredApplications.slice(start, end);
-  }, [filteredApplications, currentPage, itemsPerPage]);
-
-  const totalPages = Math.ceil(filteredApplications.length / itemsPerPage);
-
-  // Reset to page 1 when filter changes
-  if (currentPage > totalPages && totalPages > 0) {
-    setCurrentPage(1);
-  }
+  }, [filteredApplications, effectivePage, itemsPerPage]);
 
   const statusCounts = applications?.reduce((acc: Record<string, number>, app: Application) => {
     acc[app.status] = (acc[app.status] || 0) + 1;
@@ -67,14 +67,11 @@ export default function TrackerPage() {
 
   if (isError) {
     return (
-      <div className="p-8">
-        <div className="card p-8 text-center">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            Failed to load applications
-          </h2>
-          <p className="text-xs text-gray-600 dark:text-gray-400">Please try again later</p>
-        </div>
-      </div>
+      <PageErrorState
+        title="Failed to load applications"
+        message={error instanceof Error ? error.message : 'Please try again later'}
+        onRetry={() => queryClient.invalidateQueries({ queryKey: queryKeys.applications })}
+      />
     );
   }
 
@@ -118,7 +115,10 @@ export default function TrackerPage() {
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Applications</h2>
             <Select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
               options={[
                 { value: 'all', label: 'All Statuses' },
                 { value: 'applied', label: 'Applied' },
@@ -130,7 +130,23 @@ export default function TrackerPage() {
             />
           </div>
           <div className="space-y-4">
-        {paginatedApplications.map((app: Application) => {
+        {paginatedApplications.length === 0 ? (
+          <PageEmptyState
+            title="No applications yet"
+            description={
+              statusFilter === 'all'
+                ? 'Browse jobs and apply to start tracking your hiring journey.'
+                : 'No applications match this status filter.'
+            }
+            action={
+              statusFilter === 'all' ? (
+                <Link href="/app/jobs">
+                  <Button>Browse Jobs</Button>
+                </Link>
+              ) : undefined
+            }
+          />
+        ) : paginatedApplications.map((app: Application) => {
           const statusIndex = statusOrder.indexOf(app.status);
           return (
             <Card key={app.id}>
@@ -193,7 +209,7 @@ export default function TrackerPage() {
           {totalPages > 1 && (
             <div className="mt-6">
               <Pagination
-                currentPage={currentPage}
+                currentPage={effectivePage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
                 totalItems={filteredApplications.length}

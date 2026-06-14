@@ -2,6 +2,9 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getJobs, applyToJob } from '../../../services/api';
 import { Card, Button, Badge, Select, SearchBar, LoadingCard, Pagination } from '../../../components/ui';
+import { PageErrorState } from '../../../components/QueryStateViews';
+import { useInvalidateApplicationData } from '../../../hooks/invalidateCandidateQueries';
+import { queryKeys } from '@/lib/query-keys';
 import { useToast } from '../../../contexts/ToastContext';
 import { formatIndianCurrencyRange } from '../../../utils/currency';
 import { getRelativeTime } from '../../../utils/date';
@@ -42,21 +45,32 @@ export default function JobsPage() {
   const [savedJobs, setSavedJobs] = useState<Set<number>>(new Set());
   const itemsPerPage = 10;
   const queryClient = useQueryClient();
+  const invalidateApplicationData = useInvalidateApplicationData();
   const { showToast } = useToast();
 
   const { data: jobs, isLoading, isError, error } = useQuery({
-    queryKey: ['jobs'],
+    queryKey: queryKeys.jobs,
     queryFn: getJobs,
   });
 
   const applyMutation = useMutation({
     mutationFn: applyToJob,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      invalidateApplicationData();
       showToast('Application submitted successfully!', 'success');
     },
-    onError: () => {
-      showToast('Failed to apply. Please try again.', 'error');
+    onError: (err: unknown) => {
+      const status =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { status?: number } }).response?.status
+          : undefined;
+      const message =
+        status === 402
+          ? 'Not enough credits to apply. Visit Credits to review your balance.'
+          : status === 409
+            ? 'You have already applied to this job.'
+            : 'Failed to apply. Please try again.';
+      showToast(message, 'error');
     },
   });
 
@@ -70,7 +84,7 @@ export default function JobsPage() {
     onSuccess: (results) => {
       const successful = results.filter((r) => r.status === 'fulfilled').length;
       const failed = results.filter((r) => r.status === 'rejected').length;
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      invalidateApplicationData();
       setSelectedJobs(new Set());
       setShowBulkActions(false);
       if (successful > 0) {
@@ -220,22 +234,11 @@ export default function JobsPage() {
 
   if (isError) {
     return (
-      <div className="p-8">
-        <div className="card p-8 text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-            <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </div>
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Failed to load jobs</h2>
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
-            {error instanceof Error ? error.message : 'An error occurred'}
-          </p>
-          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['jobs'] })}>
-            Try Again
-          </Button>
-        </div>
-      </div>
+      <PageErrorState
+        title="Failed to load jobs"
+        message={error instanceof Error ? error.message : 'An error occurred'}
+        onRetry={() => queryClient.invalidateQueries({ queryKey: queryKeys.jobs })}
+      />
     );
   }
 

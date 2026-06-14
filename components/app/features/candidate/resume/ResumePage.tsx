@@ -2,7 +2,11 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getResumeData, optimizeResumeForRole, parseResume, analyzeResume, getResumeVersions, getResumeTemplates, getResumeBuilderData, getContentSuggestions, exportResume } from '../../../services/api';
 import { Card, Button, Badge, Input, LoadingCard } from '../../../components/ui';
+import { PageEmptyState, PageErrorState } from '../../../components/QueryStateViews';
 import { useToast } from '../../../contexts/ToastContext';
+import { useInvalidateResumeData } from '../../../hooks/invalidateCandidateQueries';
+import { MOCK_API_ENABLED } from '@/lib/candidate-features';
+import { queryKeys } from '@/lib/query-keys';
 import type { ResumeVersion, ResumeTemplate } from '../../../types';
 
 export default function ResumePage() {
@@ -15,9 +19,10 @@ export default function ResumePage() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const invalidateResumeData = useInvalidateResumeData();
 
-  const { data: resumeData, isLoading } = useQuery({
-    queryKey: ['resume-data'],
+  const { data: resumeData, isLoading, isError, error } = useQuery({
+    queryKey: queryKeys.resumeData,
     queryFn: getResumeData,
   });
 
@@ -28,30 +33,41 @@ export default function ResumePage() {
   });
 
   const { data: versions = [] as ResumeVersion[] } = useQuery({
-    queryKey: ['resume-versions'],
+    queryKey: queryKeys.resumeVersions,
     queryFn: getResumeVersions,
+    enabled: MOCK_API_ENABLED,
   });
 
   const { data: templates } = useQuery({
-    queryKey: ['resume-templates'],
+    queryKey: queryKeys.resumeTemplates,
     queryFn: getResumeTemplates,
+    enabled: MOCK_API_ENABLED,
   });
 
   const { data: builderData } = useQuery({
-    queryKey: ['resume-builder'],
+    queryKey: queryKeys.resumeBuilder,
     queryFn: () => getResumeBuilderData(),
-    enabled: activeTab === 'builder',
+    enabled: MOCK_API_ENABLED && activeTab === 'builder',
   });
 
   const roleOptimizeMutation = useMutation({
     mutationFn: () => optimizeResumeForRole(targetRole),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['resume-data'] });
+      invalidateResumeData();
       setShowRoleOptimization(false);
       showToast(`Resume optimized for ${targetRole}! Score: ${result.roleSpecificScore}`, 'success');
     },
-    onError: () => {
-      showToast('Failed to optimize resume. Please try again.', 'error');
+    onError: (err: unknown) => {
+      const status =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { status?: number } }).response?.status
+          : undefined;
+      showToast(
+        status === 402
+          ? 'Not enough credits. Visit Credits to review your balance.'
+          : 'Failed to optimize resume. Please try again.',
+        'error',
+      );
     },
   });
 
@@ -129,6 +145,16 @@ export default function ResumePage() {
           <LoadingCard />
         </div>
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <PageErrorState
+        title="Failed to load resume"
+        message={error instanceof Error ? error.message : 'Please try again later'}
+        onRetry={() => queryClient.invalidateQueries({ queryKey: queryKeys.resumeData })}
+      />
     );
   }
 
@@ -250,20 +276,28 @@ export default function ResumePage() {
             </div>
             {file && !isParsing && (
               <div className="mt-3 flex items-center gap-2">
-                <Button onClick={handleUpload} size="sm" className="flex-1">
-                  Parse Resume
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setFile(null);
-                    const input = document.getElementById('resume-upload') as HTMLInputElement;
-                    if (input) input.value = '';
-                  }}
-                >
-                  Cancel
-                </Button>
+                {MOCK_API_ENABLED ? (
+                  <>
+                    <Button onClick={handleUpload} size="sm" className="flex-1">
+                      Parse Resume
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFile(null);
+                        const input = document.getElementById('resume-upload') as HTMLInputElement;
+                        if (input) input.value = '';
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    PDF parsing is coming soon. Use Optimize for Role to improve your score today.
+                  </p>
+                )}
               </div>
             )}
             {isParsing && (
@@ -348,12 +382,26 @@ export default function ResumePage() {
                   </div>
                 </div>
               )}
+
+              <Button
+                size="sm"
+                className="mt-4"
+                onClick={() => setShowRoleOptimization(true)}
+              >
+                Optimize for Role
+              </Button>
             </div>
           </Card>
         </div>
       )}
 
       {activeTab === 'templates' && (
+        !MOCK_API_ENABLED ? (
+          <PageEmptyState
+            title="Templates coming soon"
+            description="Resume templates will be available in a future release."
+          />
+        ) : (
         <div className="space-y-6">
           <div>
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
@@ -410,9 +458,16 @@ export default function ResumePage() {
             <LoadingCard />
           )}
         </div>
+        )
       )}
 
       {activeTab === 'builder' && (
+        !MOCK_API_ENABLED ? (
+          <PageEmptyState
+            title="Resume builder coming soon"
+            description="The visual resume builder will be available in a future release."
+          />
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Builder Sidebar */}
           <div className="lg:col-span-1 space-y-4">
@@ -642,9 +697,16 @@ export default function ResumePage() {
             </Card>
           </div>
         </div>
+        )
       )}
 
       {activeTab === 'analysis' && (
+        !MOCK_API_ENABLED ? (
+          <PageEmptyState
+            title="Resume analysis coming soon"
+            description="Deep ATS analysis will be available in a future release."
+          />
+        ) : (
         <div className="space-y-6">
           {/* Analysis Input */}
           <Card>
@@ -815,9 +877,16 @@ export default function ResumePage() {
             </Card>
           )}
         </div>
+        )
       )}
 
       {activeTab === 'versions' && (
+        !MOCK_API_ENABLED ? (
+          <PageEmptyState
+            title="Resume versions coming soon"
+            description="Multiple resume versions will be available in a future release."
+          />
+        ) : (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -883,6 +952,7 @@ export default function ResumePage() {
             </Card>
           )}
         </div>
+        )
       )}
 
       {/* Role Optimization Modal */}

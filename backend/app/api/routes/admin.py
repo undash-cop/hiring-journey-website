@@ -10,6 +10,7 @@ from app.core.security import AuthUser, require_roles
 from app.db import get_db
 from app.job_serialization import decode_skills, encode_skills
 from app.models import AdminAuditLog, Application, Job, UserCredit, UserProfile
+from app.services.credits import get_or_create_credit
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -248,16 +249,6 @@ async def get_admin_applications(
     return response
 
 
-def _get_or_create_credit(db: Session, user_sub: str) -> UserCredit:
-    credit = db.query(UserCredit).filter(UserCredit.user_sub == user_sub).one_or_none()
-    if credit:
-        return credit
-    credit = UserCredit(user_sub=user_sub, credits_total=200, credits_used=0, status="active")
-    db.add(credit)
-    db.commit()
-    db.refresh(credit)
-    return credit
-
 
 @router.get("/candidates", response_model=list[AdminCandidateItem])
 async def get_admin_candidates(
@@ -271,7 +262,7 @@ async def get_admin_candidates(
     ).all()
     response: list[AdminCandidateItem] = []
     for profile in profiles:
-        credit = _get_or_create_credit(db, profile.keycloak_sub)
+        credit = get_or_create_credit(db, profile.keycloak_sub)
         response.append(
             AdminCandidateItem(
                 id=profile.id,
@@ -297,7 +288,7 @@ async def update_candidate_credits(
     profile = db.get(UserProfile, candidate_id)
     if not profile:
         return {"success": False}
-    credit = _get_or_create_credit(db, profile.keycloak_sub)
+    credit = get_or_create_credit(db, profile.keycloak_sub)
     old_total = credit.credits_total
     credit.credits_total = payload.credits_total
     credit.updated_at = datetime.now(tz=timezone.utc)
@@ -325,7 +316,7 @@ async def update_candidate_status(
     profile = db.get(UserProfile, candidate_id)
     if not profile:
         return {"success": False}
-    credit = _get_or_create_credit(db, profile.keycloak_sub)
+    credit = get_or_create_credit(db, profile.keycloak_sub)
     old_status = credit.status
     credit.status = payload.status
     credit.updated_at = datetime.now(tz=timezone.utc)

@@ -6,14 +6,16 @@ import { useToast } from '../../../contexts/ToastContext';
 import { validateForm, type ValidationRule } from '../../../utils/validation';
 import { getUserProfile, updateUserProfile } from '../../../services/api';
 import { LoadingCard } from '../../../components/ui/Loading';
+import { PageErrorState } from '../../../components/QueryStateViews';
+import { queryKeys } from '@/lib/query-keys';
 
 export default function ProfilePage() {
   const { user, login } = useAuthStore();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ['user-profile'],
+  const { data: profile, isLoading, isError, error } = useQuery({
+    queryKey: queryKeys.userProfile,
     queryFn: getUserProfile,
   });
 
@@ -33,10 +35,27 @@ export default function ProfilePage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const startEditing = () => {
+    setFormData({
+      name: user?.name || profile?.name || '',
+      email: user?.email || profile?.email || '',
+      phone: profile?.phone || '',
+      location: profile?.location || '',
+      bio: profile?.bio || '',
+      linkedinUrl: profile?.linkedinUrl || '',
+      githubUrl: profile?.githubUrl || '',
+      portfolioUrl: profile?.portfolioUrl || '',
+      experience: profile?.experience || '',
+      education: profile?.education || '',
+    });
+    setErrors({});
+    setIsEditing(true);
+  };
+
   const updateMutation = useMutation({
     mutationFn: updateUserProfile,
     onSuccess: (updatedUser) => {
-      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.userProfile });
       login({ token: useAuthStore.getState().token || '', user: updatedUser });
       setIsEditing(false);
       showToast('Profile updated successfully!', 'success');
@@ -97,6 +116,16 @@ export default function ProfilePage() {
     );
   }
 
+  if (isError) {
+    return (
+      <PageErrorState
+        title="Failed to load profile"
+        message={error instanceof Error ? error.message : 'Please try again later'}
+        onRetry={() => queryClient.invalidateQueries({ queryKey: queryKeys.userProfile })}
+      />
+    );
+  }
+
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -105,7 +134,7 @@ export default function ProfilePage() {
           <p className="section-subtitle">Manage your account information and preferences</p>
         </div>
         {!isEditing && (
-          <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
+          <Button onClick={startEditing}>Edit Profile</Button>
         )}
       </div>
 

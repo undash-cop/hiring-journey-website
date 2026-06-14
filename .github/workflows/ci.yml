@@ -27,6 +27,9 @@ jobs:
       - name: Validate marketing CTA routes
         run: npm run validate:marketing
 
+      - name: Validate candidate route map
+        run: npm run validate:candidate
+
       - name: Lint
         run: npm run lint
 

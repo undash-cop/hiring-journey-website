@@ -7,6 +7,7 @@ import {
   SettingsApi,
   UsersApi,
 } from '@/lib/generated/api-client';
+import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 import type {
   DashboardStats,
@@ -53,6 +54,52 @@ function requireMockApi(feature: string): void {
   }
 }
 
+function getAccessToken(): string {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+  const fromStore = useAuthStore.getState().token;
+  if (fromStore) {
+    return fromStore;
+  }
+  const authStorage = window.localStorage.getItem('auth-storage');
+  if (!authStorage) {
+    return '';
+  }
+  try {
+    const parsed = JSON.parse(authStorage);
+    return parsed?.state?.token ?? '';
+  } catch {
+    return '';
+  }
+}
+
+async function apiRequest<T>(
+  method: 'get' | 'post' | 'put' | 'patch',
+  path: string,
+  body?: unknown,
+): Promise<T> {
+  const token = getAccessToken();
+  const { data } = await axios.request<T>({
+    method,
+    url: `${API_BASE_URL}${path}`,
+    data: body,
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  return data;
+}
+
+type ResumeSummaryApiResponse = {
+  score: number;
+  suggestions: string[];
+  last_updated: string;
+  target_role?: string | null;
+  role_specific_score?: number | null;
+  ats_score: number;
+  keyword_match: number;
+  skills_gap: string[];
+};
+
 const generatedApiConfig = new GeneratedApiConfiguration({
   basePath: API_BASE_URL,
   accessToken: () => {
@@ -92,7 +139,8 @@ const toFrontendApplicationStatus = (
     case 'offer':
     case 'rejected':
     case 'applied':
-      return status;
+    case 'submitted':
+      return 'applied';
     default:
       return 'applied';
   }
@@ -165,35 +213,37 @@ export const applyToJob = async (jobId: number): Promise<{ success: boolean }> =
 };
 
 export const getResumeData = async (): Promise<ResumeData> => {
-  requireMockApi('Resume optimization');
-  await delay(500);
+  const data = await apiRequest<ResumeSummaryApiResponse>('get', '/resume');
   return {
-    score: 85,
-    suggestions: [
-      'Add more quantifiable achievements',
-      'Include relevant keywords from job descriptions',
-      'Highlight leadership experience',
-      'Add certifications and courses',
-    ],
-    lastUpdated: new Date().toISOString(),
-    targetRole: 'Frontend Developer',
-    roleSpecificScore: 88,
-    atsScore: 82,
-    keywordMatch: 75,
-    skillsGap: ['TypeScript', 'GraphQL', 'AWS'],
+    score: data.score,
+    suggestions: data.suggestions,
+    lastUpdated: data.last_updated,
+    targetRole: data.target_role ?? undefined,
+    roleSpecificScore: data.role_specific_score ?? undefined,
+    atsScore: data.ats_score,
+    keywordMatch: data.keyword_match,
+    skillsGap: data.skills_gap,
   };
 };
 
 export const improveResume = async (): Promise<{ success: boolean; newScore: number }> => {
-  requireMockApi('Resume optimization');
-  await delay(1500);
-  return { success: true, newScore: 92 };
+  const data = await apiRequest<{ success: boolean; new_score: number }>('post', '/resume/improve');
+  return { success: data.success, newScore: data.new_score };
 };
 
-export const optimizeResumeForRole = async (_targetRole: string): Promise<{ success: boolean; newScore: number; roleSpecificScore: number }> => {
-  requireMockApi('Resume optimization');
-  await delay(2000);
-  return { success: true, newScore: 90, roleSpecificScore: 95 };
+export const optimizeResumeForRole = async (
+  targetRole: string,
+): Promise<{ success: boolean; newScore: number; roleSpecificScore: number }> => {
+  const data = await apiRequest<{
+    success: boolean;
+    new_score: number;
+    role_specific_score: number;
+  }>('post', '/resume/optimize-role', { target_role: targetRole });
+  return {
+    success: data.success,
+    newScore: data.new_score,
+    roleSpecificScore: data.role_specific_score,
+  };
 };
 
 // Resume Parsing & Analysis APIs
@@ -813,6 +863,11 @@ export const getNegotiationFrameworks = async (): Promise<NegotiationFramework[]
 // User Profile APIs
 export const getUserProfile = async (): Promise<UserProfile> => {
   const { data } = await usersApi.getMyProfileUsersMeGet();
+  const stats = data as typeof data & {
+    applications_count?: number;
+    interviews_count?: number;
+    credits_remaining?: number;
+  };
   return {
     id: 0,
     name: data.full_name || data.username || data.email || 'User',
@@ -820,6 +875,8 @@ export const getUserProfile = async (): Promise<UserProfile> => {
     role: 'candidate',
     bio: data.headline || '',
     joinedAt: new Date(data.updated_at).toISOString(),
+    applicationsCount: stats.applications_count ?? 0,
+    interviewsCount: stats.interviews_count ?? 0,
   };
 };
 

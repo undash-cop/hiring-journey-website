@@ -1,11 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getCandidateDashboard } from '../../../services/api';
 import { Card, LoadingCard } from '../../../components/ui';
+import { PageEmptyState, PageErrorState } from '../../../components/QueryStateViews';
+import { queryKeys } from '@/lib/query-keys';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function CandidateDashboard() {
+  const queryClient = useQueryClient();
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['candidate-dashboard'],
+    queryKey: queryKeys.candidateDashboard,
     queryFn: getCandidateDashboard,
   });
 
@@ -29,19 +32,11 @@ export default function CandidateDashboard() {
 
   if (isError) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8">
-        <div className="card p-6 sm:p-8 text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-            <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </div>
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Failed to load dashboard</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {error instanceof Error ? error.message : 'An error occurred'}
-          </p>
-        </div>
-      </div>
+      <PageErrorState
+        title="Failed to load dashboard"
+        message={error instanceof Error ? error.message : 'An error occurred'}
+        onRetry={() => queryClient.invalidateQueries({ queryKey: queryKeys.candidateDashboard })}
+      />
     );
   }
 
@@ -130,6 +125,12 @@ export default function CandidateDashboard() {
 
         <Card>
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Recent Activity</h2>
+          {data.recentActivity.length === 0 ? (
+            <PageEmptyState
+              title="No recent activity"
+              description="Apply to jobs or update your profile to see activity here."
+            />
+          ) : (
           <div className="space-y-3 sm:space-y-4">
             {data.recentActivity.map((activity) => (
               <div key={activity.id} className="flex items-start gap-3">
@@ -147,6 +148,7 @@ export default function CandidateDashboard() {
               </div>
             ))}
           </div>
+          )}
         </Card>
       </div>
     </div>

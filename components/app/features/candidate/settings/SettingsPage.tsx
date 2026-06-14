@@ -3,28 +3,22 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, Button, Input, Select } from '../../../components/ui';
 import { useToast } from '../../../contexts/ToastContext';
 import { getUserSettings, updateUserSettings, changePassword } from '../../../services/api';
+import type { UserSettings } from '../../../types';
 import { LoadingCard } from '../../../components/ui/Loading';
+import { PageErrorState } from '../../../components/QueryStateViews';
+import { queryKeys } from '@/lib/query-keys';
 import { validatePassword } from '../../../utils/validation';
 
 export default function SettingsPage() {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ['user-settings'],
+  const { data: settings, isLoading, isError, error } = useQuery({
+    queryKey: queryKeys.userSettings,
     queryFn: getUserSettings,
   });
 
-  const [localSettings, setLocalSettings] = useState({
-    emailNotifications: settings?.emailNotifications ?? true,
-    smsNotifications: settings?.smsNotifications ?? false,
-    marketingEmails: settings?.marketingEmails ?? false,
-    autoApplyEnabled: settings?.autoApplyEnabled ?? false,
-    skillMatchThreshold: settings?.skillMatchThreshold ?? 70,
-    preferredLocations: settings?.preferredLocations ?? [],
-    preferredJobTypes: settings?.preferredJobTypes ?? [],
-    theme: settings?.theme ?? 'system',
-  });
+  const [draftSettings, setDraftSettings] = useState<UserSettings | null>(null);
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -37,7 +31,8 @@ export default function SettingsPage() {
   const updateSettingsMutation = useMutation({
     mutationFn: updateUserSettings,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-settings'] });
+      setDraftSettings(null);
+      queryClient.invalidateQueries({ queryKey: queryKeys.userSettings });
       showToast('Settings saved successfully!', 'success');
     },
     onError: () => {
@@ -101,6 +96,20 @@ export default function SettingsPage() {
     );
   }
 
+  if (isError) {
+    return (
+      <PageErrorState
+        title="Failed to load settings"
+        message={error instanceof Error ? error.message : 'Please try again later'}
+        onRetry={() => queryClient.invalidateQueries({ queryKey: queryKeys.userSettings })}
+      />
+    );
+  }
+
+  if (!settings) return null;
+
+  const localSettings = draftSettings ?? settings;
+
   return (
     <div className="p-8 space-y-6">
       <div>
@@ -126,7 +135,7 @@ export default function SettingsPage() {
                 type="checkbox"
                 checked={localSettings.emailNotifications}
                 onChange={(e) =>
-                  setLocalSettings({ ...localSettings, emailNotifications: e.target.checked })
+                  setDraftSettings({ ...localSettings, emailNotifications: e.target.checked })
                 }
                 className="sr-only peer"
               />
@@ -145,7 +154,7 @@ export default function SettingsPage() {
                 type="checkbox"
                 checked={localSettings.smsNotifications}
                 onChange={(e) =>
-                  setLocalSettings({ ...localSettings, smsNotifications: e.target.checked })
+                  setDraftSettings({ ...localSettings, smsNotifications: e.target.checked })
                 }
                 className="sr-only peer"
               />
@@ -164,7 +173,7 @@ export default function SettingsPage() {
                 type="checkbox"
                 checked={localSettings.marketingEmails}
                 onChange={(e) =>
-                  setLocalSettings({ ...localSettings, marketingEmails: e.target.checked })
+                  setDraftSettings({ ...localSettings, marketingEmails: e.target.checked })
                 }
                 className="sr-only peer"
               />
@@ -195,7 +204,7 @@ export default function SettingsPage() {
                 type="checkbox"
                 checked={localSettings.autoApplyEnabled}
                 onChange={(e) =>
-                  setLocalSettings({ ...localSettings, autoApplyEnabled: e.target.checked })
+                  setDraftSettings({ ...localSettings, autoApplyEnabled: e.target.checked })
                 }
                 className="sr-only peer"
               />
@@ -214,7 +223,7 @@ export default function SettingsPage() {
                 step="5"
                 value={localSettings.skillMatchThreshold}
                 onChange={(e) =>
-                  setLocalSettings({ ...localSettings, skillMatchThreshold: parseInt(e.target.value) })
+                  setDraftSettings({ ...localSettings, skillMatchThreshold: parseInt(e.target.value) })
                 }
                 className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
               />
@@ -299,7 +308,7 @@ export default function SettingsPage() {
             <Select
               value={localSettings.theme}
               onChange={(e) =>
-                setLocalSettings({ ...localSettings, theme: e.target.value as 'light' | 'dark' | 'system' })
+                setDraftSettings({ ...localSettings, theme: e.target.value as 'light' | 'dark' | 'system' })
               }
               options={[
                 { value: 'light', label: 'Light' },

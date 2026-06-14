@@ -43,15 +43,29 @@ Routes: `/`, `/features`, `/pricing`, `/about`, `/blog/*`, `/careers/*`, `/conta
 - [x] Performance: below-fold dynamic imports on `/`, `/features`, `/pricing`
 - [x] Skip-to-content link on marketing shell
 
-## Phase 3 (Weeks 4-8): Candidate App Pages Full Completion
+## Phase 3 (Weeks 4-8): Candidate App Pages Full Completion — in progress
 
 Routes: `/app/dashboard`, `/app/resume`, `/app/jobs`, `/app/auto-apply`, `/app/interview`, `/app/tracker`, `/app/negotiation`, `/app/legal`, `/app/coding-arena`, `/app/credits`, `/app/profile`, `/app/settings`
 
-- [ ] Replace all placeholder blocks with real API-driven modules
-- [ ] Implement core user actions per page (create, update, filter, save, submit flows)
-- [ ] Add unified state handling (loading/empty/error) for every module
-- [ ] Ensure cross-page navigation and data consistency
-- [ ] Add route-level integration tests for core journeys
+- [x] Gate mock-only routes with `FeatureUnavailable` when API is not live (`lib/candidate-features.ts`)
+- [x] Centralized React Query keys + cross-page invalidation on job apply (`lib/query-keys.ts`)
+- [x] Unified loading/empty/error states on live API pages (dashboard, jobs, tracker, profile, settings, credits)
+- [x] Real credits + profile stats from backend (`user_credits`, apply deducts 5 credits)
+- [x] Resume score overview + role optimization via live `/resume` API (advanced tabs remain mock/demo)
+- [ ] Replace remaining placeholder blocks (interview, negotiation, legal, auto-apply pending backend)
+- [ ] Implement core user actions per page (create, update, filter, save, submit flows) for mock-gated modules
+- [x] Ensure cross-page navigation and data consistency for live APIs
+- [x] Add route-level integration tests for core journeys (`e2e/candidate-routes.spec.ts`)
+- [x] Candidate route map validation in CI (`npm run validate:candidate`)
+
+**Still open (need backend APIs):**
+
+- [ ] `/app/interview` — interview prep sessions, questions, feedback
+- [ ] `/app/negotiation` — salary insights and negotiation frameworks
+- [ ] `/app/legal` — legal document upload and validation
+- [ ] `/app/auto-apply` — auto-apply profiles and bulk apply
+
+Until those APIs ship, these routes show `FeatureUnavailable` in production (or mock data when `NEXT_PUBLIC_USE_MOCK_API=true`).
 
 ## Phase 4 (Weeks 8-10): Admin App Pages Completion
 

@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from app.core.security import AuthUser, get_current_user
 from app.db import get_db
 from app.models import Application
+from app.services.credits import credits_remaining, get_or_create_credit
+from app.services.resume import get_or_create_resume
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -61,9 +63,12 @@ async def get_candidate_dashboard(
         daily_counts[day] = daily_counts.get(day, 0) + 1
     trend = [TrendItem(date=day, count=count) for day, count in sorted(daily_counts.items())]
 
+    credit = get_or_create_credit(db, current_user.sub)
+    resume = get_or_create_resume(db, current_user.sub)
+
     return CandidateDashboardResponse(
-        resume_score=85,
-        credits_remaining=150,
+        resume_score=resume.score,
+        credits_remaining=credits_remaining(credit),
         applications_count=len(apps),
         interviews_count=interviews_count,
         recent_activity=recent_activity,

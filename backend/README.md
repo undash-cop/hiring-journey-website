@@ -65,6 +65,9 @@ The backend validates bearer tokens using:
 - `GET /jobs/{job_id}` — published only (404 otherwise)
 - `POST /applications`
 - `GET /applications`
+- `GET /resume` — candidate resume score summary
+- `POST /resume/improve` — improve score (deducts credits)
+- `POST /resume/optimize-role` — optimize for a target role (deducts credits)
 
 ## Database
 

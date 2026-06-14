@@ -95,6 +95,25 @@ class UserCredit(Base):
     )
 
 
+class CandidateResume(Base):
+    __tablename__ = "candidate_resumes"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_sub: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    score: Mapped[int] = mapped_column(default=72)
+    target_role: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    role_specific_score: Mapped[int | None] = mapped_column(nullable=True)
+    ats_score: Mapped[int] = mapped_column(default=75)
+    keyword_match: Mapped[int] = mapped_column(default=68)
+    skills_gap: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'[]'"))
+    suggestions: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'[]'"))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(tz=timezone.utc),
+        onupdate=lambda: datetime.now(tz=timezone.utc),
+    )
+
+
 class AdminAuditLog(Base):
     __tablename__ = "admin_audit_logs"
 

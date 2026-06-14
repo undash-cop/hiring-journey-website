@@ -3,7 +3,11 @@
 import { use, useEffect, type ComponentType } from "react";
 import { useRouter } from "next/navigation";
 import FeatureUnavailable from "@/components/app/components/FeatureUnavailable";
-import { FEATURE_FLAGS } from "@/lib/constants";
+import {
+  CANDIDATE_SECTION_CONFIG,
+  getSectionUnavailableReason,
+  isCandidateSection,
+} from "@/lib/candidate-features";
 import CandidateDashboard from "@/components/app/features/candidate/dashboard/CandidateDashboard";
 import ResumePage from "@/components/app/features/candidate/resume/ResumePage";
 import JobsPage from "@/components/app/features/candidate/jobs/JobsPage";
@@ -41,29 +45,25 @@ export default function CandidateSectionPage({ params }: CandidateSectionPagePro
   const { section: rawSection } = use(params);
   const section = decodeURIComponent(rawSection).toLowerCase();
   const Component = candidateRouteMap[section];
+
   useEffect(() => {
     if (!Component) {
       router.replace("/app/dashboard");
     }
   }, [Component, router]);
+
   if (!Component) return null;
 
-  if (section === "coding-arena" && !FEATURE_FLAGS.CODING_ARENA) {
-    return (
-      <FeatureUnavailable
-        title="Coding Arena"
-        description="Coding challenges are coming soon. This feature is disabled in production until the API is ready."
-      />
-    );
-  }
-
-  if (section === "auto-apply" && !FEATURE_FLAGS.AUTO_APPLY) {
-    return (
-      <FeatureUnavailable
-        title="Auto Apply"
-        description="Auto-apply is temporarily unavailable."
-      />
-    );
+  if (isCandidateSection(section)) {
+    const unavailableReason = getSectionUnavailableReason(section);
+    if (unavailableReason) {
+      return (
+        <FeatureUnavailable
+          title={CANDIDATE_SECTION_CONFIG[section].title}
+          description={unavailableReason}
+        />
+      );
+    }
   }
 
   return <Component />;

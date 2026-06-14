@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.security import AuthUser, get_current_user
 from app.db import get_db
 from app.models import UserSettings
+from app.services.credits import build_credit_usage, get_or_create_credit
 
 router = APIRouter(prefix="/users/me", tags=["settings"])
 
@@ -124,17 +125,10 @@ async def change_password(
 
 
 @router.get("/credits/usage", response_model=CreditUsageResponse)
-async def get_credit_usage(_: AuthUser = Depends(get_current_user)) -> CreditUsageResponse:
-    total = 200
-    used = 50
-    return CreditUsageResponse(
-        total=total,
-        used=used,
-        remaining=total - used,
-        breakdown={
-            "resumeOptimization": 20,
-            "interviewPrep": 15,
-            "autoApply": 10,
-            "negotiation": 5,
-        },
-    )
+async def get_credit_usage(
+    current_user: AuthUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> CreditUsageResponse:
+    credit = get_or_create_credit(db, current_user.sub)
+    usage = build_credit_usage(credit)
+    return CreditUsageResponse(**usage)

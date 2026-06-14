@@ -1,10 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getCreditUsage } from '../../../services/api';
 import { Card, LoadingCard } from '../../../components/ui';
+import { PageErrorState } from '../../../components/QueryStateViews';
+import { queryKeys } from '@/lib/query-keys';
 
 export default function CreditsPage() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['credit-usage'],
+  const queryClient = useQueryClient();
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: queryKeys.creditUsage,
     queryFn: getCreditUsage,
   });
 
@@ -22,16 +25,11 @@ export default function CreditsPage() {
 
   if (isError || !data) {
     return (
-      <div className="p-8">
-        <div className="card p-8 text-center">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            Failed to load credits
-          </h2>
-          <p className="text-xs text-gray-600 dark:text-gray-400">
-            Please try again later
-          </p>
-        </div>
-      </div>
+      <PageErrorState
+        title="Failed to load credits"
+        message={error instanceof Error ? error.message : 'Please try again later'}
+        onRetry={() => queryClient.invalidateQueries({ queryKey: queryKeys.creditUsage })}
+      />
     );
   }
 
