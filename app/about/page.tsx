@@ -6,7 +6,8 @@ import { ImpactSection } from "@/components/about/impact-section";
 import { TeamSection } from "@/components/about/team-section";
 import { CompanyInfo } from "@/components/about/company-info";
 import { CTABanner } from "@/components/sections/cta-banner";
-import { createPageMetadata } from "@/lib/seo";
+import { JsonLd } from "@/components/seo/json-ld";
+import { createPageMetadata, schema } from "@/lib/seo";
 
 import type { Metadata } from "next";
 export const metadata: Metadata = createPageMetadata({
@@ -21,6 +22,13 @@ export const revalidate = false;
 export default function AboutPage() {
   return (
     <div className="flex flex-col">
+      <JsonLd data={schema.organization()} />
+      <JsonLd
+        data={schema.breadcrumb([
+          { name: "Home", path: "/" },
+          { name: "About", path: "/about" },
+        ])}
+      />
       <AboutHero />
       <VisionMission />
       <OurStory />

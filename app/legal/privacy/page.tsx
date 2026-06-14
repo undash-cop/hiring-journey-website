@@ -1,15 +1,24 @@
 import type { Metadata } from "next";
-import { generateMetadataWithCanonical } from "@/lib/metadata";
+import { JsonLd } from "@/components/seo/json-ld";
+import { createPageMetadata, schema } from "@/lib/seo";
 
-export const metadata: Metadata = generateMetadataWithCanonical(
-  "/legal/privacy",
-  "Privacy Policy - Hiring Journey",
-  "Privacy Policy for Hiring Journey - Learn how we collect, use, and protect your personal information."
-);
+export const metadata: Metadata = createPageMetadata({
+  path: "/legal/privacy",
+  title: "Privacy Policy - Hiring Journey",
+  description:
+    "Privacy Policy for Hiring Journey - Learn how we collect, use, and protect your personal information.",
+  keywords: ["Hiring Journey privacy policy", "data protection India"],
+});
 
 export default function PrivacyPage() {
   return (
     <div className="bg-white dark:bg-gray-950">
+      <JsonLd
+        data={schema.breadcrumb([
+          { name: "Home", path: "/" },
+          { name: "Privacy Policy", path: "/legal/privacy" },
+        ])}
+      />
       <div className="mx-auto max-w-4xl px-6 py-16 sm:py-24 lg:px-8">
         <h1 className="text-4xl font-display font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
           Privacy Policy

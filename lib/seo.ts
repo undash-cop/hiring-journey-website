@@ -32,11 +32,20 @@ export function createPageMetadata({
       siteName: "Hiring Journey",
       locale: "en_IN",
       type,
+      images: [
+        {
+          url: "/logos/Hiring_Journey_Primary.svg",
+          width: 1200,
+          height: 630,
+          alt: "Hiring Journey",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: ["/logos/Hiring_Journey_Primary.svg"],
     },
   };
 }
@@ -146,5 +155,12 @@ export const schema = {
       price: "0",
       priceCurrency: "INR",
     },
+  }),
+  contactPage: (path: string) => ({
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    name: "Contact Hiring Journey",
+    url: getCanonicalUrl(path),
+    description: "Contact Hiring Journey for support, partnerships, and platform assistance.",
   }),
 };

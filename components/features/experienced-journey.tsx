@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { MARKETING_CTAS } from "@/lib/marketing-nav";
 import { Briefcase, TrendingUp, Target, Handshake, CheckCircle, ArrowRight, Sparkles } from "lucide-react";
 
 const experiencedSteps = [
@@ -141,7 +142,7 @@ export function ExperiencedJourney() {
           className="mt-12 text-center"
         >
           <Link
-            href="/app/signup"
+            href={MARKETING_CTAS.signup}
             className="inline-flex items-center gap-2 rounded-md bg-secondary-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 transition-colors"
           >
             Accelerate Your Career

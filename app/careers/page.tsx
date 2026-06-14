@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { createPageMetadata } from "@/lib/seo";
 import { CareersPageClient } from "@/components/careers/careers-page-client";
+import { JsonLd } from "@/components/seo/json-ld";
+import { createPageMetadata, schema } from "@/lib/seo";
 
 export const dynamic = "force-static";
 export const revalidate = false;
@@ -12,5 +13,15 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 export default function CareersPage() {
-  return <CareersPageClient />;
+  return (
+    <>
+      <JsonLd
+        data={schema.breadcrumb([
+          { name: "Home", path: "/" },
+          { name: "Careers", path: "/careers" },
+        ])}
+      />
+      <CareersPageClient />
+    </>
+  );
 }

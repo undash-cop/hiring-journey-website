@@ -1,54 +1,34 @@
 import Link from "next/link";
 import { Github, Twitter, Linkedin, Mail } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { FOOTER_NAV } from "@/lib/marketing-nav";
+import type { NavLink } from "@/lib/marketing-nav";
 
-type NavItem = {
-  name: string;
-  href: string;
-  external?: boolean;
-};
+const social = [
+  { name: "Twitter", href: "#", icon: Twitter },
+  { name: "LinkedIn", href: "#", icon: Linkedin },
+  { name: "GitHub", href: "#", icon: Github },
+  { name: "Email", href: "mailto:contact@hiringjourney.com", icon: Mail },
+];
 
-const navigation = {
-  product: [
-    { name: "Features", href: "/features" },
-    { name: "Pricing", href: "/pricing" },
-    { name: "How it Works", href: "/#how-it-works" },
-  ],
-  company: [
-    { name: "About", href: "/about" },
-    { name: "Blog", href: "/blog" },
-    { name: "Careers", href: "/careers" },
-    { name: "Contact", href: "/contact" },
-    { name: "Undash-cop", href: "https://undash-cop.com", external: true },
-  ] as NavItem[],
-  legal: [
-    { name: "Privacy", href: "/legal/privacy" },
-    { name: "Terms", href: "/legal/terms" },
-    { name: "Cookie Policy", href: "/legal/cookie-policy" },
-  ],
-  social: [
-    {
-      name: "Twitter",
-      href: "#",
-      icon: Twitter,
-    },
-    {
-      name: "LinkedIn",
-      href: "#",
-      icon: Linkedin,
-    },
-    {
-      name: "GitHub",
-      href: "#",
-      icon: Github,
-    },
-    {
-      name: "Email",
-      href: "mailto:contact@hiringjourney.com",
-      icon: Mail,
-    },
-  ],
-};
+function FooterLink({ item }: { item: NavLink }) {
+  const className =
+    "text-sm leading-6 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors";
+
+  if (item.external) {
+    return (
+      <a href={item.href} target="_blank" rel="noopener noreferrer" className={className}>
+        {item.name}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={item.href} className={className}>
+      {item.name}
+    </Link>
+  );
+}
 
 export function Footer() {
   return (
@@ -63,7 +43,7 @@ export function Footer() {
               </p>
             </div>
             <div className="flex space-x-6">
-              {navigation.social.map((item) => (
+              {social.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
@@ -80,14 +60,9 @@ export function Footer() {
               <div>
                 <h3 className="text-sm font-semibold leading-6 text-gray-900 dark:text-gray-100">Product</h3>
                 <ul role="list" className="mt-6 space-y-4">
-                  {navigation.product.map((item) => (
+                  {FOOTER_NAV.product.map((item) => (
                     <li key={item.name}>
-                      <Link
-                        href={item.href}
-                        className="text-sm leading-6 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                      >
-                        {item.name}
-                      </Link>
+                      <FooterLink item={item} />
                     </li>
                   ))}
                 </ul>
@@ -95,25 +70,9 @@ export function Footer() {
               <div className="mt-10 md:mt-0">
                 <h3 className="text-sm font-semibold leading-6 text-gray-900 dark:text-gray-100">Company</h3>
                 <ul role="list" className="mt-6 space-y-4">
-                  {navigation.company.map((item) => (
+                  {FOOTER_NAV.company.map((item) => (
                     <li key={item.name}>
-                      {item.external ? (
-                        <a
-                          href={item.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm leading-6 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                        >
-                          {item.name}
-                        </a>
-                      ) : (
-                        <Link
-                          href={item.href}
-                          className="text-sm leading-6 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                        >
-                          {item.name}
-                        </Link>
-                      )}
+                      <FooterLink item={item} />
                     </li>
                   ))}
                 </ul>
@@ -123,14 +82,9 @@ export function Footer() {
               <div>
                 <h3 className="text-sm font-semibold leading-6 text-gray-900 dark:text-gray-100">Legal</h3>
                 <ul role="list" className="mt-6 space-y-4">
-                  {navigation.legal.map((item) => (
+                  {FOOTER_NAV.legal.map((item) => (
                     <li key={item.name}>
-                      <Link
-                        href={item.href}
-                        className="text-sm leading-6 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                      >
-                        {item.name}
-                      </Link>
+                      <FooterLink item={item} />
                     </li>
                   ))}
                 </ul>

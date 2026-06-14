@@ -8,13 +8,8 @@ import { useTheme } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Logo } from "@/components/logo";
-
-const navigation = [
-  { name: "Features", href: "/features" },
-  { name: "Pricing", href: "/pricing" },
-  { name: "Blog", href: "/blog" },
-  { name: "About", href: "/about" },
-];
+import { HEADER_NAV, MARKETING_CTAS } from "@/lib/marketing-nav";
+import { MARKETING_ROUTES } from "@/lib/marketing-routes";
 
 export function Header() {
   const pathname = usePathname();
@@ -29,7 +24,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md">
       <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
         <div className="flex lg:flex-1">
-          <Link href="/" className="-m-1.5 p-1.5">
+          <Link href={MARKETING_ROUTES.home} className="-m-1.5 p-1.5">
             <Logo width={32} height={32} variant="monochrome" className="h-8" />
           </Link>
         </div>
@@ -48,7 +43,7 @@ export function Header() {
           </button>
         </div>
         <div className="hidden lg:flex lg:gap-x-12">
-          {navigation.map((item) => (
+          {HEADER_NAV.map((item) => (
             <Link
               key={item.name}
               href={item.href}
@@ -76,13 +71,13 @@ export function Header() {
             )}
           </button>
           <Link
-            href="/app/login"
+            href={MARKETING_CTAS.login}
             className="text-sm font-semibold leading-6 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
           >
             Log in
           </Link>
           <Link
-            href="/app/signup"
+            href={MARKETING_CTAS.signup}
             className="rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors"
           >
             Start Free
@@ -98,7 +93,7 @@ export function Header() {
             className="lg:hidden border-t border-gray-200 dark:border-gray-800"
           >
             <div className="space-y-1 px-6 pb-6 pt-4">
-              {navigation.map((item) => (
+              {HEADER_NAV.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
@@ -122,14 +117,14 @@ export function Header() {
                 </button>
                 <div className="flex gap-2">
                   <Link
-                    href="/app/login"
+                    href={MARKETING_CTAS.login}
                     className="rounded-md px-3 py-2 text-base font-semibold text-gray-900 dark:text-gray-100"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Log in
                   </Link>
                   <Link
-                    href="/app/signup"
+                    href={MARKETING_CTAS.signup}
                     className="rounded-md bg-primary-600 px-3 py-2 text-base font-semibold text-white"
                     onClick={() => setMobileMenuOpen(false)}
                   >

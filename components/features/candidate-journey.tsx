@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { FileText, Search, Zap, MessageSquare, Handshake, CheckCircle, ArrowRight, Sparkles } from "lucide-react";
+import { MARKETING_CTAS } from "@/lib/marketing-nav";
 
 const journeySteps = [
   {
@@ -216,7 +217,7 @@ export function CandidateJourney() {
           className="mt-16 text-center"
         >
           <Link
-            href="/app/signup"
+            href={MARKETING_CTAS.signup}
             className="inline-flex items-center gap-2 rounded-md bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-colors"
           >
             Start Your Journey

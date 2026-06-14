@@ -1,13 +1,16 @@
+import nextDynamic from "next/dynamic";
 import { PricingHero } from "@/components/pricing/pricing-hero";
 import { PricingPlans } from "@/components/pricing/pricing-plans";
-import { CreditSystem } from "@/components/pricing/credit-system";
-import { ROICalculator } from "@/components/sections/roi-calculator";
-import { PricingFAQ } from "@/components/pricing/pricing-faq";
-import { CTABanner } from "@/components/sections/cta-banner";
 import { JsonLd } from "@/components/seo/json-ld";
 import { createPageMetadata, schema } from "@/lib/seo";
 
 import type { Metadata } from "next";
+
+const CreditSystem = nextDynamic(() => import("@/components/pricing/credit-system").then((m) => m.CreditSystem));
+const ROICalculator = nextDynamic(() => import("@/components/sections/roi-calculator").then((m) => m.ROICalculator));
+const PricingFAQ = nextDynamic(() => import("@/components/pricing/pricing-faq").then((m) => m.PricingFAQ));
+const CTABanner = nextDynamic(() => import("@/components/sections/cta-banner").then((m) => m.CTABanner));
+
 export const metadata: Metadata = createPageMetadata({
   path: "/pricing",
   title: "Pricing - Hiring Journey",
@@ -23,6 +26,12 @@ export default function PricingPage() {
     <div className="flex flex-col">
       <JsonLd
         data={schema.product("Hiring Journey Pro Plans", "AI-powered career platform pricing plans", "/pricing")}
+      />
+      <JsonLd
+        data={schema.breadcrumb([
+          { name: "Home", path: "/" },
+          { name: "Pricing", path: "/pricing" },
+        ])}
       />
       <PricingHero />
       <PricingPlans />

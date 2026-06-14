@@ -42,7 +42,8 @@ Pricing remains on the marketing site, and account creation/sign-in are handled 
 
 ## Validation Checklist
 
-- [ ] Clicking plan CTA opens `/app/signup`.
-- [ ] `/app/signup` immediately redirects to Keycloak registration.
-- [ ] `/app/login` immediately redirects to Keycloak login.
-- [ ] Successful callback lands users at `/app/dashboard`.
+- [x] Clicking plan CTA opens `/app/signup`.
+- [x] `/app/signup` immediately redirects to Keycloak registration.
+- [x] `/app/login` immediately redirects to Keycloak login.
+- [x] Successful callback lands users at `/app/dashboard`.
+- [x] Marketing CTAs validated in CI (`npm run validate:marketing`).

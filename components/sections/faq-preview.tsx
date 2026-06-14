@@ -1,36 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { FaqAccordion } from "@/components/marketing/faq-accordion";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ArrowRight } from "lucide-react";
-
-const faqs = [
-  {
-    question: "How does the AI resume optimization work?",
-    answer:
-      "Our AI analyzes your resume against job descriptions, identifies skill gaps, optimizes keywords for ATS systems, and provides role-specific improvements. It takes less than 5 minutes to get your optimized resume.",
-  },
-  {
-    question: "Is Hiring Journey suitable for freshers?",
-    answer:
-      "Absolutely! We have specialized features for freshers including resume building from scratch, entry-level job matching, interview preparation for first-time job seekers, and fresher-specific negotiation guides.",
-  },
-  {
-    question: "How does auto-apply work?",
-    answer:
-      "Set your preferences (role, location, salary range) and our AI automatically applies to matching jobs. You can review applications before submission or enable full automation. We ensure you only apply to roles matching your skill level.",
-  },
-  {
-    question: "What if I run out of AI credits?",
-    answer:
-      "You can purchase additional credits anytime or upgrade to a higher plan. We'll notify you when you're running low, and you can always check your credit usage in the dashboard.",
-  },
-];
+import { ArrowRight } from "lucide-react";
+import { HOME_FAQ_PREVIEW } from "@/lib/marketing-faq";
+import { MARKETING_ROUTES } from "@/lib/marketing-routes";
 
 export function FAQPreview() {
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
-
   return (
     <div className="bg-gray-50 dark:bg-gray-900 py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -43,54 +19,14 @@ export function FAQPreview() {
           </p>
         </div>
         <div className="mx-auto max-w-3xl">
-          <div className="space-y-4">
-            {faqs.map((faq, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950"
-              >
-                <button
-                  onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                  className="flex w-full items-center justify-between p-6 text-left"
-                >
-                  <span className="text-base font-semibold leading-7 text-gray-900 dark:text-white">
-                    {faq.question}
-                  </span>
-                  <ChevronDown
-                    className={`h-5 w-5 text-gray-500 dark:text-gray-400 transition-transform ${
-                      openIndex === index ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                <AnimatePresence>
-                  {openIndex === index && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-6 pb-6 text-sm leading-7 text-gray-600 dark:text-gray-300">
-                        {faq.answer}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            ))}
-          </div>
+          <FaqAccordion items={HOME_FAQ_PREVIEW} />
           <div className="mt-10 text-center">
             <Link
-              href="/pricing#faq"
+              href={MARKETING_ROUTES.faq}
               className="inline-flex items-center gap-2 text-sm font-semibold text-primary-600 hover:text-primary-500 dark:text-primary-400"
             >
               View all FAQs
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           </div>
         </div>

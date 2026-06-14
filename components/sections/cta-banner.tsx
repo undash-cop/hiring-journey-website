@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { MARKETING_CTAS } from "@/lib/marketing-nav";
+import { MARKETING_ROUTES } from "@/lib/marketing-routes";
 
 export function CTABanner() {
   return (
@@ -27,14 +29,14 @@ export function CTABanner() {
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/app/signup"
+              href={MARKETING_CTAS.signup}
               className="rounded-md bg-primary-600 px-8 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-all hover:scale-105 flex items-center gap-2"
             >
               Get Started Free
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/pricing"
+              href={MARKETING_ROUTES.pricing}
               className="rounded-md bg-white dark:bg-gray-900 px-8 py-3 text-sm font-semibold text-gray-900 dark:text-white ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
             >
               View Pricing

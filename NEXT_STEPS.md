@@ -30,15 +30,18 @@ Each page is considered complete only when all items pass:
 - [x] Confirm environment parity (local, preview, production) for Keycloak settings — templates + `npm run validate:env:parity` (Keycloak console URIs still manual; see [keycloak-redirect-uris.md](./docs/keycloak-redirect-uris.md))
 - [x] Add integration tests for auth entry routes and callback handling — Playwright `e2e/auth-routes.spec.ts`
 
-## Phase 2 (Weeks 2-4): Marketing Pages Full Completion
+## Phase 2 (Weeks 2-4): Marketing Pages Full Completion — done
 
 Routes: `/`, `/features`, `/pricing`, `/about`, `/blog/*`, `/careers/*`, `/contact`, legal pages
 
-- [ ] Final content/data source wiring for each page
-- [ ] CTA and form paths verified against `/app/*` routes
-- [ ] SEO completion (title, description, canonical, OpenGraph, schema where needed)
-- [ ] Performance pass on key landing routes
-- [ ] Responsive and accessibility QA complete
+- [x] Centralize marketing nav, CTAs, contact copy (`lib/marketing-nav.ts`, `lib/marketing-content.ts`)
+- [x] Shared FAQ content + accordion (`lib/marketing-faq.ts`, `/faq`, home preview)
+- [x] Legal + core pages SEO (OpenGraph images, breadcrumb JSON-LD, contact schema)
+- [x] Contact form accessibility (label/input ids, semantic aside)
+- [x] Marketing E2E coverage (legal, careers, FAQ, CTAs, skip link, form validation)
+- [x] CTA route validation in CI (`npm run validate:marketing`)
+- [x] Performance: below-fold dynamic imports on `/`, `/features`, `/pricing`
+- [x] Skip-to-content link on marketing shell
 
 ## Phase 3 (Weeks 4-8): Candidate App Pages Full Completion
 

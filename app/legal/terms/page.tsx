@@ -1,15 +1,24 @@
 import type { Metadata } from "next";
-import { generateMetadataWithCanonical } from "@/lib/metadata";
+import { JsonLd } from "@/components/seo/json-ld";
+import { createPageMetadata, schema } from "@/lib/seo";
 
-export const metadata: Metadata = generateMetadataWithCanonical(
-  "/legal/terms",
-  "Terms of Service - Hiring Journey",
-  "Terms of Service for Hiring Journey - Read our terms and conditions for using our platform."
-);
+export const metadata: Metadata = createPageMetadata({
+  path: "/legal/terms",
+  title: "Terms of Service - Hiring Journey",
+  description:
+    "Terms of Service for Hiring Journey - Read our terms and conditions for using our platform.",
+  keywords: ["Hiring Journey terms of service"],
+});
 
 export default function TermsPage() {
   return (
     <div className="bg-white dark:bg-gray-950">
+      <JsonLd
+        data={schema.breadcrumb([
+          { name: "Home", path: "/" },
+          { name: "Terms of Service", path: "/legal/terms" },
+        ])}
+      />
       <div className="mx-auto max-w-4xl px-6 py-16 sm:py-24 lg:px-8">
         <h1 className="text-4xl font-display font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
           Terms of Service

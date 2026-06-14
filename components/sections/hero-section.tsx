@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, Target, Zap, Shield, TrendingUp } from "lucide-react";
+import { MARKETING_CTAS } from "@/lib/marketing-nav";
+import { MARKETING_ROUTES } from "@/lib/marketing-routes";
 
 export function HeroSection() {
   return (
@@ -42,14 +44,14 @@ export function HeroSection() {
             </p>
             <div className="mt-10 flex items-center gap-x-6">
               <Link
-                href="/app/signup"
+                href={MARKETING_CTAS.signup}
                 className="rounded-md bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors flex items-center gap-2"
               >
                 Start Free
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="/pricing"
+                href={MARKETING_ROUTES.pricing}
                 className="text-sm font-semibold leading-6 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
               >
                 View Pricing <span aria-hidden="true">→</span>

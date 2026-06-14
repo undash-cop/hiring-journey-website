@@ -24,6 +24,9 @@ jobs:
       - name: Validate env template parity
         run: npm run validate:env:parity
 
+      - name: Validate marketing CTA routes
+        run: npm run validate:marketing
+
       - name: Lint
         run: npm run lint
 

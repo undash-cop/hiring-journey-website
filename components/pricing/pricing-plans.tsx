@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Check, ArrowRight, Sparkles } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { analytics } from "@/lib/analytics";
+import { MARKETING_CTAS } from "@/lib/marketing-nav";
 
 const plans = [
   {
@@ -217,7 +218,7 @@ export function PricingPlans() {
                   </ul>
                 </div>
                 <Link
-                  href="/app/signup"
+                  href={MARKETING_CTAS.signup}
                   onClick={() => analytics.planSelected(plan.name)}
                   className={`mt-8 block w-full rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 transition-colors ${
                     plan.popular

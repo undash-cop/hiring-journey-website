@@ -1,15 +1,24 @@
 import type { Metadata } from "next";
-import { generateMetadataWithCanonical } from "@/lib/metadata";
+import { JsonLd } from "@/components/seo/json-ld";
+import { createPageMetadata, schema } from "@/lib/seo";
 
-export const metadata: Metadata = generateMetadataWithCanonical(
-  "/legal/cookie-policy",
-  "Cookie Policy - Hiring Journey",
-  "Cookie Policy for Hiring Journey - Learn how we use cookies and similar technologies."
-);
+export const metadata: Metadata = createPageMetadata({
+  path: "/legal/cookie-policy",
+  title: "Cookie Policy - Hiring Journey",
+  description:
+    "Cookie Policy for Hiring Journey - Learn how we use cookies and similar technologies.",
+  keywords: ["Hiring Journey cookie policy"],
+});
 
 export default function CookiePolicyPage() {
   return (
     <div className="bg-white dark:bg-gray-950">
+      <JsonLd
+        data={schema.breadcrumb([
+          { name: "Home", path: "/" },
+          { name: "Cookie Policy", path: "/legal/cookie-policy" },
+        ])}
+      />
       <div className="mx-auto max-w-4xl px-6 py-16 sm:py-24 lg:px-8">
         <h1 className="text-4xl font-display font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
           Cookie Policy

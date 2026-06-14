@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Check, ArrowRight } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { MARKETING_CTAS } from "@/lib/marketing-nav";
 
 const plans = [
   {
@@ -183,7 +184,7 @@ export function PricingPreviewSection() {
                 </ul>
               </div>
               <Link
-                href="/app/signup"
+                href={MARKETING_CTAS.signup}
                 className={`mt-8 block rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 transition-colors ${
                   plan.popular
                     ? "bg-white text-primary-600 hover:bg-primary-50"
