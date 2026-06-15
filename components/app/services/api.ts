@@ -75,7 +75,7 @@ function getAccessToken(): string {
 }
 
 async function apiRequest<T>(
-  method: 'get' | 'post' | 'put' | 'patch',
+  method: 'get' | 'post' | 'put' | 'patch' | 'delete',
   path: string,
   body?: unknown,
 ): Promise<T> {
@@ -721,38 +721,51 @@ export const getAdminAuditLogs = async (limit: number = 50): Promise<AdminAuditL
 
 // Legal Readiness APIs
 export const getLegalDocuments = async (): Promise<LegalDocument[]> => {
-  requireMockApi('Legal documents');
-  await delay(500);
-  return [
-    {
-      id: 1,
-      type: 'offer-letter',
-      name: 'Offer_Letter_TechCorp.pdf',
-      status: 'validated',
-      uploadedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 2,
-      type: 'employment-contract',
-      name: 'Employment_Contract.pdf',
-      status: 'issues-found',
-      uploadedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      issues: ['Notice period clause unclear', 'Non-compete duration exceeds standard'],
-    },
-    {
-      id: 3,
-      type: 'nda',
-      name: 'NDA_Agreement.pdf',
-      status: 'pending',
-      uploadedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-  ];
+  const data = await apiRequest<{ items: Array<{
+    id: number;
+    type: string;
+    name: string;
+    status: string;
+    uploaded_at: string;
+    issues?: string[] | null;
+  }> }>('get', '/legal/documents');
+  return data.items.map((doc) => ({
+    id: doc.id,
+    type: doc.type as LegalDocument['type'],
+    name: doc.name,
+    status: doc.status as LegalDocument['status'],
+    uploadedAt: doc.uploaded_at,
+    issues: doc.issues ?? undefined,
+  }));
 };
 
-export const validateLegalDocument = async (_documentId: number): Promise<{ success: boolean; issues?: string[] }> => {
-  requireMockApi('Legal document validation');
-  await delay(1500);
-  return { success: true, issues: [] };
+export const createLegalDocument = async (data: {
+  type: LegalDocument['type'];
+  name: string;
+}): Promise<LegalDocument> => {
+  const doc = await apiRequest<{
+    id: number;
+    type: string;
+    name: string;
+    status: string;
+    uploaded_at: string;
+    issues?: string[] | null;
+  }>('post', '/legal/documents', { type: data.type, name: data.name });
+  return {
+    id: doc.id,
+    type: doc.type as LegalDocument['type'],
+    name: doc.name,
+    status: doc.status as LegalDocument['status'],
+    uploadedAt: doc.uploaded_at,
+    issues: doc.issues ?? undefined,
+  };
+};
+
+export const validateLegalDocument = async (documentId: number): Promise<{ success: boolean; issues?: string[] }> => {
+  return apiRequest<{ success: boolean; issues?: string[] }>(
+    'post',
+    `/legal/documents/${documentId}/validate`,
+  );
 };
 
 // Coding Arena APIs
@@ -805,59 +818,84 @@ export const getCodingChallenges = async (): Promise<CodingChallenge[]> => {
 
 // Negotiation APIs
 export const getNegotiationFrameworks = async (): Promise<NegotiationFramework[]> => {
-  requireMockApi('Negotiation frameworks');
-  await delay(500);
-  return [
-    {
-      id: 1,
-      title: 'Salary Negotiation Framework',
-      description: 'Step-by-step guide to negotiate your salary effectively',
-      steps: [
-        'Research market rates for your role and location',
-        'Prepare your value proposition',
-        'Set your target and walk-away numbers',
-        'Practice your negotiation pitch',
-        'Schedule the negotiation conversation',
-        'Present your case professionally',
-        'Handle counter-offers gracefully',
-      ],
-      tips: [
-        'Never accept the first offer immediately',
-        'Focus on total compensation, not just salary',
-        'Use data to support your request',
-        'Be prepared to walk away if needed',
-        'Maintain a positive, collaborative tone',
-      ],
-      templates: [
-        'Email template for salary negotiation',
-        'Script for phone/video call negotiation',
-        'Response template for counter-offers',
-      ],
-    },
-    {
-      id: 2,
-      title: 'Benefits Negotiation',
-      description: 'How to negotiate non-salary benefits',
-      steps: [
-        'Identify valuable benefits',
-        'Prioritize your needs',
-        'Research company policies',
-        'Present your request',
-        'Be flexible and creative',
-      ],
-      tips: [
-        'Health insurance can be worth ₹50K+ annually',
-        'Stock options can significantly increase total comp',
-        'Remote work flexibility is highly valued',
-        'Professional development budget',
-        'Additional vacation days',
-      ],
-      templates: [
-        'Benefits negotiation email',
-        'Benefits comparison template',
-      ],
-    },
-  ];
+  const data = await apiRequest<{ items: NegotiationFramework[] }>('get', '/negotiation/frameworks');
+  return data.items;
+};
+
+export const getNegotiationMarketInsights = async (): Promise<{
+  averageSalary: number;
+  yourOffer: number;
+  marketRange: { min: number; max: number };
+}> => {
+  const data = await apiRequest<{
+    average_salary: number;
+    your_offer: number;
+    market_range: { min: number; max: number };
+  }>('get', '/negotiation/market-insights');
+  return {
+    averageSalary: data.average_salary,
+    yourOffer: data.your_offer,
+    marketRange: data.market_range,
+  };
+};
+
+// Interview APIs
+export const getInterviewQuestions = async (type: 'hr' | 'technical'): Promise<string[]> => {
+  const data = await apiRequest<{ items: string[] }>('get', `/interview/questions?type=${type}`);
+  return data.items;
+};
+
+export const getInterviewSessions = async (): Promise<{
+  items: Array<{ id: number; type: 'hr' | 'technical'; score: number; date: string; questionsAnswered: number }>;
+  averageScore: number;
+  totalSessions: number;
+}> => {
+  const data = await apiRequest<{
+    items: Array<{
+      id: number;
+      type: string;
+      score: number;
+      date: string;
+      questions_answered: number;
+    }>;
+    average_score: number;
+    total_sessions: number;
+  }>('get', '/interview/sessions');
+  return {
+    items: data.items.map((item) => ({
+      id: item.id,
+      type: item.type as 'hr' | 'technical',
+      score: item.score,
+      date: item.date,
+      questionsAnswered: item.questions_answered,
+    })),
+    averageScore: data.average_score,
+    totalSessions: data.total_sessions,
+  };
+};
+
+export const submitInterviewFeedback = async (payload: {
+  interviewType: 'hr' | 'technical';
+  question: string;
+  answer: string;
+}): Promise<{ score: number; feedback: string; strengths: string[]; improvements: string[] }> => {
+  return apiRequest('post', '/interview/feedback', {
+    interview_type: payload.interviewType,
+    question: payload.question,
+    answer: payload.answer,
+  });
+};
+
+export const createInterviewSession = async (payload: {
+  interviewType: 'hr' | 'technical';
+  score: number;
+  questionsAnswered: number;
+}): Promise<void> => {
+  await apiRequest('post', '/interview/sessions', {
+    interview_type: payload.interviewType,
+    score: payload.score,
+    questions_answered: payload.questionsAnswered,
+  });
 };
 
 // User Profile APIs
@@ -998,75 +1036,93 @@ export const getCandidatesPaginated = async (
 };
 
 // Auto-Apply Profile APIs
+const mapAutoApplyProfile = (profile: {
+  id: number;
+  name: string;
+  is_active: boolean;
+  min_salary: number;
+  locations: string[];
+  job_types: string[];
+  required_skills: string[];
+  skill_match_threshold: number;
+  job_boards: string[];
+  exclude_companies: string[];
+  exclude_keywords: string[];
+  resume_version?: string | null;
+  daily_apply_limit: number;
+  apply_schedule: string;
+  created_at: string;
+  applied_count: number;
+}): AutoApplyProfile => ({
+  id: profile.id,
+  name: profile.name,
+  isActive: profile.is_active,
+  minSalary: profile.min_salary,
+  locations: profile.locations,
+  jobTypes: profile.job_types,
+  requiredSkills: profile.required_skills,
+  skillMatchThreshold: profile.skill_match_threshold,
+  jobBoards: profile.job_boards,
+  excludeCompanies: profile.exclude_companies,
+  excludeKeywords: profile.exclude_keywords,
+  resumeVersion: profile.resume_version ?? undefined,
+  dailyApplyLimit: profile.daily_apply_limit,
+  applySchedule: profile.apply_schedule as AutoApplyProfile['applySchedule'],
+  createdAt: profile.created_at,
+  appliedCount: profile.applied_count,
+});
+
+const toAutoApplyWriteBody = (data: Partial<AutoApplyProfile>) => {
+  const body: Record<string, unknown> = {};
+  if (data.name !== undefined) body.name = data.name;
+  if (data.isActive !== undefined) body.is_active = data.isActive;
+  if (data.minSalary !== undefined) body.min_salary = data.minSalary;
+  if (data.locations !== undefined) body.locations = data.locations;
+  if (data.jobTypes !== undefined) body.job_types = data.jobTypes;
+  if (data.requiredSkills !== undefined) body.required_skills = data.requiredSkills;
+  if (data.skillMatchThreshold !== undefined) body.skill_match_threshold = data.skillMatchThreshold;
+  if (data.jobBoards !== undefined) body.job_boards = data.jobBoards;
+  if (data.excludeCompanies !== undefined) body.exclude_companies = data.excludeCompanies;
+  if (data.excludeKeywords !== undefined) body.exclude_keywords = data.excludeKeywords;
+  if (data.resumeVersion !== undefined) body.resume_version = data.resumeVersion;
+  if (data.dailyApplyLimit !== undefined) body.daily_apply_limit = data.dailyApplyLimit;
+  if (data.applySchedule !== undefined) body.apply_schedule = data.applySchedule;
+  return body;
+};
+
 export const getAutoApplyProfiles = async (): Promise<AutoApplyProfile[]> => {
-  requireMockApi('Auto-apply profiles');
-  await delay(500);
-  return [
-    {
-      id: 1,
-      name: 'Frontend Developer - Remote',
-      isActive: true,
-      minSalary: 1000000,
-      locations: ['Remote', 'Bangalore'],
-      jobTypes: ['full-time'],
-      requiredSkills: ['React', 'TypeScript', 'JavaScript'],
-      skillMatchThreshold: 75,
-      jobBoards: ['linkedin', 'indeed', 'naukri'],
-      excludeCompanies: ['Company A'],
-      excludeKeywords: ['intern', 'junior'],
-      dailyApplyLimit: 50,
-      applySchedule: 'daily',
-      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      appliedCount: 245,
-    },
-    {
-      id: 2,
-      name: 'Full Stack Developer',
-      isActive: false,
-      minSalary: 1500000,
-      locations: ['Bangalore', 'Mumbai', 'Delhi'],
-      jobTypes: ['full-time', 'contract'],
-      requiredSkills: ['Node.js', 'React', 'MongoDB'],
-      skillMatchThreshold: 80,
-      jobBoards: ['linkedin', 'glassdoor'],
-      excludeCompanies: [],
-      excludeKeywords: [],
-      dailyApplyLimit: 30,
-      applySchedule: 'daily',
-      createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-      appliedCount: 89,
-    },
-  ];
+  const data = await apiRequest<{ items: Parameters<typeof mapAutoApplyProfile>[0][] }>(
+    'get',
+    '/auto-apply/profiles',
+  );
+  return data.items.map(mapAutoApplyProfile);
 };
 
 export const createAutoApplyProfile = async (
-  data: Omit<AutoApplyProfile, 'id' | 'createdAt' | 'appliedCount'>
+  data: Omit<AutoApplyProfile, 'id' | 'createdAt' | 'appliedCount'>,
 ): Promise<AutoApplyProfile> => {
-  requireMockApi('Auto-apply profiles');
-  await delay(800);
-  return {
-    id: Math.floor(Math.random() * 1000),
-    ...data,
-    createdAt: new Date().toISOString(),
-    appliedCount: 0,
-  };
+  const profile = await apiRequest<Parameters<typeof mapAutoApplyProfile>[0]>(
+    'post',
+    '/auto-apply/profiles',
+    toAutoApplyWriteBody(data),
+  );
+  return mapAutoApplyProfile(profile);
 };
 
 export const updateAutoApplyProfile = async (
   id: number,
-  data: Partial<AutoApplyProfile>
+  data: Partial<AutoApplyProfile>,
 ): Promise<AutoApplyProfile> => {
-  requireMockApi('Auto-apply profiles');
-  await delay(600);
-  const profiles = await getAutoApplyProfiles();
-  const profile = profiles.find((p) => p.id === id);
-  if (!profile) throw new Error('Profile not found');
-  return { ...profile, ...data };
+  const profile = await apiRequest<Parameters<typeof mapAutoApplyProfile>[0]>(
+    'patch',
+    `/auto-apply/profiles/${id}`,
+    toAutoApplyWriteBody(data),
+  );
+  return mapAutoApplyProfile(profile);
 };
 
-export const deleteAutoApplyProfile = async (_id: number): Promise<{ success: boolean }> => {
-  requireMockApi('Auto-apply profiles');
-  await delay(500);
+export const deleteAutoApplyProfile = async (id: number): Promise<{ success: boolean }> => {
+  await apiRequest('delete', `/auto-apply/profiles/${id}`);
   return { success: true };
 };
 
@@ -1075,8 +1131,6 @@ export const bulkApplyToJobs = async (request: BulkApplyRequest): Promise<{
   failed: number;
   total: number;
 }> => {
-  requireMockApi('Bulk apply');
-  await delay(1000);
   const results = await Promise.allSettled(
     request.jobIds.map((id) => applyToJob(id))
   );

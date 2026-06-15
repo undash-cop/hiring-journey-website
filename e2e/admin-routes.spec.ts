@@ -1,0 +1,60 @@
+import { test, expect } from "@playwright/test";
+import { blockKeycloakRedirects, mockAdminApis, seedAdminSession } from "./helpers/mock-auth";
+
+test.describe("Admin app routes", () => {
+  test.beforeEach(async ({ page }) => {
+    await blockKeycloakRedirects(page);
+    await seedAdminSession(page);
+    await mockAdminApis(page);
+  });
+
+  test("admin dashboard loads with API stats", async ({ page }) => {
+    await page.goto("/app/admin/dashboard", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: /admin dashboard/i })).toBeVisible();
+    await expect(page.locator("p.text-3xl", { hasText: /^42$/ })).toBeVisible();
+    await expect(page.locator("p.text-3xl", { hasText: /^8$/ })).toBeVisible();
+  });
+
+  test("jobs page lists postings", async ({ page }) => {
+    await page.goto("/app/admin/jobs", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: /job management/i })).toBeVisible();
+    await expect(page.getByText("Frontend Engineer")).toBeVisible();
+    await expect(page.getByRole("link", { name: /create new job/i })).toBeVisible();
+  });
+
+  test("applications page lists applications", async ({ page }) => {
+    await page.goto("/app/admin/applications", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: /^applications$/i })).toBeVisible();
+    await expect(page.getByText("Jane Candidate")).toBeVisible();
+  });
+
+  test("candidates page lists candidates", async ({ page }) => {
+    await page.goto("/app/admin/candidates", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: /^candidates$/i })).toBeVisible();
+    await expect(page.getByText("jane@example.com")).toBeVisible();
+  });
+
+  test("analytics page loads funnel data", async ({ page }) => {
+    await page.goto("/app/admin/analytics", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: /^analytics$/i })).toBeVisible();
+    await expect(page.getByText("Conversion Rates")).toBeVisible();
+  });
+
+  test("plans page shows plan cards", async ({ page }) => {
+    await page.goto("/app/admin/plans", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: /plans & credits/i })).toBeVisible();
+    await expect(page.getByText("Starter")).toBeVisible();
+  });
+
+  test("settings page shows deployment-managed message", async ({ page }) => {
+    await page.goto("/app/admin/settings", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: /^settings$/i })).toBeVisible();
+    await expect(page.getByText(/deployment-managed/i)).toBeVisible();
+  });
+
+  test("publish page renders job form", async ({ page }) => {
+    await page.goto("/app/admin/publish", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: /publish job/i })).toBeVisible();
+    await expect(page.getByLabel(/job title/i)).toBeVisible();
+  });
+});

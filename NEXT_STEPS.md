@@ -10,7 +10,7 @@ This roadmap reflects the current architecture decision:
 - [x] Product shell and route structure exist under `/app/*`
 - [x] Keycloak redirect entry routes are active (`/app/login`, `/app/signup`, `/app/forgot-password`)
 - [x] Legacy duplicate auth pages/components removed
-- [ ] Most product pages still need full backend-driven behavior and QA hardening
+- [ ] Most product pages still need full backend-driven behavior and QA hardening (candidate + admin M2/M3 routes are live; billing and coding-arena remain)
 
 ## Execution Principles
 
@@ -43,7 +43,7 @@ Routes: `/`, `/features`, `/pricing`, `/about`, `/blog/*`, `/careers/*`, `/conta
 - [x] Performance: below-fold dynamic imports on `/`, `/features`, `/pricing`
 - [x] Skip-to-content link on marketing shell
 
-## Phase 3 (Weeks 4-8): Candidate App Pages Full Completion — in progress
+## Phase 3 (Weeks 4-8): Candidate App Pages Full Completion — done (M2 candidate routes)
 
 Routes: `/app/dashboard`, `/app/resume`, `/app/jobs`, `/app/auto-apply`, `/app/interview`, `/app/tracker`, `/app/negotiation`, `/app/legal`, `/app/coding-arena`, `/app/credits`, `/app/profile`, `/app/settings`
 
@@ -52,29 +52,38 @@ Routes: `/app/dashboard`, `/app/resume`, `/app/jobs`, `/app/auto-apply`, `/app/i
 - [x] Unified loading/empty/error states on live API pages (dashboard, jobs, tracker, profile, settings, credits)
 - [x] Real credits + profile stats from backend (`user_credits`, apply deducts 5 credits)
 - [x] Resume score overview + role optimization via live `/resume` API (advanced tabs remain mock/demo)
-- [ ] Replace remaining placeholder blocks (interview, negotiation, legal, auto-apply pending backend)
-- [ ] Implement core user actions per page (create, update, filter, save, submit flows) for mock-gated modules
+- [x] Replace remaining placeholder blocks (interview, negotiation, legal, auto-apply)
+- [x] Implement core user actions per page for live modules (apply, optimize, validate, profile CRUD)
 - [x] Ensure cross-page navigation and data consistency for live APIs
 - [x] Add route-level integration tests for core journeys (`e2e/candidate-routes.spec.ts`)
 - [x] Candidate route map validation in CI (`npm run validate:candidate`)
+- [x] Interview, negotiation, legal, and auto-apply live APIs (`/interview`, `/negotiation`, `/legal`, `/auto-apply`)
 
-**Still open (need backend APIs):**
+**Still open:**
 
-- [ ] `/app/interview` — interview prep sessions, questions, feedback
-- [ ] `/app/negotiation` — salary insights and negotiation frameworks
-- [ ] `/app/legal` — legal document upload and validation
-- [ ] `/app/auto-apply` — auto-apply profiles and bulk apply
+- [ ] `/app/coding-arena` — coding challenges (feature-flagged; API pending)
+- [ ] Resume advanced tabs (templates, builder, analysis, versions) — mock/demo only unless `NEXT_PUBLIC_USE_MOCK_API=true`
+- [ ] Legal document file storage (metadata-only upload today)
+- [ ] Interview AI feedback — heuristic MVP; replace with LLM when ready
 
-Until those APIs ship, these routes show `FeatureUnavailable` in production (or mock data when `NEXT_PUBLIC_USE_MOCK_API=true`).
-
-## Phase 4 (Weeks 8-10): Admin App Pages Completion
+## Phase 4 (Weeks 8-10): Admin App Pages Completion — done (M3 admin routes)
 
 Routes: `/app/admin/dashboard`, `/app/admin/jobs`, `/app/admin/publish`, `/app/admin/applications`, `/app/admin/candidates`, `/app/admin/analytics`, `/app/admin/plans`, `/app/admin/settings`
 
-- [ ] Implement role-based access controls and route guards
-- [ ] Wire admin tables, filters, and action flows to real APIs
-- [ ] Add audit-safe action handling (confirmations, failure recovery, logs where needed)
-- [ ] Add regression tests for admin critical actions
+- [x] Implement role-based access controls and route guards (`RealmRoleRoute` + admin layout)
+- [x] Wire admin tables, filters, and action flows to real APIs
+- [x] Centralized admin React Query keys + cross-page invalidation (`lib/admin-query-keys.ts`)
+- [x] Unified loading/empty/error states on dashboard, analytics, and plans
+- [x] Audit-safe action handling (confirm modals before close job, suspend, offer/reject)
+- [x] Publish job success uses toast + invalidates admin stats/jobs
+- [x] Admin route map validation in CI (`npm run validate:admin`)
+- [x] Route-level integration tests (`e2e/admin-routes.spec.ts`)
+
+**Still open:**
+
+- [ ] Job edit flow and draft publishing
+- [ ] Editable platform settings API (deployment-managed placeholder today)
+- [ ] Plan create/edit (billing integration in Phase 5)
 
 ## Phase 5 (Weeks 10-11): Billing and Monetization
 
@@ -95,8 +104,8 @@ Routes: `/app/admin/dashboard`, `/app/admin/jobs`, `/app/admin/publish`, `/app/a
 ## Milestone Targets
 
 - **M1:** Auth/platform stable + marketing pages production-ready
-- **M2:** Candidate `/app/*` pages functionally complete
-- **M3:** Admin and billing complete
+- **M2:** Candidate `/app/*` pages functionally complete — done
+- **M3:** Admin and billing complete — admin done; billing in Phase 5
 - **M4:** Release-quality hardening complete
 
 ## Environment Checklist

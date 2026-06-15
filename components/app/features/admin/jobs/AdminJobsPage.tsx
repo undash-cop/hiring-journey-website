@@ -1,19 +1,23 @@
 import { useState, useMemo } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { closeJob, getAdminJobs } from '../../../services/api';
 import { Card, Button, StatusBadge, Table, TableHead, TableBody, TableRow, TableHeader, TableCell, Pagination, LoadingTable } from '../../../components/ui';
+import ConfirmActionModal from '../../../components/ConfirmActionModal';
 import type { Job } from '../../../types';
 import { useToast } from '../../../contexts/ToastContext';
+import { useInvalidateAdminData } from '../../../hooks/invalidateAdminQueries';
+import { adminQueryKeys } from '@/lib/admin-query-keys';
 
 export default function AdminJobsPage() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [closingJobId, setClosingJobId] = useState<number | null>(null);
+  const [jobToClose, setJobToClose] = useState<Job | null>(null);
   const itemsPerPage = 10;
-  const queryClient = useQueryClient();
+  const invalidateAdminData = useInvalidateAdminData();
   const { showToast } = useToast();
 
   const { data: jobs, isLoading, isError } = useQuery({
-    queryKey: ['admin-jobs'],
+    queryKey: adminQueryKeys.jobs,
     queryFn: getAdminJobs,
   });
 
@@ -29,14 +33,12 @@ export default function AdminJobsPage() {
   const closeJobMutation = useMutation({
     mutationFn: closeJob,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-jobs'] });
+      invalidateAdminData();
       showToast('Job closed successfully.', 'success');
+      setJobToClose(null);
     },
     onError: () => {
       showToast('Failed to close job.', 'error');
-    },
-    onSettled: () => {
-      setClosingJobId(null);
     },
   });
 
@@ -72,7 +74,9 @@ export default function AdminJobsPage() {
           <h1 className="section-title">Job Management</h1>
           <p className="section-subtitle">Manage all job postings</p>
         </div>
-        <Button className="w-full sm:w-auto">Create New Job</Button>
+        <Link href="/app/admin/publish">
+          <Button className="w-full sm:w-auto">Create New Job</Button>
+        </Link>
       </div>
 
       <Card padding="none">
@@ -104,15 +108,14 @@ export default function AdminJobsPage() {
                 <TableCell>{new Date(job.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm">Edit</Button>
+                    <Button variant="ghost" size="sm" disabled title="Job editing is not available yet">
+                      Edit
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        setClosingJobId(job.id);
-                        closeJobMutation.mutate(job.id);
-                      }}
-                      isLoading={closeJobMutation.isPending && closingJobId === job.id}
+                      onClick={() => setJobToClose(job)}
+                      disabled={job.status === 'archived'}
                     >
                       Close
                     </Button>
@@ -134,6 +137,24 @@ export default function AdminJobsPage() {
           </div>
         )}
       </Card>
+
+      <ConfirmActionModal
+        isOpen={jobToClose != null}
+        title="Close job posting?"
+        description={
+          jobToClose
+            ? `Closing "${jobToClose.title}" will archive the listing and stop new applications. This action is recorded in the audit log.`
+            : ''
+        }
+        confirmLabel="Close Job"
+        isLoading={closeJobMutation.isPending}
+        onClose={() => setJobToClose(null)}
+        onConfirm={() => {
+          if (jobToClose) {
+            closeJobMutation.mutate(jobToClose.id);
+          }
+        }}
+      />
     </div>
   );
 }

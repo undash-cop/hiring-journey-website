@@ -11,6 +11,7 @@
     "validate:env:parity": "node scripts/validate-env-parity.mjs",
     "validate:marketing": "node scripts/validate-marketing-ctas.mjs",
     "validate:candidate": "node scripts/validate-candidate-routes.mjs",
+    "validate:admin": "node scripts/validate-admin-routes.mjs",
     "smoke:api": "bash scripts/smoke-api.sh",
     "build": "node scripts/validate-build-env.mjs && next build",
     "start": "next start",

@@ -8,8 +8,12 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api.routes.applications import router as applications_router
 from app.api.routes.admin import router as admin_router
+from app.api.routes.auto_apply import router as auto_apply_router
 from app.api.routes.dashboard import router as dashboard_router
+from app.api.routes.interview import router as interview_router
 from app.api.routes.jobs import router as jobs_router
+from app.api.routes.legal import router as legal_router
+from app.api.routes.negotiation import router as negotiation_router
 from app.api.routes.resume import router as resume_router
 from app.api.routes.settings import router as settings_router
 from app.api.routes.system import router as system_router
@@ -75,5 +79,9 @@ app.include_router(applications_router)
 app.include_router(users_router)
 app.include_router(dashboard_router)
 app.include_router(resume_router)
+app.include_router(interview_router)
+app.include_router(negotiation_router)
+app.include_router(legal_router)
+app.include_router(auto_apply_router)
 app.include_router(settings_router)
 app.include_router(admin_router)

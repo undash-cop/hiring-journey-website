@@ -1,16 +1,33 @@
 import { useQuery } from '@tanstack/react-query';
 import { getAdminStats } from '../../../services/api';
 import { Card } from '../../../components/ui';
+import { PageErrorState } from '../../../components/QueryStateViews';
+import { adminQueryKeys } from '@/lib/admin-query-keys';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 
+function safePercent(numerator: number, denominator: number): string {
+  if (!denominator) return '0.0';
+  return ((numerator / denominator) * 100).toFixed(1);
+}
+
 export default function AnalyticsPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['admin-stats'],
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: adminQueryKeys.stats,
     queryFn: getAdminStats,
   });
 
   if (isLoading) {
     return <div className="p-4 sm:p-6">Loading...</div>;
+  }
+
+  if (isError) {
+    return (
+      <PageErrorState
+        title="Failed to load analytics"
+        message="We could not load analytics data. Please try again."
+        onRetry={() => void refetch()}
+      />
+    );
   }
 
   if (!data) return null;
@@ -25,17 +42,23 @@ export default function AnalyticsPage() {
   const conversionRates = [
     {
       stage: 'Applied → Interview',
-      rate: ((data.funnel.interviewScheduled / data.funnel.applied) * 100).toFixed(1),
+      rate: safePercent(data.funnel.interviewScheduled, data.funnel.applied),
     },
     {
       stage: 'Interview → Completed',
-      rate: ((data.funnel.interviewCompleted / data.funnel.interviewScheduled) * 100).toFixed(1),
+      rate: safePercent(data.funnel.interviewCompleted, data.funnel.interviewScheduled),
     },
     {
       stage: 'Completed → Offer',
-      rate: ((data.funnel.offer / data.funnel.interviewCompleted) * 100).toFixed(1),
+      rate: safePercent(data.funnel.offer, data.funnel.interviewCompleted),
     },
   ];
+
+  const usageRateDenominator = data.totalCandidates * 200;
+  const usageRate = safePercent(data.creditUsage, usageRateDenominator);
+  const avgCreditsPerCandidate = data.totalCandidates
+    ? (data.creditUsage / data.totalCandidates).toFixed(0)
+    : '0';
 
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
@@ -74,7 +97,7 @@ export default function AnalyticsPage() {
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
                     className="bg-primary-600 h-2 rounded-full"
-                    style={{ width: `${item.rate}%` }}
+                    style={{ width: `${Math.min(parseFloat(item.rate), 100)}%` }}
                   ></div>
                 </div>
               </div>
@@ -106,15 +129,11 @@ export default function AnalyticsPage() {
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Total Credits Used</p>
           </div>
           <div className="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {((data.creditUsage / (data.totalCandidates * 200)) * 100).toFixed(1)}%
-            </p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{usageRate}%</p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Usage Rate</p>
           </div>
           <div className="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {(data.creditUsage / data.totalCandidates).toFixed(0)}
-            </p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{avgCreditsPerCandidate}</p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Avg Credits per Candidate</p>
           </div>
         </div>

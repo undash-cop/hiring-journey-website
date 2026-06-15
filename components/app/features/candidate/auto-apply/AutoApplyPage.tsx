@@ -4,6 +4,8 @@ import { Card, Button, Input, Select, Badge } from '../../../components/ui';
 import { useToast } from '../../../contexts/ToastContext';
 import { getAutoApplyProfiles, createAutoApplyProfile, updateAutoApplyProfile, deleteAutoApplyProfile } from '../../../services/api';
 import { LoadingCard } from '../../../components/ui/Loading';
+import { PageErrorState } from '../../../components/QueryStateViews';
+import { queryKeys } from '@/lib/query-keys';
 import type { AutoApplyProfile } from '../../../types';
 
 export default function AutoApplyPage() {
@@ -26,15 +28,15 @@ export default function AutoApplyPage() {
     applySchedule: 'daily' as 'daily' | 'weekly' | 'custom',
   });
 
-  const { data: profiles, isLoading } = useQuery({
-    queryKey: ['auto-apply-profiles'],
+  const { data: profiles, isLoading, isError } = useQuery({
+    queryKey: queryKeys.autoApplyProfiles,
     queryFn: getAutoApplyProfiles,
   });
 
   const createMutation = useMutation({
     mutationFn: createAutoApplyProfile,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['auto-apply-profiles'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.autoApplyProfiles });
       showToast('Auto-apply profile created successfully!', 'success');
       setActiveTab('profiles');
       resetForm();
@@ -48,7 +50,7 @@ export default function AutoApplyPage() {
     mutationFn: ({ id, data }: { id: number; data: Partial<AutoApplyProfile> }) =>
       updateAutoApplyProfile(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['auto-apply-profiles'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.autoApplyProfiles });
       showToast('Profile updated successfully!', 'success');
       setEditingProfile(null);
       resetForm();
@@ -61,7 +63,7 @@ export default function AutoApplyPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteAutoApplyProfile,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['auto-apply-profiles'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.autoApplyProfiles });
       showToast('Profile deleted successfully!', 'success');
     },
     onError: () => {
@@ -157,6 +159,15 @@ export default function AutoApplyPage() {
         </div>
         <LoadingCard />
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <PageErrorState
+        title="Failed to load auto-apply profiles"
+        onRetry={() => queryClient.invalidateQueries({ queryKey: queryKeys.autoApplyProfiles })}
+      />
     );
   }
 

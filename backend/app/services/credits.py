@@ -5,6 +5,9 @@ from app.models import UserCredit
 DEFAULT_CREDITS_TOTAL = 200
 JOB_APPLICATION_COST = 5
 RESUME_OPTIMIZATION_COST = 10
+INTERVIEW_PREP_COST = 25
+LEGAL_VALIDATION_COST = 10
+AUTO_APPLY_COST = 5
 
 
 def get_or_create_credit(db: Session, user_sub: str) -> UserCredit:

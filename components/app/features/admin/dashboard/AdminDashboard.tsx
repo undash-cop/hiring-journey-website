@@ -1,13 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { getAdminStats } from '../../../services/api';
 import { Card } from '../../../components/ui';
+import { PageErrorState } from '../../../components/QueryStateViews';
+import { adminQueryKeys } from '@/lib/admin-query-keys';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
 export default function AdminDashboard() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['admin-stats'],
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: adminQueryKeys.stats,
     queryFn: getAdminStats,
   });
 
@@ -23,6 +25,16 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <PageErrorState
+        title="Failed to load dashboard"
+        message="We could not load admin statistics. Please try again."
+        onRetry={() => void refetch()}
+      />
     );
   }
 

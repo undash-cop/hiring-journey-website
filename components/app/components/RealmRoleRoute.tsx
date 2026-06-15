@@ -3,6 +3,7 @@ import { useEffect, type ReactNode } from 'react';
 import { keycloak } from '@/lib/keycloak';
 import { useAuth } from '../context/AuthContext';
 import { Spinner } from './Spinner';
+import { Card } from './ui';
 
 export default function RealmRoleRoute({ roles, children }: { roles: string[]; children: ReactNode }) {
   const { initialized, authenticated } = useAuth();
@@ -25,7 +26,18 @@ export default function RealmRoleRoute({ roles, children }: { roles: string[]; c
     return null;
   }
 
-  if (!allowed) return null;
+  if (!allowed) {
+    return (
+      <div className="p-6 sm:p-8">
+        <Card className="max-w-lg mx-auto text-center">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Access denied</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            You need admin permissions to view this area. Redirecting to your dashboard…
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   return <>{children}</>;
 }

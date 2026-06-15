@@ -2,8 +2,12 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { publishJob } from '../../../services/api';
 import { Card, Button, Input, Select } from '../../../components/ui';
+import { useToast } from '../../../contexts/ToastContext';
+import { useInvalidateAdminData } from '../../../hooks/invalidateAdminQueries';
 
 export default function PublishJobPage() {
+  const { showToast } = useToast();
+  const invalidateAdminData = useInvalidateAdminData();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -18,7 +22,10 @@ export default function PublishJobPage() {
   const publishMutation = useMutation({
     mutationFn: publishJob,
     onSuccess: (data) => {
-      alert(`Job published successfully! LinkedIn: ${data.externalPostingIds?.linkedin || 'N/A'}, Indeed: ${data.externalPostingIds?.indeed || 'N/A'}`);
+      const linkedin = data.externalPostingIds?.linkedin ?? 'N/A';
+      const indeed = data.externalPostingIds?.indeed ?? 'N/A';
+      showToast(`Job published (LinkedIn: ${linkedin}, Indeed: ${indeed})`, 'success');
+      invalidateAdminData();
       setFormData({
         title: '',
         description: '',
@@ -29,6 +36,9 @@ export default function PublishJobPage() {
         employmentType: '',
         publishTo: [],
       });
+    },
+    onError: () => {
+      showToast('Failed to publish job. Please try again.', 'error');
     },
   });
 
@@ -43,8 +53,8 @@ export default function PublishJobPage() {
         min: parseInt(formData.salaryMin),
         max: parseInt(formData.salaryMax),
       },
-      employmentType: formData.employmentType as any,
-      publishTo: formData.publishTo as any,
+      employmentType: formData.employmentType as 'full-time' | 'part-time' | 'contract' | 'internship',
+      publishTo: formData.publishTo as ('internal' | 'linkedin' | 'indeed')[],
     });
   };
 
@@ -155,7 +165,9 @@ export default function PublishJobPage() {
         </Card>
 
         <div className="flex justify-end gap-3 mt-6">
-          <Button type="button" variant="outline">Save as Draft</Button>
+          <Button type="button" variant="outline" disabled title="Draft saving is not available yet">
+            Save as Draft
+          </Button>
           <Button type="submit" isLoading={publishMutation.isPending}>
             Publish Job
           </Button>

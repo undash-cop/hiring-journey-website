@@ -114,6 +114,57 @@ class CandidateResume(Base):
     )
 
 
+class InterviewSession(Base):
+    __tablename__ = "interview_sessions"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_sub: Mapped[str] = mapped_column(String(128), index=True)
+    interview_type: Mapped[str] = mapped_column(String(16), index=True)
+    score: Mapped[int] = mapped_column(default=0)
+    questions_answered: Mapped[int] = mapped_column(default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(tz=timezone.utc)
+    )
+
+
+class LegalDocument(Base):
+    __tablename__ = "legal_documents"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_sub: Mapped[str] = mapped_column(String(128), index=True)
+    doc_type: Mapped[str] = mapped_column(String(32), index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="pending")
+    issues: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'[]'"))
+    uploaded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(tz=timezone.utc)
+    )
+
+
+class AutoApplyProfile(Base):
+    __tablename__ = "auto_apply_profiles"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_sub: Mapped[str] = mapped_column(String(128), index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    min_salary: Mapped[int] = mapped_column(default=0)
+    locations: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'[]'"))
+    job_types: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'[]'"))
+    required_skills: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'[]'"))
+    skill_match_threshold: Mapped[int] = mapped_column(default=70)
+    job_boards: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'[]'"))
+    exclude_companies: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'[]'"))
+    exclude_keywords: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'[]'"))
+    resume_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    daily_apply_limit: Mapped[int] = mapped_column(default=50)
+    apply_schedule: Mapped[str] = mapped_column(String(16), default="daily")
+    applied_count: Mapped[int] = mapped_column(default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(tz=timezone.utc)
+    )
+
+
 class AdminAuditLog(Base):
     __tablename__ = "admin_audit_logs"
 

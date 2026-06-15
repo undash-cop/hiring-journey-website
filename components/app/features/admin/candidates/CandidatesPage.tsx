@@ -1,8 +1,11 @@
 import { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { getCandidates, updateCandidateStatus, updateCredits } from '../../../services/api';
 import { Card, StatusBadge, Table, TableHead, TableBody, TableRow, TableHeader, TableCell, Button, Input, Modal, Pagination, LoadingTable } from '../../../components/ui';
+import ConfirmActionModal from '../../../components/ConfirmActionModal';
 import { useToast } from '../../../contexts/ToastContext';
+import { useInvalidateAdminData } from '../../../hooks/invalidateAdminQueries';
+import { adminQueryKeys } from '@/lib/admin-query-keys';
 import type { Candidate } from '../../../types';
 
 export default function CandidatesPage() {
@@ -10,13 +13,13 @@ export default function CandidatesPage() {
   const [creditsAmount, setCreditsAmount] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pendingStatusCandidateId, setPendingStatusCandidateId] = useState<number | null>(null);
+  const [candidateToSuspend, setCandidateToSuspend] = useState<Candidate | null>(null);
   const itemsPerPage = 10;
-  const queryClient = useQueryClient();
+  const invalidateAdminData = useInvalidateAdminData();
   const { showToast } = useToast();
 
   const { data: candidates, isLoading, isError } = useQuery({
-    queryKey: ['candidates'],
+    queryKey: adminQueryKeys.candidates,
     queryFn: getCandidates,
   });
 
@@ -33,7 +36,7 @@ export default function CandidatesPage() {
     mutationFn: ({ candidateId, credits }: { candidateId: number; credits: number }) =>
       updateCredits(candidateId, credits),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['candidates'] });
+      invalidateAdminData();
       setIsModalOpen(false);
       setSelectedCandidate(null);
       setCreditsAmount('');
@@ -48,14 +51,12 @@ export default function CandidatesPage() {
     mutationFn: ({ candidateId, status }: { candidateId: number; status: 'active' | 'suspended' }) =>
       updateCandidateStatus(candidateId, status),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['candidates'] });
+      invalidateAdminData();
       showToast('Candidate status updated successfully!', 'success');
+      setCandidateToSuspend(null);
     },
     onError: () => {
       showToast('Failed to update candidate status.', 'error');
-    },
-    onSettled: () => {
-      setPendingStatusCandidateId(null);
     },
   });
 
@@ -72,6 +73,9 @@ export default function CandidatesPage() {
       });
     }
   };
+
+  const suspendTarget = candidateToSuspend;
+  const suspendNextStatus = suspendTarget?.status === 'active' ? 'suspended' : 'active';
 
   if (isLoading) {
     return (
@@ -137,14 +141,7 @@ export default function CandidatesPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() =>
-                        (setPendingStatusCandidateId(candidate.id),
-                        updateStatusMutation.mutate({
-                          candidateId: candidate.id,
-                          status: candidate.status === 'active' ? 'suspended' : 'active',
-                        }))
-                      }
-                      isLoading={updateStatusMutation.isPending && pendingStatusCandidateId === candidate.id}
+                      onClick={() => setCandidateToSuspend(candidate)}
                     >
                       {candidate.status === 'active' ? 'Suspend' : 'Activate'}
                     </Button>
@@ -199,6 +196,30 @@ export default function CandidatesPage() {
           </div>
         )}
       </Modal>
+
+      <ConfirmActionModal
+        isOpen={suspendTarget != null}
+        title={suspendNextStatus === 'suspended' ? 'Suspend candidate?' : 'Activate candidate?'}
+        description={
+          suspendTarget
+            ? suspendNextStatus === 'suspended'
+              ? `Suspend ${suspendTarget.name}? They will lose access to candidate features until reactivated.`
+              : `Reactivate ${suspendTarget.name}? They will regain access to candidate features.`
+            : ''
+        }
+        confirmLabel={suspendNextStatus === 'suspended' ? 'Suspend' : 'Activate'}
+        variant={suspendNextStatus === 'suspended' ? 'danger' : 'primary'}
+        isLoading={updateStatusMutation.isPending}
+        onClose={() => setCandidateToSuspend(null)}
+        onConfirm={() => {
+          if (suspendTarget) {
+            updateStatusMutation.mutate({
+              candidateId: suspendTarget.id,
+              status: suspendNextStatus,
+            });
+          }
+        }}
+      />
     </div>
   );
 }

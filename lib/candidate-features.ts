@@ -37,38 +37,15 @@ export const CANDIDATE_SECTION_CONFIG: Record<CandidateSection, SectionConfig> =
   profile: { title: "Profile", liveApi: true },
   settings: { title: "Settings", liveApi: true },
   credits: { title: "Credits", liveApi: true },
-  resume: {
-    title: "Resume Optimizer",
-    liveApi: true,
-  },
-  interview: {
-    title: "Interview Prep",
-    liveApi: false,
-    mockOnly: true,
-    unavailableDescription:
-      "AI interview prep is not available via the API yet. Check back soon.",
-  },
-  negotiation: {
-    title: "Offer & Negotiation",
-    liveApi: false,
-    mockOnly: true,
-    unavailableDescription:
-      "Negotiation tools are not available via the API yet. Check back soon.",
-  },
-  legal: {
-    title: "Legal Readiness",
-    liveApi: false,
-    mockOnly: true,
-    unavailableDescription:
-      "Legal document validation is not available via the API yet. Check back soon.",
-  },
+  resume: { title: "Resume Optimizer", liveApi: true },
+  interview: { title: "Interview Prep", liveApi: true },
+  negotiation: { title: "Offer & Negotiation", liveApi: true },
+  legal: { title: "Legal Readiness", liveApi: true },
   "auto-apply": {
     title: "Auto Apply",
-    liveApi: false,
-    mockOnly: true,
+    liveApi: true,
     featureFlag: "AUTO_APPLY",
-    unavailableDescription:
-      "Auto-apply is not available via the API yet. Check back soon.",
+    unavailableDescription: "Auto-apply is temporarily unavailable.",
   },
   "coding-arena": {
     title: "Coding Arena",

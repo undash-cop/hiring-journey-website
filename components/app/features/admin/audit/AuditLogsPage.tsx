@@ -15,6 +15,7 @@ import {
   TableRow,
 } from '../../../components/ui';
 import type { AdminAuditLog } from '../../../types';
+import { adminQueryKeys } from '@/lib/admin-query-keys';
 
 export default function AuditLogsPage() {
   const [actionFilter, setActionFilter] = useState('');
@@ -25,7 +26,7 @@ export default function AuditLogsPage() {
   const itemsPerPage = 10;
 
   const { data: logs, isLoading, isError } = useQuery({
-    queryKey: ['admin-audit-logs'],
+    queryKey: adminQueryKeys.auditLogs,
     queryFn: () => getAdminAuditLogs(100),
   });
 

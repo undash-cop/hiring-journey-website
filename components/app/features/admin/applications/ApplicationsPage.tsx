@@ -1,21 +1,29 @@
 import { useState, useMemo } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { getAllApplications, updateApplicationStatus } from '../../../services/api';
 import { Card, StatusBadge, Table, TableHead, TableBody, TableRow, TableHeader, TableCell, Button, Pagination, LoadingTable, SearchBar } from '../../../components/ui';
+import ConfirmActionModal from '../../../components/ConfirmActionModal';
 import type { Application } from '../../../types';
 import { useToast } from '../../../contexts/ToastContext';
+import { useInvalidateAdminData } from '../../../hooks/invalidateAdminQueries';
+import { adminQueryKeys } from '@/lib/admin-query-keys';
+
+type PendingStatusAction = {
+  application: Application;
+  status: Application['status'];
+};
 
 export default function ApplicationsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [jobFilter, setJobFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pendingAction, setPendingAction] = useState<{ id: number; status: Application['status'] } | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingStatusAction | null>(null);
   const itemsPerPage = 10;
-  const queryClient = useQueryClient();
+  const invalidateAdminData = useInvalidateAdminData();
   const { showToast } = useToast();
 
   const { data: applications, isLoading, isError } = useQuery({
-    queryKey: ['admin-applications'],
+    queryKey: adminQueryKeys.applications,
     queryFn: getAllApplications,
   });
 
@@ -40,16 +48,21 @@ export default function ApplicationsPage() {
     mutationFn: ({ applicationId, status }: { applicationId: number; status: Application['status'] }) =>
       updateApplicationStatus(applicationId, status),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-applications'] });
+      invalidateAdminData();
       showToast('Application status updated.', 'success');
+      setPendingAction(null);
     },
     onError: () => {
       showToast('Failed to update application status.', 'error');
     },
-    onSettled: () => {
-      setPendingAction(null);
-    },
   });
+
+  const confirmDescription =
+    pendingAction?.status === 'offer'
+      ? `Mark ${pendingAction.application.candidateName}'s application for "${pendingAction.application.jobTitle}" as an offer?`
+      : pendingAction
+        ? `Reject ${pendingAction.application.candidateName}'s application for "${pendingAction.application.jobTitle}"? This cannot be undone from the candidate view.`
+        : '';
 
   if (isLoading) {
     return (
@@ -138,22 +151,16 @@ export default function ApplicationsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() =>
-                        (setPendingAction({ id: app.id, status: 'offer' }),
-                        updateStatusMutation.mutate({ applicationId: app.id, status: 'offer' }))
-                      }
-                      isLoading={updateStatusMutation.isPending && pendingAction?.id === app.id && pendingAction?.status === 'offer'}
+                      onClick={() => setPendingAction({ application: app, status: 'offer' })}
+                      disabled={app.status === 'offer'}
                     >
                       Mark Offer
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() =>
-                        (setPendingAction({ id: app.id, status: 'rejected' }),
-                        updateStatusMutation.mutate({ applicationId: app.id, status: 'rejected' }))
-                      }
-                      isLoading={updateStatusMutation.isPending && pendingAction?.id === app.id && pendingAction?.status === 'rejected'}
+                      onClick={() => setPendingAction({ application: app, status: 'rejected' })}
+                      disabled={app.status === 'rejected'}
                     >
                       Reject
                     </Button>
@@ -175,6 +182,24 @@ export default function ApplicationsPage() {
           </div>
         )}
       </Card>
+
+      <ConfirmActionModal
+        isOpen={pendingAction != null}
+        title={pendingAction?.status === 'offer' ? 'Confirm offer' : 'Reject application'}
+        description={confirmDescription}
+        confirmLabel={pendingAction?.status === 'offer' ? 'Mark Offer' : 'Reject'}
+        variant={pendingAction?.status === 'rejected' ? 'danger' : 'primary'}
+        isLoading={updateStatusMutation.isPending}
+        onClose={() => setPendingAction(null)}
+        onConfirm={() => {
+          if (pendingAction) {
+            updateStatusMutation.mutate({
+              applicationId: pendingAction.application.id,
+              status: pendingAction.status,
+            });
+          }
+        }}
+      />
     </div>
   );
 }

@@ -1,51 +1,139 @@
 import { useState } from 'react';
-import { Card, Button, Select, Badge } from '../../../components/ui';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  getInterviewQuestions,
+  getInterviewSessions,
+  submitInterviewFeedback,
+  createInterviewSession,
+} from '../../../services/api';
+import { Card, Button, Select, Badge, LoadingCard } from '../../../components/ui';
+import { PageEmptyState, PageErrorState } from '../../../components/QueryStateViews';
+import { useToast } from '../../../contexts/ToastContext';
+import { queryKeys } from '@/lib/query-keys';
 
-const mockQuestions = {
-  hr: [
-    'Tell me about yourself.',
-    'Why do you want to work here?',
-    'What are your strengths and weaknesses?',
-    'Where do you see yourself in 5 years?',
-    'How do you handle stress and pressure?',
-    'Describe a challenging situation you faced at work.',
-  ],
-  technical: [
-    'Explain how React hooks work.',
-    'What is the difference between let, const, and var?',
-    'How would you optimize a slow database query?',
-    'Explain the difference between REST and GraphQL.',
-    'How does JavaScript event loop work?',
-    'Explain the concept of closures in JavaScript.',
-  ],
+type FeedbackState = {
+  score: number;
+  feedback: string;
+  strengths: string[];
+  improvements: string[];
 };
-
-const mockFeedback = {
-  score: 85,
-  feedback: 'Great answer! You demonstrated strong technical knowledge. Consider providing more specific examples.',
-  strengths: ['Clear explanation', 'Good technical depth'],
-  improvements: ['Add more examples', 'Explain edge cases'],
-};
-
-const mockSessionHistory = [
-  { id: 1, type: 'hr', score: 88, date: '2024-02-10', questionsAnswered: 6 },
-  { id: 2, type: 'technical', score: 82, date: '2024-02-08', questionsAnswered: 5 },
-  { id: 3, type: 'hr', score: 90, date: '2024-02-05', questionsAnswered: 6 },
-];
 
 export default function InterviewPage() {
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
   const [type, setType] = useState<'hr' | 'technical'>('hr');
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answer, setAnswer] = useState('');
-  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [sessionScores, setSessionScores] = useState<number[]>([]);
 
-  const questions = mockQuestions[type];
+  const {
+    data: questions = [],
+    isLoading: questionsLoading,
+    isError: questionsError,
+    error: questionsErrorObj,
+  } = useQuery({
+    queryKey: [...queryKeys.interviewQuestions, type],
+    queryFn: () => getInterviewQuestions(type),
+  });
+
+  const {
+    data: sessionsData,
+    isLoading: sessionsLoading,
+    isError: sessionsError,
+  } = useQuery({
+    queryKey: queryKeys.interviewSessions,
+    queryFn: getInterviewSessions,
+  });
+
+  const feedbackMutation = useMutation({
+    mutationFn: submitInterviewFeedback,
+    onSuccess: (result) => {
+      setFeedback(result);
+      setSessionScores((prev) => [...prev, result.score]);
+    },
+    onError: (err: unknown) => {
+      const status =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { status?: number } }).response?.status
+          : undefined;
+      showToast(
+        status === 402
+          ? 'Not enough credits for interview prep. Visit Credits to review your balance.'
+          : 'Failed to get feedback. Please try again.',
+        'error',
+      );
+    },
+  });
+
+  const saveSessionMutation = useMutation({
+    mutationFn: createInterviewSession,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.interviewSessions });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.creditUsage });
+    },
+  });
 
   const handleSubmit = () => {
-    setShowFeedback(true);
+    if (!answer.trim()) {
+      showToast('Please enter an answer before submitting', 'error');
+      return;
+    }
+    feedbackMutation.mutate({
+      interviewType: type,
+      question: questions[currentQuestion] ?? '',
+      answer,
+    });
   };
+
+  const finishSession = async (scores: number[]) => {
+    if (scores.length === 0) return;
+    const averageScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    await saveSessionMutation.mutateAsync({
+      interviewType: type,
+      score: averageScore,
+      questionsAnswered: scores.length,
+    });
+    showToast('Interview session saved!', 'success');
+    setSessionStarted(false);
+    setCurrentQuestion(0);
+    setAnswer('');
+    setFeedback(null);
+    setSessionScores([]);
+  };
+
+  if (questionsLoading || sessionsLoading) {
+    return (
+      <div className="p-8 space-y-6">
+        <div>
+          <h1 className="section-title">Interview Prep</h1>
+          <p className="section-subtitle">Practice with AI-powered interview questions</p>
+        </div>
+        <LoadingCard />
+      </div>
+    );
+  }
+
+  if (questionsError || sessionsError) {
+    return (
+      <PageErrorState
+        title="Failed to load interview prep"
+        message={
+          questionsErrorObj instanceof Error
+            ? questionsErrorObj.message
+            : 'Please try again later'
+        }
+        onRetry={() => {
+          void queryClient.invalidateQueries({ queryKey: queryKeys.interviewQuestions });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.interviewSessions });
+        }}
+      />
+    );
+  }
+
+  const sessionHistory = sessionsData?.items ?? [];
 
   return (
     <div className="p-8 space-y-6">
@@ -65,8 +153,9 @@ export default function InterviewPage() {
                   setType(e.target.value as 'hr' | 'technical');
                   setCurrentQuestion(0);
                   setAnswer('');
-                  setShowFeedback(false);
+                  setFeedback(null);
                   setSessionStarted(false);
+                  setSessionScores([]);
                 }}
                 options={[
                   { value: 'hr', label: 'HR Interview' },
@@ -82,15 +171,25 @@ export default function InterviewPage() {
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
                   Start a mock interview session to practice {type === 'hr' ? 'HR' : 'Technical'} questions
                 </p>
-                <Button onClick={() => setSessionStarted(true)}>
+                <Button
+                  onClick={() => setSessionStarted(true)}
+                  disabled={questions.length === 0}
+                >
                   Start Mock Interview Session
                 </Button>
               </div>
+            ) : questions.length === 0 ? (
+              <PageEmptyState
+                title="No questions available"
+                description="Try switching interview type or try again later."
+              />
             ) : (
               <div>
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Question {currentQuestion + 1} of {questions.length}</h2>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                      Question {currentQuestion + 1} of {questions.length}
+                    </h2>
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       {Math.round(((currentQuestion + 1) / questions.length) * 100)}% Complete
                     </span>
@@ -99,12 +198,14 @@ export default function InterviewPage() {
                     <div
                       className="bg-primary-600 h-2 rounded-full transition-all"
                       style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
-                    ></div>
+                    />
                   </div>
                 </div>
 
                 <div className="mb-6">
-                  <p className="text-lg text-gray-900 dark:text-gray-100 mb-4">{questions[currentQuestion]}</p>
+                  <p className="text-lg text-gray-900 dark:text-gray-100 mb-4">
+                    {questions[currentQuestion]}
+                  </p>
                   <textarea
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
@@ -113,27 +214,35 @@ export default function InterviewPage() {
                   />
                 </div>
 
-                {showFeedback && (
+                {feedback && (
                   <div className="mb-6 p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg font-semibold text-primary-900 dark:text-primary-100">AI Feedback</span>
-                      <Badge variant="info">Score: {mockFeedback.score}/100</Badge>
+                      <span className="text-lg font-semibold text-primary-900 dark:text-primary-100">
+                        AI Feedback
+                      </span>
+                      <Badge variant="info">Score: {feedback.score}/100</Badge>
                     </div>
-                    <p className="text-sm text-primary-800 dark:text-primary-200 mb-3">{mockFeedback.feedback}</p>
+                    <p className="text-sm text-primary-800 dark:text-primary-200 mb-3">
+                      {feedback.feedback}
+                    </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                       <div>
-                        <p className="text-xs font-medium text-green-700 dark:text-green-300 mb-1">Strengths:</p>
+                        <p className="text-xs font-medium text-green-700 dark:text-green-300 mb-1">
+                          Strengths:
+                        </p>
                         <ul className="list-disc list-inside text-xs text-gray-700 dark:text-gray-300">
-                          {mockFeedback.strengths.map((s, i) => (
+                          {feedback.strengths.map((s, i) => (
                             <li key={i}>{s}</li>
                           ))}
                         </ul>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-orange-700 dark:text-orange-300 mb-1">Improvements:</p>
+                        <p className="text-xs font-medium text-orange-700 dark:text-orange-300 mb-1">
+                          Improvements:
+                        </p>
                         <ul className="list-disc list-inside text-xs text-gray-700 dark:text-gray-300">
-                          {mockFeedback.improvements.map((i, idx) => (
-                            <li key={idx}>{i}</li>
+                          {feedback.improvements.map((item, idx) => (
+                            <li key={idx}>{item}</li>
                           ))}
                         </ul>
                       </div>
@@ -148,7 +257,7 @@ export default function InterviewPage() {
                       if (currentQuestion > 0) {
                         setCurrentQuestion(currentQuestion - 1);
                         setAnswer('');
-                        setShowFeedback(false);
+                        setFeedback(null);
                       }
                     }}
                     disabled={currentQuestion === 0}
@@ -158,20 +267,33 @@ export default function InterviewPage() {
                   {currentQuestion < questions.length - 1 ? (
                     <Button
                       onClick={() => {
-                        handleSubmit();
-                        setTimeout(() => {
-                          setCurrentQuestion(currentQuestion + 1);
-                          setAnswer('');
-                          setShowFeedback(false);
-                        }, 2000);
+                        if (!feedback) {
+                          handleSubmit();
+                          return;
+                        }
+                        setCurrentQuestion(currentQuestion + 1);
+                        setAnswer('');
+                        setFeedback(null);
                       }}
+                      isLoading={feedbackMutation.isPending}
                       className="flex-1"
                     >
-                      Submit & Next
+                      {feedback ? 'Next Question' : 'Submit & Next'}
                     </Button>
                   ) : (
-                    <Button onClick={handleSubmit} className="flex-1">
-                      Submit Answer
+                    <Button
+                      onClick={async () => {
+                        if (!feedback) {
+                          handleSubmit();
+                          return;
+                        }
+                        const scores = sessionScores;
+                        await finishSession(scores);
+                      }}
+                      isLoading={feedbackMutation.isPending || saveSessionMutation.isPending}
+                      className="flex-1"
+                    >
+                      {feedback ? 'Finish Session' : 'Submit Answer'}
                     </Button>
                   )}
                 </div>
@@ -186,12 +308,14 @@ export default function InterviewPage() {
             <div className="space-y-3">
               <div>
                 <p className="text-xs text-gray-600 dark:text-gray-400">Total Sessions</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{mockSessionHistory.length}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {sessionsData?.totalSessions ?? 0}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-gray-600 dark:text-gray-400">Average Score</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {Math.round(mockSessionHistory.reduce((acc, s) => acc + s.score, 0) / mockSessionHistory.length)}
+                  {sessionsData?.averageScore ?? 0}
                 </p>
               </div>
             </div>
@@ -200,21 +324,31 @@ export default function InterviewPage() {
           {showHistory && (
             <Card>
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Session History</h3>
-              <div className="space-y-3">
-                {mockSessionHistory.map((session) => (
-                  <div key={session.id} className="p-3 border border-gray-200 dark:border-gray-800 rounded-lg">
-                    <div className="flex items-center justify-between mb-1">
-                      <Badge variant={session.type === 'hr' ? 'info' : 'warning'}>
-                        {session.type === 'hr' ? 'HR' : 'Technical'}
-                      </Badge>
-                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{session.score}/100</span>
+              {sessionHistory.length === 0 ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">No sessions yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {sessionHistory.map((session) => (
+                    <div
+                      key={session.id}
+                      className="p-3 border border-gray-200 dark:border-gray-800 rounded-lg"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <Badge variant={session.type === 'hr' ? 'info' : 'warning'}>
+                          {session.type === 'hr' ? 'HR' : 'Technical'}
+                        </Badge>
+                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {session.score}/100
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {session.questionsAnswered} questions •{' '}
+                        {new Date(session.date).toLocaleDateString()}
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {session.questionsAnswered} questions • {new Date(session.date).toLocaleDateString()}
-                    </p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </Card>
           )}
         </div>

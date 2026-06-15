@@ -68,6 +68,11 @@ The backend validates bearer tokens using:
 - `GET /resume` — candidate resume score summary
 - `POST /resume/improve` — improve score (deducts credits)
 - `POST /resume/optimize-role` — optimize for a target role (deducts credits)
+- `GET /interview/questions` — HR/technical question bank
+- `GET /interview/sessions`, `POST /interview/sessions`, `POST /interview/feedback`
+- `GET /negotiation/frameworks`, `GET /negotiation/market-insights`
+- `GET /legal/documents`, `POST /legal/documents`, `POST /legal/documents/{id}/validate`
+- `GET /auto-apply/profiles`, `POST /auto-apply/profiles`, `PATCH/DELETE /auto-apply/profiles/{id}`
 
 ## Database
 

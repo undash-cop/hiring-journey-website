@@ -30,6 +30,9 @@ jobs:
       - name: Validate candidate route map
         run: npm run validate:candidate
 
+      - name: Validate admin route map
+        run: npm run validate:admin
+
       - name: Lint
         run: npm run lint
 

@@ -12,7 +12,10 @@ export const queryKeys = {
   resumeBuilder: ['resume-builder'] as const,
   autoApplyProfiles: ['auto-apply-profiles'] as const,
   negotiationFrameworks: ['negotiation-frameworks'] as const,
+  negotiationMarketInsights: ['negotiation-market-insights'] as const,
   legalDocuments: ['legal-documents'] as const,
+  interviewQuestions: ['interview-questions'] as const,
+  interviewSessions: ['interview-sessions'] as const,
   codingChallenges: ['coding-challenges'] as const,
 } as const;
 
