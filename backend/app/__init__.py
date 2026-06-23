@@ -1,1 +1,0 @@
-# Hiring Journey API package

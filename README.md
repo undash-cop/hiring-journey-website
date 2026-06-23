@@ -1,99 +1,72 @@
-# Hiring Journey Website
+# Hiring Journey
 
-Production-grade AI SaaS website for Hiring Journey by Undash-cop Private Limited.
+Production web app for [Hiring Journey](https://hiringjourney.com) by Undash-cop Private Limited.
 
-## Current Auth Architecture
+## Repositories
 
-- Authentication is handled by Keycloak.
-- App entry routes `/app/login`, `/app/signup`, and `/app/forgot-password` are redirect-only handlers.
-- Local auth form pages/components are intentionally removed to avoid duplicate auth surfaces.
+| Repo | Path | Deploy target |
+|------|------|---------------|
+| **Frontend** (this repo) | `hiring-journey-website/` | Netlify → `hiringjourney.com` |
+| **Backend** (submodule) | `backend/` → [hiring-journey-backend](https://github.com/undash-cop/hiring-journey-backend) | VM/Docker → `api.hiringjourney.com` |
 
-## Requirements
+The API is a **separate GitHub repository** linked as a git submodule at `backend/`.
 
-- **Node.js**: >= 22.0.0
-- **npm**: >= 10.0.0
+## Quick start
 
-## Tech Stack
-
-- **Framework**: Next.js 15 (App Router)
-- **React**: 19
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Animations**: Framer Motion
-- **Icons**: Lucide React
-- **Forms**: React Hook Form + Zod
-- **Deployment**: Netlify
-
-## Getting Started
+### Frontend
 
 ```bash
-# Install dependencies
+git clone --recurse-submodules https://github.com/undash-cop/hiring-journey-website.git
+cd hiring-journey-website
 npm install
-
-# Run development server
+cp .env.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the website.
-
-**Note**: Make sure you're using Node.js 22 or higher. You can use `nvm` to manage Node versions:
-```bash
-nvm use 22
-```
-
-## Environment Variables
-
-Create a `.env.local` file:
-
-```
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-## Build for Production
+If you already cloned without submodules:
 
 ```bash
-npm run build
-npm start
+git submodule update --init --recursive
 ```
+
+### Backend
+
+```bash
+cd backend
+cp .env.example .env
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+alembic upgrade head
+uvicorn app.main:app --reload --port 8000
+```
+
+Or clone the API repo standalone: [hiring-journey-backend](https://github.com/undash-cop/hiring-journey-backend).
+
+## Tech stack
+
+- **Frontend:** Next.js 16, React 19, TypeScript, Tailwind, Keycloak JS
+- **Backend:** FastAPI, SQLAlchemy, Alembic (submodule)
+- **Deploy:** Netlify (frontend), Docker Compose (API)
 
 ## Documentation
 
-### Setup & Deployment
-- **[Deployment Guide](DEPLOYMENT.md)** - Complete guide for deploying to Netlify
-- **[Backend API Plan](BACKEND_API_PLAN.md)** - Independent FastAPI backend scope and endpoint plan
+**[docs/README.md](docs/README.md)** — full index
 
-### Architecture & Features
-- **[Architecture Decisions](ARCHITECTURE_DECISION.md)** - Key architectural decisions
-- **[Pricing to Signup Flow](PRICING_TO_SIGNUP_FLOW.md)** - How plan selection flows to signup
-- **[Middleware Setup](MIDDLEWARE_SETUP.md)** - Configuring optional redirects
+| Topic | Doc |
+|-------|-----|
+| Local development | [docs/development/local-dev.md](docs/development/local-dev.md) |
+| Architecture | [docs/architecture.md](docs/architecture.md) |
+| Roadmap | [docs/roadmap.md](docs/roadmap.md) |
+| Deploy frontend | [docs/deployment/frontend.md](docs/deployment/frontend.md) |
+| Deploy API | [backend/docs/deployment.md](backend/docs/deployment.md) |
+| Production checklist | [docs/deployment/production-checklist.md](docs/deployment/production-checklist.md) |
 
-### Configuration
-- **[Analytics Setup](ANALYTICS_SETUP.md)** - Setting up Google Analytics and Plausible
-- **[Team Data](TEAM_DATA.md)** - Updating team member information
+## Scripts
 
-### Development
-- **[Next Steps](NEXT_STEPS.md)** - Development roadmap and backend integration
-- **[Troubleshooting](TROUBLESHOOTING.md)** - Common issues and solutions
-
-### Deployment & Operations
-- **[Local Development](docs/LOCAL_DEV.md)** - Dev server, auth smoke test, E2E
-- **[M1 Deployment Checklist](docs/M1_DEPLOYMENT_CHECKLIST.md)** - First production release
-- **[Staging Setup](docs/STAGING.md)** - Staging VM and env matrix
-- **[Staging First Deploy](docs/STAGING_FIRST_DEPLOY.md)** - One-time staging bring-up
-- **[Operations Runbook](docs/RUNBOOK.md)** - Rollback, backups, HA
-- **[Deploy Secrets](docs/DEPLOY_SECRETS.md)** - GitHub Actions SSH secrets
-
-## Backend API (FastAPI)
-
-An independent backend service scaffold now exists in `backend/`.
-
-- Run backend locally with FastAPI (`uvicorn app.main:app --reload --port 8000`)
-- Export OpenAPI contract from backend (`/openapi.json`)
-- Sync frontend client from spec:
-  - `npm run api:spec:download`
-  - `npm run api:client:generate`
-  - `npm run api:sync`
-
-## Deployment
-
-This project is configured for Netlify deployment. See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
+```bash
+npm run build
+npm run test:e2e
+npm run smoke:api
+npm run api:sync           # refresh OpenAPI client from local backend
+npm run validate:env:parity
+```

@@ -1,16 +1,11 @@
-# OpenAPI Artifacts
+# OpenAPI contract
 
-`hiring-journey-api.openapi.json` is the backend API contract exported from the FastAPI service.
+`hiring-journey-api.openapi.json` is the checked-in API contract exported from the FastAPI backend.
 
-## Refresh flow
-
-```bash
-npm run api:spec:download
-npm run api:client:generate
-```
-
-Or run both:
+Refresh from a running local API:
 
 ```bash
 npm run api:sync
 ```
+
+See [../docs/development/api-client-sync.md](../docs/development/api-client-sync.md).
