@@ -29,12 +29,25 @@ If port 3000 is in use, Next.js may bind to **3001**. Update:
 
 ```bash
 ./scripts/clone-backend-dev.sh   # once, if backend/ is not present
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-uvicorn app.main:app --reload --port 8000
+./scripts/start-backend.sh       # creates .venv, .env, migrates, starts :8000
 ```
+
+Or from `backend/`:
+
+```bash
+cd backend
+cp .env.example .env             # once
+./scripts/dev-server.sh
+```
+
+**Docker (optional):** start Docker Desktop first, then:
+
+```bash
+cd backend
+docker compose -f docker-compose.dev.yml up --build
+```
+
+Do not use `docker-compose.prod.yml` locally — it expects Postgres, Nginx, and TLS cert paths on a VM.
 
 Verify: `curl http://localhost:8000/health`
 

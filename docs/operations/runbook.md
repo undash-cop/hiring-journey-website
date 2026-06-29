@@ -11,6 +11,8 @@
 
 ## API deployment (production)
 
+**Current status:** if `https://api.hiringjourney.com/health` returns 503, the API container is down. Full steps: [backend/docs/production-recovery.md](../backend/docs/production-recovery.md).
+
 1. SSH to production VM.
 2. Pull latest `main` (or checkout release tag).
 3. Run migrations explicitly:
