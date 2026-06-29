@@ -12,6 +12,7 @@
     "validate:marketing": "node scripts/validate-marketing-ctas.mjs",
     "validate:candidate": "node scripts/validate-candidate-routes.mjs",
     "validate:admin": "node scripts/validate-admin-routes.mjs",
+    "validate:release": "node scripts/validate-release.mjs",
     "smoke:api": "bash scripts/smoke-api.sh",
     "build": "node scripts/validate-build-env.mjs && next build",
     "start": "next start",
@@ -26,6 +27,7 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@next/third-parties": "^16.2.1",
+    "@sentry/nextjs": "^9.47.1",
     "@tanstack/react-query": "^5.95.2",
     "autoprefixer": "^10.4.27",
     "axios": "^1.14.0",
@@ -45,8 +47,8 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@playwright/test": "^1.51.0",
     "@openapitools/openapi-generator-cli": "^2.25.0",
+    "@playwright/test": "^1.51.0",
     "@types/node": "^22.19.15",
     "@types/react": "^19.0.6",
     "@types/react-dom": "^19.0.2",

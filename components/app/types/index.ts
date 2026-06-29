@@ -207,6 +207,7 @@ export interface ResumeSection {
 }
 
 export interface ResumeBuilderData {
+  versionId?: number;
   template: string;
   sections: ResumeSection[];
   personalInfo: ParsedResume['personalInfo'];
@@ -225,6 +226,8 @@ export interface LegalDocument {
   status: 'pending' | 'validated' | 'issues-found';
   uploadedAt: string;
   issues?: string[];
+  hasFile?: boolean;
+  sizeBytes?: number;
 }
 
 export interface CodingChallenge {
@@ -236,6 +239,30 @@ export interface CodingChallenge {
   tags: string[];
   solved: boolean;
   attempts: number;
+  executable?: boolean;
+}
+
+export interface CodingChallengeDetail extends CodingChallenge {
+  starterCode?: string | null;
+  functionName?: string | null;
+}
+
+export interface CodingTestResult {
+  case: number;
+  pass: boolean;
+  expected?: unknown;
+  actual?: unknown;
+  error?: string;
+}
+
+export interface CodingSubmitResult {
+  challengeId: number;
+  passed: number;
+  total: number;
+  results: CodingTestResult[];
+  solved: boolean;
+  attempts: number;
+  error?: string | null;
 }
 
 export interface NegotiationFramework {
@@ -300,6 +327,7 @@ export interface PublishJobData {
   };
   employmentType: 'full-time' | 'part-time' | 'contract' | 'internship';
   publishTo: ('internal' | 'linkedin' | 'indeed')[];
+  status?: 'draft' | 'published';
 }
 
 export interface PublishJobResponse {
@@ -327,6 +355,86 @@ export interface Plan {
   creditLimit: number;
   price: number;
   usage: number;
+}
+
+export interface PlatformSettings {
+  platformDisplayName: string;
+  supportEmail: string;
+  defaultCandidateCredits: number;
+  linkedinIntegrationEnabled: boolean;
+  indeedIntegrationEnabled: boolean;
+  updatedAt: string;
+}
+
+export interface CreatePlanData {
+  name: string;
+  creditLimit: number;
+  price: number;
+  isActive?: boolean;
+}
+
+export interface UpdatePlanData {
+  name?: string;
+  creditLimit?: number;
+  price?: number;
+  isActive?: boolean;
+}
+
+export interface BillingPlan {
+  id: number;
+  name: string;
+  slug: string | null;
+  description: string;
+  creditLimit: number;
+  price: number;
+  yearlyPrice: number;
+  features: string[];
+  isFree: boolean;
+  sortOrder: number;
+}
+
+export interface UserSubscription {
+  id: number;
+  planId: number;
+  planName: string;
+  planSlug: string | null;
+  status: 'active' | 'past_due' | 'canceled' | 'trialing';
+  billingCycle: 'monthly' | 'yearly';
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+  pendingPlanId: number | null;
+  pendingPlanName: string | null;
+  provider: string;
+}
+
+export interface BillingInvoice {
+  id: number;
+  invoiceNumber: string;
+  planId: number;
+  planName: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'paid' | 'failed';
+  billingCycle: 'monthly' | 'yearly';
+  failureReason?: string;
+  paidAt?: string;
+  createdAt: string;
+}
+
+export interface CheckoutSession {
+  checkoutSessionId: number | null;
+  invoiceId: number | null;
+  orderId?: string;
+  amount: number;
+  currency: string;
+  planId: number;
+  planName?: string;
+  billingCycle: 'monthly' | 'yearly';
+  keyId?: string;
+  mock: boolean;
+  free: boolean;
+  subscription?: UserSubscription;
 }
 
 export interface AdminAuditLog {

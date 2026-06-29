@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getLegalDocuments,
   validateLegalDocument,
-  createLegalDocument,
+  uploadLegalDocument,
+  downloadLegalDocument,
 } from '../../../services/api';
 import { Card, Button, StatusBadge, LoadingCard } from '../../../components/ui';
 import { PageEmptyState, PageErrorState } from '../../../components/QueryStateViews';
@@ -23,13 +24,14 @@ export default function LegalReadinessPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: createLegalDocument,
+    mutationFn: ({ file, type }: { file: File; type: LegalDocument['type'] }) =>
+      uploadLegalDocument(file, type),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.legalDocuments });
-      showToast('Document registered successfully!', 'success');
+      showToast('Document uploaded successfully!', 'success');
     },
     onError: () => {
-      showToast('Failed to register document. Please try again.', 'error');
+      showToast('Failed to upload document. Please try again.', 'error');
     },
   });
 
@@ -65,7 +67,7 @@ export default function LegalReadinessPage() {
       showToast('File size must be less than 10MB', 'error');
       return;
     }
-    createMutation.mutate({ type: docType, name: file.name });
+    createMutation.mutate({ file, type: docType });
     e.target.value = '';
   };
 
@@ -123,7 +125,7 @@ export default function LegalReadinessPage() {
         <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
           <input
             type="file"
-            accept=".pdf,.doc,.docx"
+            accept=".pdf,.docx"
             className="hidden"
             id="legal-upload"
             onChange={handleFileChange}
@@ -134,10 +136,10 @@ export default function LegalReadinessPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              {createMutation.isPending ? 'Registering document...' : 'Click to upload or drag and drop'}
+              {createMutation.isPending ? 'Uploading document...' : 'Click to upload or drag and drop'}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-              PDF, DOC, DOCX (MAX. 10MB) — metadata only for now
+              PDF or DOCX (MAX. 10MB)
             </p>
           </label>
         </div>
@@ -174,6 +176,18 @@ export default function LegalReadinessPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <StatusBadge status={doc.status} />
+                    {doc.hasFile && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void downloadLegalDocument(doc.id, doc.name);
+                        }}
+                      >
+                        Download
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"

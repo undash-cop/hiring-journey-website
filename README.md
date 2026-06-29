@@ -64,10 +64,12 @@ Or clone the API repo standalone: [hiring-journey-backend](https://github.com/un
 | Deploy frontend | [docs/deployment/frontend.md](docs/deployment/frontend.md) |
 | Deploy API | [hiring-journey-backend deployment](https://github.com/undash-cop/hiring-journey-backend/blob/main/docs/deployment.md) |
 | Production checklist | [docs/deployment/production-checklist.md](docs/deployment/production-checklist.md) |
+| Release readiness (M4) | [docs/deployment/release-readiness.md](docs/deployment/release-readiness.md) |
 
 ## Scripts
 
 ```bash
+npm run validate:release   # lint + typecheck + route validators (CI quality gate)
 npm run build
 npm run test:e2e
 npm run smoke:api

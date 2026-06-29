@@ -6,6 +6,7 @@
 |----------|----------|-------------------|
 | `GET /health` | `{ "status": "ok" }` | Restart API container; check logs |
 | `GET /ready` | `{ "status": "ready" }` | Check Postgres connectivity, migrations |
+| `GET /metrics` | Prometheus text | Scrape for request rate/latency alerts |
 | Netlify site | HTTP 200 on `/` | Check Netlify deploy logs |
 
 ## API deployment (production)
@@ -67,9 +68,17 @@ Use `docker-compose.prod-ha.yml` with Nginx upstream (`backend/deploy/nginx/api-
 
 ## Monitoring alerts
 
+Configure before M4 launch ([observability.md](../development/observability.md)):
+
+| Alert | Condition |
+|-------|-----------|
+| API down | `/health` fails 2+ minutes |
+| Site down | `https://hiringjourney.com` fails |
+| Error spike | Sentry issue rate threshold |
+| 5xx rate | Prometheus `http_requests_total{status=~"5.."}` |
+
 - Uptime monitor on `https://api.hiringjourney.com/health` (1 min interval)
 - Uptime monitor on `https://hiringjourney.com`
-- Alert on 5xx rate spike from API logs
 
 ## Incident contacts
 

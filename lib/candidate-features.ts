@@ -49,11 +49,8 @@ export const CANDIDATE_SECTION_CONFIG: Record<CandidateSection, SectionConfig> =
   },
   "coding-arena": {
     title: "Coding Arena",
-    liveApi: false,
-    mockOnly: true,
+    liveApi: true,
     featureFlag: "CODING_ARENA",
-    unavailableDescription:
-      "Coding challenges are coming soon. This feature is disabled until the API is ready.",
   },
 };
 

@@ -20,8 +20,13 @@ import type {
   PublishJobResponse,
   Candidate,
   Plan,
+  PlatformSettings,
+  CreatePlanData,
+  UpdatePlanData,
   LegalDocument,
   CodingChallenge,
+  CodingChallengeDetail,
+  CodingSubmitResult,
   NegotiationFramework,
   UserProfile,
   UserSettings,
@@ -34,6 +39,10 @@ import type {
   ResumeTemplate,
   ResumeBuilderData,
   AdminAuditLog,
+  BillingPlan,
+  UserSubscription,
+  BillingInvoice,
+  CheckoutSession,
 } from '../types';
 
 const API_BASE_URL =
@@ -246,286 +255,396 @@ export const optimizeResumeForRole = async (
   };
 };
 
-// Resume Parsing & Analysis APIs
-export const parseResume = async (_file: File): Promise<ParsedResume> => {
-  requireMockApi('Resume parsing');
-  await delay(1500);
-  // Mock parsing - in real app, this would parse PDF/DOCX
-  return {
-    personalInfo: {
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      phone: '+91 98765 43210',
-      location: 'Bangalore, India',
-      linkedin: 'linkedin.com/in/johndoe',
-      github: 'github.com/johndoe',
-      portfolio: 'johndoe.dev',
-    },
-    summary: 'Experienced Frontend Developer with 5+ years of expertise in React, TypeScript, and modern web technologies.',
-    experience: [
-      {
-        company: 'Tech Corp',
-        title: 'Senior Frontend Developer',
-        duration: '2020 - Present',
-        location: 'Bangalore',
-        description: 'Led frontend development for multiple products',
-        achievements: [
-          'Reduced page load time by 40%',
-          'Mentored team of 5 developers',
-          'Implemented design system used by 10+ products',
-        ],
-        skills: ['React', 'TypeScript', 'Node.js'],
-      },
-      {
-        company: 'Startup Inc',
-        title: 'Frontend Developer',
-        duration: '2018 - 2020',
-        location: 'Mumbai',
-        description: 'Developed responsive web applications',
-        achievements: [
-          'Built 5+ production applications',
-          'Improved user engagement by 25%',
-        ],
-        skills: ['React', 'JavaScript', 'CSS'],
-      },
-    ],
-    education: [
-      {
-        institution: 'University of Technology',
-        degree: 'B.Tech',
-        field: 'Computer Science',
-        duration: '2014 - 2018',
-        gpa: '8.5/10',
-      },
-    ],
-    skills: {
-      technical: ['React', 'JavaScript', 'TypeScript', 'Node.js', 'CSS', 'HTML'],
-      soft: ['Leadership', 'Communication', 'Problem Solving'],
-      languages: ['English', 'Hindi'],
-    },
-    certifications: [
-      {
-        name: 'AWS Certified Developer',
-        issuer: 'Amazon',
-        date: '2022',
-      },
-    ],
-    projects: [
-      {
-        name: 'E-commerce Platform',
-        description: 'Full-stack e-commerce solution',
-        technologies: ['React', 'Node.js', 'MongoDB'],
-        url: 'github.com/johndoe/ecommerce',
-      },
-    ],
-  };
+type ParsedResumeApi = {
+  personal_info: ParsedResume['personalInfo'];
+  summary: string;
+  experience: ParsedResume['experience'];
+  education: ParsedResume['education'];
+  skills: ParsedResume['skills'];
+  certifications: ParsedResume['certifications'];
+  projects: ParsedResume['projects'];
 };
 
-export const analyzeResume = async (_targetRole?: string): Promise<ResumeAnalysis> => {
-  requireMockApi('Resume analysis');
-  await delay(1000);
-  const parsed = await parseResume(new File([], 'resume.pdf'));
+type ResumeBuilderApiResponse = ParsedResumeApi & {
+  version_id: number;
+  template: string;
+  sections: Array<{
+    id: string;
+    type: string;
+    title: string;
+    content: string;
+    order: number;
+    is_visible: boolean;
+  }>;
+};
+
+function mapParsedResume(data: ParsedResumeApi): ParsedResume {
   return {
-    overallScore: 85,
-    atsScore: 82,
-    keywordMatch: 75,
-    formattingScore: 90,
-    contentScore: 80,
-    strengths: [
-      'Strong technical skills',
-      'Clear work experience',
-      'Good formatting',
-      'Relevant projects',
-    ],
-    weaknesses: [
-      'Missing quantifiable metrics',
-      'Limited leadership examples',
-      'Could add more keywords',
-    ],
-    missingKeywords: ['TypeScript', 'GraphQL', 'Microservices', 'CI/CD'],
-    skillsGap: ['TypeScript', 'GraphQL'],
-    recommendations: [
-      {
-        priority: 'high',
-        category: 'Keywords',
-        suggestion: 'Add missing keywords: TypeScript, GraphQL',
-        impact: 'Increase ATS score by 8-10 points',
+    personalInfo: data.personal_info,
+    summary: data.summary,
+    experience: data.experience,
+    education: data.education,
+    skills: data.skills,
+    certifications: data.certifications,
+    projects: data.projects,
+  };
+}
+
+function mapBuilderData(data: ResumeBuilderApiResponse): ResumeBuilderData {
+  return {
+    versionId: data.version_id,
+    template: data.template,
+    sections: data.sections.map((section) => ({
+      id: section.id,
+      type: section.type as ResumeBuilderData['sections'][number]['type'],
+      title: section.title,
+      content: section.content,
+      order: section.order,
+      isVisible: section.is_visible,
+    })),
+    personalInfo: data.personal_info,
+    summary: data.summary,
+    experience: data.experience,
+    education: data.education,
+    skills: data.skills,
+    certifications: data.certifications,
+    projects: data.projects,
+  };
+}
+
+function builderToApiPayload(data: ResumeBuilderData) {
+  return {
+    template: data.template,
+    sections: data.sections.map((section) => ({
+      id: section.id,
+      type: section.type,
+      title: section.title,
+      content: section.content,
+      order: section.order,
+      is_visible: section.isVisible,
+    })),
+    personal_info: data.personalInfo,
+    summary: data.summary,
+    experience: data.experience,
+    education: data.education,
+    skills: data.skills,
+    certifications: data.certifications,
+    projects: data.projects,
+  };
+}
+
+async function resolveResumeVersionId(versionId?: number): Promise<number> {
+  if (versionId) {
+    return versionId;
+  }
+  const versions = await getResumeVersions();
+  const selected = versions.find((version) => version.isDefault) ?? versions[0];
+  if (!selected) {
+    throw new Error('No resume version available.');
+  }
+  return selected.id;
+}
+
+// Resume Parsing & Analysis APIs
+export const parseResume = async (file: File): Promise<ParsedResume> => {
+  if (USE_MOCK_API) {
+    await delay(1500);
+    return {
+      personalInfo: {
+        name: 'John Doe',
+        email: 'john.doe@example.com',
+        phone: '+91 98765 43210',
+        location: 'Bangalore, India',
+        linkedin: 'linkedin.com/in/johndoe',
+        github: 'github.com/johndoe',
+        portfolio: 'johndoe.dev',
       },
-      {
-        priority: 'high',
-        category: 'Achievements',
-        suggestion: 'Add quantifiable metrics to experience',
-        impact: 'Improve content score by 5-7 points',
+      summary: 'Experienced Frontend Developer with 5+ years of expertise in React, TypeScript, and modern web technologies.',
+      experience: [],
+      education: [],
+      skills: { technical: [], soft: [], languages: [] },
+      certifications: [],
+      projects: [],
+    };
+  }
+
+  const token = getAccessToken();
+  const formData = new FormData();
+  formData.append('file', file);
+  const { data } = await axios.post<ParsedResumeApi & { version_id: number }>(
+    `${API_BASE_URL}/resume/parse`,
+    formData,
+    {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        'Content-Type': 'multipart/form-data',
       },
-      {
-        priority: 'medium',
-        category: 'Skills',
-        suggestion: 'Highlight leadership and soft skills',
-        impact: 'Better match for senior roles',
-      },
-      {
-        priority: 'low',
-        category: 'Formatting',
-        suggestion: 'Optimize section ordering',
-        impact: 'Minor ATS improvement',
-      },
-    ],
-    parsedData: parsed,
+    },
+  );
+  return mapParsedResume(data);
+};
+
+export const analyzeResume = async (targetRole?: string, versionId?: number): Promise<ResumeAnalysis> => {
+  if (USE_MOCK_API) {
+    await delay(1000);
+    const parsed = await parseResume(new File([], 'resume.pdf'));
+    return {
+      overallScore: 85,
+      atsScore: 82,
+      keywordMatch: 75,
+      formattingScore: 90,
+      contentScore: 80,
+      strengths: ['Strong technical skills', 'Clear work experience'],
+      weaknesses: ['Missing quantifiable metrics'],
+      missingKeywords: ['TypeScript', 'GraphQL'],
+      skillsGap: ['TypeScript'],
+      recommendations: [],
+      parsedData: parsed,
+    };
+  }
+
+  const params = new URLSearchParams();
+  if (targetRole) {
+    params.set('target_role', targetRole);
+  }
+  if (versionId) {
+    params.set('version_id', String(versionId));
+  }
+  const query = params.toString();
+  const data = await apiRequest<{
+    overall_score: number;
+    ats_score: number;
+    keyword_match: number;
+    formatting_score: number;
+    content_score: number;
+    strengths: string[];
+    weaknesses: string[];
+    missing_keywords: string[];
+    skills_gap: string[];
+    recommendations: ResumeAnalysis['recommendations'];
+    parsed_data: ParsedResumeApi;
+  }>('get', `/resume/analysis${query ? `?${query}` : ''}`);
+
+  return {
+    overallScore: data.overall_score,
+    atsScore: data.ats_score,
+    keywordMatch: data.keyword_match,
+    formattingScore: data.formatting_score,
+    contentScore: data.content_score,
+    strengths: data.strengths,
+    weaknesses: data.weaknesses,
+    missingKeywords: data.missing_keywords,
+    skillsGap: data.skills_gap,
+    recommendations: data.recommendations,
+    parsedData: mapParsedResume(data.parsed_data),
   };
 };
 
 export const getResumeVersions = async (): Promise<ResumeVersion[]> => {
-  requireMockApi('Resume versions');
-  await delay(400);
-  return [
-    {
-      id: 1,
-      name: 'Default Resume',
-      targetRole: 'Frontend Developer',
-      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      score: 85,
-      isDefault: true,
-    },
-    {
-      id: 2,
-      name: 'Senior Frontend Resume',
-      targetRole: 'Senior Frontend Developer',
-      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      score: 88,
-      isDefault: false,
-    },
-    {
-      id: 3,
-      name: 'Full Stack Resume',
-      targetRole: 'Full Stack Developer',
-      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      score: 82,
-      isDefault: false,
-    },
-  ];
+  if (USE_MOCK_API) {
+    await delay(400);
+    return [
+      {
+        id: 1,
+        name: 'Default Resume',
+        targetRole: 'Frontend Developer',
+        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        score: 85,
+        isDefault: true,
+      },
+    ];
+  }
+
+  const data = await apiRequest<{
+    items: Array<{
+      id: number;
+      name: string;
+      target_role: string;
+      created_at: string;
+      score: number;
+      is_default: boolean;
+      template_id: string;
+    }>;
+  }>('get', '/resume/versions');
+
+  return data.items.map((version) => ({
+    id: version.id,
+    name: version.name,
+    targetRole: version.target_role,
+    createdAt: version.created_at,
+    score: version.score,
+    isDefault: version.is_default,
+    templateId: version.template_id,
+  }));
 };
 
 export const createResumeVersion = async (data: {
   name: string;
   targetRole: string;
+  templateId?: string;
 }): Promise<ResumeVersion> => {
-  requireMockApi('Resume versions');
-  await delay(800);
-  return {
-    id: Math.floor(Math.random() * 1000),
+  if (USE_MOCK_API) {
+    await delay(800);
+    return {
+      id: Math.floor(Math.random() * 1000),
+      name: data.name,
+      targetRole: data.targetRole,
+      createdAt: new Date().toISOString(),
+      score: 0,
+      isDefault: false,
+    };
+  }
+
+  const created = await apiRequest<{
+    id: number;
+    name: string;
+    target_role: string;
+    created_at: string;
+    score: number;
+    is_default: boolean;
+    template_id: string;
+  }>('post', '/resume/versions', {
     name: data.name,
-    targetRole: data.targetRole,
-    createdAt: new Date().toISOString(),
-    score: 0,
-    isDefault: false,
-  };
-};
+    target_role: data.targetRole,
+    template_id: data.templateId ?? 'modern-blue',
+  });
 
-// Resume Templates
-export const getResumeTemplates = async (): Promise<ResumeTemplate[]> => {
-  requireMockApi('Resume templates');
-  await delay(500);
-  return [
-    {
-      id: 'modern-blue',
-      name: 'Modern Blue',
-      category: 'modern',
-      description: 'Clean and contemporary design perfect for tech roles',
-      preview: 'modern-blue-preview.jpg',
-      atsFriendly: true,
-      isPopular: true,
-    },
-    {
-      id: 'professional-classic',
-      name: 'Professional Classic',
-      category: 'professional',
-      description: 'Traditional format trusted by ATS systems',
-      preview: 'professional-classic-preview.jpg',
-      atsFriendly: true,
-      isPopular: true,
-    },
-    {
-      id: 'minimalist-clean',
-      name: 'Minimalist Clean',
-      category: 'minimalist',
-      description: 'Simple and elegant, great for creative industries',
-      preview: 'minimalist-clean-preview.jpg',
-      atsFriendly: true,
-      isPopular: false,
-    },
-    {
-      id: 'executive-bold',
-      name: 'Executive Bold',
-      category: 'executive',
-      description: 'Powerful design for senior-level positions',
-      preview: 'executive-bold-preview.jpg',
-      atsFriendly: true,
-      isPopular: false,
-    },
-    {
-      id: 'creative-colorful',
-      name: 'Creative Colorful',
-      category: 'creative',
-      description: 'Eye-catching design for design and marketing roles',
-      preview: 'creative-colorful-preview.jpg',
-      atsFriendly: false,
-      isPopular: false,
-    },
-  ];
-};
-
-export const getResumeBuilderData = async (_versionId?: number): Promise<ResumeBuilderData> => {
-  requireMockApi('Resume builder');
-  await delay(600);
-  const parsed = await parseResume(new File([], 'resume.pdf'));
   return {
-    template: 'modern-blue',
-    sections: [
-      { id: 'personal', type: 'personal', title: 'Personal Information', content: '', order: 1, isVisible: true },
-      { id: 'summary', type: 'summary', title: 'Professional Summary', content: parsed.summary, order: 2, isVisible: true },
-      { id: 'experience', type: 'experience', title: 'Work Experience', content: '', order: 3, isVisible: true },
-      { id: 'education', type: 'education', title: 'Education', content: '', order: 4, isVisible: true },
-      { id: 'skills', type: 'skills', title: 'Skills', content: '', order: 5, isVisible: true },
-      { id: 'certifications', type: 'certifications', title: 'Certifications', content: '', order: 6, isVisible: true },
-      { id: 'projects', type: 'projects', title: 'Projects', content: '', order: 7, isVisible: true },
-    ],
-    personalInfo: parsed.personalInfo,
-    summary: parsed.summary,
-    experience: parsed.experience,
-    education: parsed.education,
-    skills: parsed.skills,
-    certifications: parsed.certifications,
-    projects: parsed.projects,
+    id: created.id,
+    name: created.name,
+    targetRole: created.target_role,
+    createdAt: created.created_at,
+    score: created.score,
+    isDefault: created.is_default,
+    templateId: created.template_id,
   };
+};
+
+export const getResumeTemplates = async (): Promise<ResumeTemplate[]> => {
+  if (USE_MOCK_API) {
+    await delay(500);
+    return [
+      {
+        id: 'modern-blue',
+        name: 'Modern Blue',
+        category: 'modern',
+        description: 'Clean and contemporary design perfect for tech roles',
+        preview: 'modern-blue-preview.jpg',
+        atsFriendly: true,
+        isPopular: true,
+      },
+    ];
+  }
+
+  const data = await apiRequest<{
+    items: Array<{
+      id: string;
+      name: string;
+      category: ResumeTemplate['category'];
+      description: string;
+      preview: string;
+      ats_friendly: boolean;
+      is_popular: boolean;
+    }>;
+  }>('get', '/resume/templates');
+
+  return data.items.map((template) => ({
+    id: template.id,
+    name: template.name,
+    category: template.category,
+    description: template.description,
+    preview: template.preview,
+    atsFriendly: template.ats_friendly,
+    isPopular: template.is_popular,
+  }));
+};
+
+export const getResumeBuilderData = async (versionId?: number): Promise<ResumeBuilderData> => {
+  if (USE_MOCK_API) {
+    await delay(600);
+    const parsed = await parseResume(new File([], 'resume.pdf'));
+    return {
+      versionId: 1,
+      template: 'modern-blue',
+      sections: [
+        { id: 'personal', type: 'personal', title: 'Personal Information', content: '', order: 1, isVisible: true },
+        { id: 'summary', type: 'summary', title: 'Professional Summary', content: parsed.summary, order: 2, isVisible: true },
+        { id: 'experience', type: 'experience', title: 'Work Experience', content: '', order: 3, isVisible: true },
+        { id: 'education', type: 'education', title: 'Education', content: '', order: 4, isVisible: true },
+        { id: 'skills', type: 'skills', title: 'Skills', content: '', order: 5, isVisible: true },
+        { id: 'certifications', type: 'certifications', title: 'Certifications', content: '', order: 6, isVisible: true },
+        { id: 'projects', type: 'projects', title: 'Projects', content: '', order: 7, isVisible: true },
+      ],
+      personalInfo: parsed.personalInfo,
+      summary: parsed.summary,
+      experience: parsed.experience,
+      education: parsed.education,
+      skills: parsed.skills,
+      certifications: parsed.certifications,
+      projects: parsed.projects,
+    };
+  }
+
+  const resolvedId = await resolveResumeVersionId(versionId);
+  const data = await apiRequest<ResumeBuilderApiResponse>('get', `/resume/versions/${resolvedId}/builder`);
+  return mapBuilderData(data);
+};
+
+export const saveResumeBuilderData = async (
+  data: ResumeBuilderData,
+  versionId?: number,
+): Promise<ResumeBuilderData> => {
+  const resolvedId = versionId ?? data.versionId;
+  if (!resolvedId) {
+    throw new Error('Resume version id is required to save builder data.');
+  }
+
+  if (USE_MOCK_API) {
+    await delay(400);
+    return { ...data, versionId: resolvedId };
+  }
+
+  const saved = await apiRequest<ResumeBuilderApiResponse>(
+    'put',
+    `/resume/versions/${resolvedId}/builder`,
+    builderToApiPayload(data),
+  );
+  return mapBuilderData(saved);
 };
 
 export const getContentSuggestions = async (section: string, targetRole: string): Promise<string[]> => {
-  requireMockApi('Resume content suggestions');
-  await delay(800);
-  const suggestions: Record<string, string[]> = {
-    summary: [
-      `Experienced ${targetRole} with proven track record in...`,
-      `Results-driven ${targetRole} specializing in...`,
-      `Dynamic ${targetRole} with expertise in...`,
-    ],
-    experience: [
-      'Quantify achievements with numbers and percentages',
-      'Use action verbs: Led, Developed, Implemented, Optimized',
-      'Highlight impact on business metrics',
-    ],
-    skills: [
-      'List technical skills first',
-      'Include both hard and soft skills',
-      'Match skills to job description keywords',
-    ],
-  };
-  return suggestions[section] || ['Add relevant content for this section'];
+  if (USE_MOCK_API) {
+    await delay(800);
+    return [`Add relevant ${section} content for ${targetRole}.`];
+  }
+
+  const params = new URLSearchParams({ section, target_role: targetRole });
+  const data = await apiRequest<{ items: string[] }>('get', `/resume/suggestions?${params.toString()}`);
+  return data.items;
 };
 
-export const exportResume = async (format: 'pdf' | 'docx' | 'txt'): Promise<{ url: string }> => {
-  requireMockApi('Resume export');
-  await delay(1000);
-  return { url: `https://api.hiringjourney.com/resume/export/${format}` };
+export const exportResume = async (
+  format: 'pdf' | 'docx' | 'txt',
+  versionId?: number,
+): Promise<{ url: string; filename?: string }> => {
+  if (USE_MOCK_API) {
+    await delay(1000);
+    return { url: `https://api.hiringjourney.com/resume/export/${format}`, filename: `resume.${format}` };
+  }
+
+  const resolvedId = await resolveResumeVersionId(versionId);
+  const data = await apiRequest<{
+    content: string;
+    filename: string;
+    mime_type: string;
+    encoding?: string;
+  }>('post', `/resume/versions/${resolvedId}/export`, { format });
+  const blobContent =
+    data.encoding === 'base64'
+      ? Uint8Array.from(atob(data.content), (char) => char.charCodeAt(0))
+      : data.content;
+  const blob = new Blob([blobContent], { type: data.mime_type });
+  return { url: URL.createObjectURL(blob), filename: data.filename };
 };
 
 export const getCreditUsage = async (): Promise<CreditUsage> => {
@@ -588,8 +707,10 @@ export const getAdminStats = async (): Promise<AdminStats> => {
 };
 
 export const publishJob = async (data: PublishJobData): Promise<PublishJobResponse> => {
-  const { data: response } = await adminApi.publishJobAdminJobsPublishPost({
-    publishJobRequest: {
+  const response = await apiRequest<{ success: boolean; external_posting_ids?: Record<string, string> }>(
+    'post',
+    '/admin/jobs/publish',
+    {
       title: data.title,
       description: data.description,
       skills: data.skills,
@@ -597,32 +718,76 @@ export const publishJob = async (data: PublishJobData): Promise<PublishJobRespon
       salary_range: data.salaryRange,
       employment_type: data.employmentType,
       publish_to: data.publishTo,
+      status: data.status ?? 'published',
     },
-  });
+  );
   return {
     success: response.success,
     externalPostingIds: response.external_posting_ids || undefined,
   };
 };
 
+const mapAdminJob = (item: {
+  id: number;
+  title: string;
+  description: string;
+  skills: string[];
+  location: string;
+  salary_range?: { min?: number; max?: number };
+  employment_type: string;
+  status: string;
+  applicant_count: number;
+  created_at: string;
+  source: string;
+}): Job => ({
+  id: item.id,
+  title: item.title,
+  description: item.description,
+  skills: item.skills,
+  location: item.location,
+  salaryRange: {
+    min: item.salary_range?.min ?? 0,
+    max: item.salary_range?.max ?? 0,
+  },
+  employmentType: item.employment_type as Job['employmentType'],
+  status: item.status as Job['status'],
+  applicantCount: item.applicant_count,
+  createdAt: item.created_at,
+  source: item.source as Job['source'],
+});
+
+export const getAdminJob = async (jobId: number): Promise<Job> => {
+  const data = await apiRequest<Parameters<typeof mapAdminJob>[0]>('get', `/admin/jobs/${jobId}`);
+  return mapAdminJob(data);
+};
+
+export const updateAdminJob = async (
+  jobId: number,
+  data: PublishJobData & { status?: Job['status'] },
+): Promise<Job> => {
+  const response = await apiRequest<Parameters<typeof mapAdminJob>[0]>('patch', `/admin/jobs/${jobId}`, {
+    title: data.title,
+    description: data.description,
+    skills: data.skills,
+    location: data.location,
+    salary_range: data.salaryRange,
+    employment_type: data.employmentType,
+    status: data.status,
+  });
+  return mapAdminJob(response);
+};
+
+export const updateJobStatus = async (
+  jobId: number,
+  status: Job['status'],
+): Promise<{ success: boolean }> => {
+  const data = await apiRequest<{ success: boolean }>('patch', `/admin/jobs/${jobId}/status`, { status });
+  return { success: Boolean(data.success) };
+};
+
 export const getAdminJobs = async (): Promise<Job[]> => {
   const { data } = await adminApi.getAdminJobsAdminJobsGet();
-  return data.map((item) => ({
-    id: item.id,
-    title: item.title,
-    description: item.description,
-    skills: item.skills,
-    location: item.location,
-    salaryRange: {
-      min: item.salary_range?.min ?? 0,
-      max: item.salary_range?.max ?? 0,
-    },
-    employmentType: item.employment_type as Job['employmentType'],
-    status: item.status as Job['status'],
-    applicantCount: item.applicant_count,
-    createdAt: item.created_at,
-    source: item.source as Job['source'],
-  }));
+  return data.map((item) => mapAdminJob(item));
 };
 
 export const getAllApplications = async (): Promise<Application[]> => {
@@ -695,7 +860,13 @@ export const updateApplicationStatus = async (
 };
 
 export const getPlans = async (): Promise<Plan[]> => {
-  const { data } = await adminApi.getAdminPlansAdminPlansGet();
+  const data = await apiRequest<Array<{
+    id: number;
+    name: string;
+    credit_limit: number;
+    price: number;
+    usage: number;
+  }>>('get', '/admin/plans');
   return data.map((item) => ({
     id: item.id,
     name: item.name,
@@ -703,6 +874,96 @@ export const getPlans = async (): Promise<Plan[]> => {
     price: item.price,
     usage: item.usage,
   }));
+};
+
+export const createPlan = async (data: CreatePlanData): Promise<Plan> => {
+  const response = await apiRequest<{
+    id: number;
+    name: string;
+    credit_limit: number;
+    price: number;
+    usage: number;
+  }>('post', '/admin/plans', {
+    name: data.name,
+    credit_limit: data.creditLimit,
+    price: data.price,
+    is_active: data.isActive ?? true,
+  });
+  return {
+    id: response.id,
+    name: response.name,
+    creditLimit: response.credit_limit,
+    price: response.price,
+    usage: response.usage,
+  };
+};
+
+export const updatePlan = async (planId: number, data: UpdatePlanData): Promise<Plan> => {
+  const response = await apiRequest<{
+    id: number;
+    name: string;
+    credit_limit: number;
+    price: number;
+    usage: number;
+  }>('patch', `/admin/plans/${planId}`, {
+    name: data.name,
+    credit_limit: data.creditLimit,
+    price: data.price,
+    is_active: data.isActive,
+  });
+  return {
+    id: response.id,
+    name: response.name,
+    creditLimit: response.credit_limit,
+    price: response.price,
+    usage: response.usage,
+  };
+};
+
+export const getPlatformSettings = async (): Promise<PlatformSettings> => {
+  const data = await apiRequest<{
+    platform_display_name: string;
+    support_email: string;
+    default_candidate_credits: number;
+    linkedin_integration_enabled: boolean;
+    indeed_integration_enabled: boolean;
+    updated_at: string;
+  }>('get', '/admin/platform-settings');
+  return {
+    platformDisplayName: data.platform_display_name,
+    supportEmail: data.support_email,
+    defaultCandidateCredits: data.default_candidate_credits,
+    linkedinIntegrationEnabled: data.linkedin_integration_enabled,
+    indeedIntegrationEnabled: data.indeed_integration_enabled,
+    updatedAt: data.updated_at,
+  };
+};
+
+export const updatePlatformSettings = async (
+  settings: Omit<PlatformSettings, 'updatedAt'>,
+): Promise<PlatformSettings> => {
+  const data = await apiRequest<{
+    platform_display_name: string;
+    support_email: string;
+    default_candidate_credits: number;
+    linkedin_integration_enabled: boolean;
+    indeed_integration_enabled: boolean;
+    updated_at: string;
+  }>('put', '/admin/platform-settings', {
+    platform_display_name: settings.platformDisplayName,
+    support_email: settings.supportEmail,
+    default_candidate_credits: settings.defaultCandidateCredits,
+    linkedin_integration_enabled: settings.linkedinIntegrationEnabled,
+    indeed_integration_enabled: settings.indeedIntegrationEnabled,
+  });
+  return {
+    platformDisplayName: data.platform_display_name,
+    supportEmail: data.support_email,
+    defaultCandidateCredits: data.default_candidate_credits,
+    linkedinIntegrationEnabled: data.linkedin_integration_enabled,
+    indeedIntegrationEnabled: data.indeed_integration_enabled,
+    updatedAt: data.updated_at,
+  };
 };
 
 export const getAdminAuditLogs = async (limit: number = 50): Promise<AdminAuditLog[]> => {
@@ -728,6 +989,8 @@ export const getLegalDocuments = async (): Promise<LegalDocument[]> => {
     status: string;
     uploaded_at: string;
     issues?: string[] | null;
+    has_file?: boolean;
+    size_bytes?: number | null;
   }> }>('get', '/legal/documents');
   return data.items.map((doc) => ({
     id: doc.id,
@@ -736,9 +999,47 @@ export const getLegalDocuments = async (): Promise<LegalDocument[]> => {
     status: doc.status as LegalDocument['status'],
     uploadedAt: doc.uploaded_at,
     issues: doc.issues ?? undefined,
+    hasFile: doc.has_file ?? false,
+    sizeBytes: doc.size_bytes ?? undefined,
   }));
 };
 
+export const uploadLegalDocument = async (
+  file: File,
+  type: LegalDocument['type'],
+): Promise<LegalDocument> => {
+  const token = getAccessToken();
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('type', type);
+  const { data: doc } = await axios.post<{
+    id: number;
+    type: string;
+    name: string;
+    status: string;
+    uploaded_at: string;
+    issues?: string[] | null;
+    has_file?: boolean;
+    size_bytes?: number | null;
+  }>(`${API_BASE_URL}/legal/documents`, formData, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return {
+    id: doc.id,
+    type: doc.type as LegalDocument['type'],
+    name: doc.name,
+    status: doc.status as LegalDocument['status'],
+    uploadedAt: doc.uploaded_at,
+    issues: doc.issues ?? undefined,
+    hasFile: doc.has_file ?? true,
+    sizeBytes: doc.size_bytes ?? undefined,
+  };
+};
+
+/** @deprecated Use uploadLegalDocument with the file bytes. */
 export const createLegalDocument = async (data: {
   type: LegalDocument['type'];
   name: string;
@@ -750,7 +1051,9 @@ export const createLegalDocument = async (data: {
     status: string;
     uploaded_at: string;
     issues?: string[] | null;
-  }>('post', '/legal/documents', { type: data.type, name: data.name });
+    has_file?: boolean;
+    size_bytes?: number | null;
+  }>('post', '/legal/documents/metadata', { type: data.type, name: data.name });
   return {
     id: doc.id,
     type: doc.type as LegalDocument['type'],
@@ -758,7 +1061,23 @@ export const createLegalDocument = async (data: {
     status: doc.status as LegalDocument['status'],
     uploadedAt: doc.uploaded_at,
     issues: doc.issues ?? undefined,
+    hasFile: doc.has_file ?? false,
+    sizeBytes: doc.size_bytes ?? undefined,
   };
+};
+
+export const downloadLegalDocument = async (documentId: number, filename: string): Promise<void> => {
+  const token = getAccessToken();
+  const { data } = await axios.get<Blob>(`${API_BASE_URL}/legal/documents/${documentId}/download`, {
+    responseType: 'blob',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  const url = URL.createObjectURL(data);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 };
 
 export const validateLegalDocument = async (documentId: number): Promise<{ success: boolean; issues?: string[] }> => {
@@ -770,50 +1089,118 @@ export const validateLegalDocument = async (documentId: number): Promise<{ succe
 
 // Coding Arena APIs
 export const getCodingChallenges = async (): Promise<CodingChallenge[]> => {
-  requireMockApi('Coding challenges');
-  await delay(500);
-  return [
-    {
-      id: 1,
-      title: 'Two Sum',
-      description: 'Given an array of integers, return indices of the two numbers such that they add up to a specific target.',
-      difficulty: 'easy',
-      category: 'arrays',
-      tags: ['hash-table', 'arrays'],
-      solved: false,
-      attempts: 0,
-    },
-    {
-      id: 2,
-      title: 'Reverse Linked List',
-      description: 'Reverse a singly linked list.',
-      difficulty: 'medium',
-      category: 'data-structures',
-      tags: ['linked-list', 'recursion'],
-      solved: true,
-      attempts: 2,
-    },
-    {
-      id: 3,
-      title: 'Merge Intervals',
-      description: 'Given a collection of intervals, merge all overlapping intervals.',
-      difficulty: 'medium',
-      category: 'arrays',
-      tags: ['arrays', 'sorting'],
-      solved: false,
-      attempts: 1,
-    },
-    {
-      id: 4,
-      title: 'Design Twitter',
-      description: 'Design a simplified version of Twitter where users can post tweets, follow/unfollow users.',
-      difficulty: 'hard',
-      category: 'system-design',
-      tags: ['design', 'hash-table'],
-      solved: false,
-      attempts: 0,
-    },
-  ];
+  if (USE_MOCK_API) {
+    await delay(500);
+    return [
+      {
+        id: 1,
+        title: 'Two Sum',
+        description: 'Given an array of integers, return indices of the two numbers such that they add up to a specific target.',
+        difficulty: 'easy',
+        category: 'arrays',
+        tags: ['hash-table', 'arrays'],
+        solved: false,
+        attempts: 0,
+        executable: true,
+      },
+    ];
+  }
+
+  const data = await apiRequest<{
+    items: Array<{
+      id: number;
+      title: string;
+      description: string;
+      difficulty: CodingChallenge['difficulty'];
+      category: CodingChallenge['category'];
+      tags: string[];
+      solved: boolean;
+      attempts: number;
+      executable?: boolean;
+    }>;
+  }>('get', '/coding/challenges');
+
+  return data.items.map((item) => ({
+    ...item,
+    executable: item.executable ?? false,
+  }));
+};
+
+export const getCodingChallenge = async (challengeId: number): Promise<CodingChallengeDetail> => {
+  const data = await apiRequest<{
+    id: number;
+    title: string;
+    description: string;
+    difficulty: CodingChallenge['difficulty'];
+    category: CodingChallenge['category'];
+    tags: string[];
+    solved: boolean;
+    attempts: number;
+    executable?: boolean;
+    starter_code?: string | null;
+    function_name?: string | null;
+  }>('get', `/coding/challenges/${challengeId}`);
+
+  return {
+    id: data.id,
+    title: data.title,
+    description: data.description,
+    difficulty: data.difficulty,
+    category: data.category,
+    tags: data.tags,
+    solved: data.solved,
+    attempts: data.attempts,
+    executable: data.executable ?? false,
+    starterCode: data.starter_code,
+    functionName: data.function_name,
+  };
+};
+
+export const submitCodingSolution = async (
+  challengeId: number,
+  code: string,
+): Promise<CodingSubmitResult> => {
+  const data = await apiRequest<{
+    challenge_id: number;
+    passed: number;
+    total: number;
+    results: Array<{
+      case: number;
+      pass: boolean;
+      expected?: unknown;
+      actual?: unknown;
+      error?: string;
+    }>;
+    solved: boolean;
+    attempts: number;
+    error?: string | null;
+  }>('post', `/coding/challenges/${challengeId}/submit`, { code });
+
+  return {
+    challengeId: data.challenge_id,
+    passed: data.passed,
+    total: data.total,
+    results: data.results,
+    solved: data.solved,
+    attempts: data.attempts,
+    error: data.error,
+  };
+};
+
+export const recordCodingAttempt = async (
+  challengeId: number,
+  solved = false,
+): Promise<{ challengeId: number; solved: boolean; attempts: number }> => {
+  const data = await apiRequest<{
+    challenge_id: number;
+    solved: boolean;
+    attempts: number;
+  }>('post', `/coding/challenges/${challengeId}/attempts`, { solved });
+  return {
+    challengeId: data.challenge_id,
+    solved: data.solved,
+    attempts: data.attempts,
+  };
 };
 
 // Negotiation APIs
@@ -878,7 +1265,7 @@ export const submitInterviewFeedback = async (payload: {
   interviewType: 'hr' | 'technical';
   question: string;
   answer: string;
-}): Promise<{ score: number; feedback: string; strengths: string[]; improvements: string[] }> => {
+}): Promise<{ score: number; feedback: string; strengths: string[]; improvements: string[]; source?: string }> => {
   return apiRequest('post', '/interview/feedback', {
     interview_type: payload.interviewType,
     question: payload.question,
@@ -1137,4 +1524,174 @@ export const bulkApplyToJobs = async (request: BulkApplyRequest): Promise<{
   const success = results.filter((r) => r.status === 'fulfilled').length;
   const failed = results.filter((r) => r.status === 'rejected').length;
   return { success, failed, total: request.jobIds.length };
+};
+
+// Billing APIs
+const mapBillingPlan = (item: {
+  id: number;
+  name: string;
+  slug: string | null;
+  description: string;
+  credit_limit: number;
+  price: number;
+  yearly_price: number;
+  features: string[];
+  is_free: boolean;
+  sort_order: number;
+}): BillingPlan => ({
+  id: item.id,
+  name: item.name,
+  slug: item.slug,
+  description: item.description,
+  creditLimit: item.credit_limit,
+  price: item.price,
+  yearlyPrice: item.yearly_price,
+  features: item.features,
+  isFree: item.is_free,
+  sortOrder: item.sort_order,
+});
+
+const mapSubscription = (item: {
+  id: number;
+  plan_id: number;
+  plan_name: string;
+  plan_slug: string | null;
+  status: string;
+  billing_cycle: string;
+  current_period_start: string;
+  current_period_end: string;
+  cancel_at_period_end: boolean;
+  pending_plan_id: number | null;
+  pending_plan_name: string | null;
+  provider: string;
+}): UserSubscription => ({
+  id: item.id,
+  planId: item.plan_id,
+  planName: item.plan_name,
+  planSlug: item.plan_slug,
+  status: item.status as UserSubscription['status'],
+  billingCycle: item.billing_cycle as UserSubscription['billingCycle'],
+  currentPeriodStart: item.current_period_start,
+  currentPeriodEnd: item.current_period_end,
+  cancelAtPeriodEnd: item.cancel_at_period_end,
+  pendingPlanId: item.pending_plan_id,
+  pendingPlanName: item.pending_plan_name,
+  provider: item.provider,
+});
+
+export const getBillingPlans = async (): Promise<BillingPlan[]> => {
+  const data = await apiRequest<Parameters<typeof mapBillingPlan>[0][]>('get', '/billing/plans');
+  return data.map(mapBillingPlan);
+};
+
+export const getBillingSubscription = async (): Promise<UserSubscription | null> => {
+  const data = await apiRequest<{ subscription: Parameters<typeof mapSubscription>[0] | null }>(
+    'get',
+    '/billing/subscription',
+  );
+  return data.subscription ? mapSubscription(data.subscription) : null;
+};
+
+export const getBillingInvoices = async (): Promise<BillingInvoice[]> => {
+  const data = await apiRequest<Array<{
+    id: number;
+    invoice_number: string;
+    plan_id: number;
+    plan_name: string;
+    amount: number;
+    currency: string;
+    status: string;
+    billing_cycle: string;
+    failure_reason?: string | null;
+    paid_at?: string | null;
+    created_at: string;
+  }>>('get', '/billing/invoices');
+  return data.map((item) => ({
+    id: item.id,
+    invoiceNumber: item.invoice_number,
+    planId: item.plan_id,
+    planName: item.plan_name,
+    amount: item.amount,
+    currency: item.currency,
+    status: item.status as BillingInvoice['status'],
+    billingCycle: item.billing_cycle as BillingInvoice['billingCycle'],
+    failureReason: item.failure_reason ?? undefined,
+    paidAt: item.paid_at ?? undefined,
+    createdAt: item.created_at,
+  }));
+};
+
+const mapCheckoutSession = (data: {
+  checkout_session_id: number | null;
+  invoice_id: number | null;
+  order_id?: string;
+  amount: number;
+  currency: string;
+  plan_id: number;
+  plan_name?: string;
+  billing_cycle: string;
+  key_id?: string;
+  mock: boolean;
+  free: boolean;
+  subscription?: Parameters<typeof mapSubscription>[0];
+}): CheckoutSession => ({
+  checkoutSessionId: data.checkout_session_id,
+  invoiceId: data.invoice_id,
+  orderId: data.order_id,
+  amount: data.amount,
+  currency: data.currency,
+  planId: data.plan_id,
+  planName: data.plan_name,
+  billingCycle: data.billing_cycle as CheckoutSession['billingCycle'],
+  keyId: data.key_id,
+  mock: data.mock,
+  free: data.free,
+  subscription: data.subscription ? mapSubscription(data.subscription) : undefined,
+});
+
+export const startBillingCheckout = async (
+  planId: number,
+  billingCycle: 'monthly' | 'yearly',
+): Promise<CheckoutSession> => {
+  const data = await apiRequest<Parameters<typeof mapCheckoutSession>[0]>('post', '/billing/checkout', {
+    plan_id: planId,
+    billing_cycle: billingCycle,
+  });
+  return mapCheckoutSession(data);
+};
+
+export const confirmBillingCheckout = async (
+  invoiceId: number,
+  paymentId?: string,
+  signature?: string,
+): Promise<{ success: boolean; subscription?: UserSubscription }> => {
+  const data = await apiRequest<{
+    success: boolean;
+    subscription?: Parameters<typeof mapSubscription>[0];
+  }>('post', '/billing/checkout/confirm', {
+    invoice_id: invoiceId,
+    payment_id: paymentId,
+    signature,
+  });
+  return {
+    success: data.success,
+    subscription: data.subscription ? mapSubscription(data.subscription) : undefined,
+  };
+};
+
+export const updateBillingSubscription = async (
+  action: 'cancel' | 'resume' | 'change_plan',
+  planId?: number,
+): Promise<UserSubscription> => {
+  const data = await apiRequest<{ subscription: Parameters<typeof mapSubscription>[0] }>(
+    'patch',
+    '/billing/subscription',
+    { action, plan_id: planId },
+  );
+  return mapSubscription(data.subscription);
+};
+
+export const retryBillingPayment = async (): Promise<CheckoutSession> => {
+  const data = await apiRequest<Parameters<typeof mapCheckoutSession>[0]>('post', '/billing/retry-payment');
+  return mapCheckoutSession(data);
 };

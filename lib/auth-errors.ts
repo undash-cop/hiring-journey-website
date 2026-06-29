@@ -27,7 +27,7 @@ export function parseAuthErrorParam(value: string | null): AuthErrorCode | null 
   return value === "auth_failed" ? "auth_failed" : null;
 }
 
-/** Record auth failures for debugging (console in dev; hook for Sentry/analytics later). */
+/** Record auth failures for debugging and Sentry. */
 export function reportAuthError(
   code: AuthErrorCode,
   detail?: Record<string, unknown>,
@@ -45,4 +45,8 @@ export function reportAuthError(
       // ignore quota / private mode
     }
   }
+
+  void import("@/lib/monitoring").then(({ captureMessage }) => {
+    captureMessage(`auth:${code}`, payload);
+  });
 }

@@ -38,17 +38,38 @@ Keycloak holds identity; Postgres holds product data (`user_profiles`, `user_cre
 - Callback: `/auth/callback` → `/app/dashboard`
 - Legacy `/auth/login` redirects to `/app/login` via `proxy.ts`
 
-## Pricing → signup flow
+## Pricing → signup → billing
 
-1. CTA on `/pricing` → `/app/signup`
-2. `redirectToRegister()` → Keycloak
-3. Callback → `/app/dashboard`
+1. `/pricing` loads plans from `GET /billing/plans` (static fallback if API unavailable)
+2. Free tier CTA → `/app/signup` → Keycloak
+3. Paid tier CTA → `/app/login?redirect=/app/credits?plan={id}`
+4. Checkout on `/app/credits` via Razorpay (mock mode when keys unset)
+
+## Admin & platform config
+
+- Admin routes under `/app/admin/*` (realm role `admin`)
+- Job publish/edit, platform settings, and plan CRUD via `/admin/*` APIs
+- Subscription catalog is source-of-truth in `subscription_plans` table
 
 ## API contract
 
 - Backend publishes OpenAPI at `/openapi.json`
-- Frontend uses generated TypeScript client (`lib/generated/api-client`)
+- Frontend uses generated TypeScript client (`lib/generated/api-client`) plus `apiRequest()` for newer routes (billing, admin extensions)
 - Sync: [development/api-client-sync.md](./development/api-client-sync.md)
+
+## Storage & integrations
+
+| Feature | Backend | Notes |
+|---------|---------|--------|
+| Legal documents | Cloudflare R2 or local `UPLOAD_DIR` | [file_storage.py](../backend/app/services/file_storage.py) |
+| Billing | Razorpay orders + webhooks | Mock checkout without keys |
+| Coding arena | Python subprocess sandbox | `POST /coding/challenges/{id}/submit` |
+| Interview feedback | OpenRouter (OpenAI-compatible) or heuristics | Set `LLM_API_KEY` to your OpenRouter key |
+| Observability | Sentry + Prometheus `/metrics` | [observability.md](./development/observability.md) |
+
+## Quality gate (CI)
+
+Every PR runs lint, typecheck, build, route validators, backend `pytest`, OpenAPI sync check, and Playwright E2E. See [release-readiness.md](./deployment/release-readiness.md).
 
 ## Environment variables
 

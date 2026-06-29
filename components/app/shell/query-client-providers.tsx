@@ -1,11 +1,18 @@
 "use client";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryCache, QueryClient, QueryClientProvider, MutationCache } from "@tanstack/react-query";
 import type { ReactNode } from "react";
+import { captureApiError } from "@/lib/monitoring";
 import { ToastProvider } from "../contexts/ToastContext";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error) => captureApiError(error, { source: "react_query" }),
+  }),
+  mutationCache: new MutationCache({
+    onError: (error) => captureApiError(error, { source: "react_query_mutation" }),
+  }),
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,

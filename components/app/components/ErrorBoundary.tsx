@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import type { ReactNode } from 'react';
+import { captureException } from '@/lib/monitoring';
 import { Button } from './ui';
 
 interface Props {
@@ -23,7 +24,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: unknown) {
-    console.error('Error caught by boundary:', error, errorInfo);
+    captureException(error, {
+      source: 'react_error_boundary',
+      componentStack: errorInfo,
+    });
   }
 
   render() {

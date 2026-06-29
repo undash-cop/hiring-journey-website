@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { RouteShell } from "@/components/layout/route-shell";
 import { Analytics } from "@/components/analytics/analytics";
+import { MonitoringBootstrap } from "@/components/monitoring/monitoring-bootstrap";
 import { metadataBase, getCanonicalUrl } from "@/lib/metadata";
 import GTMPageTracker from "@/components/analytics/gtm-page-tracker";
 import { Suspense } from "react";
@@ -97,6 +98,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <Analytics />
+        <MonitoringBootstrap />
         <Suspense fallback={null}>
           <GTMPageTracker />
         </Suspense>

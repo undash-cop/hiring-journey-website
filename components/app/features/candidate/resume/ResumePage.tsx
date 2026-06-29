@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getResumeData, optimizeResumeForRole, parseResume, analyzeResume, getResumeVersions, getResumeTemplates, getResumeBuilderData, getContentSuggestions, exportResume } from '../../../services/api';
+import { getResumeData, optimizeResumeForRole, parseResume, analyzeResume, getResumeVersions, getResumeTemplates, getResumeBuilderData, getContentSuggestions, exportResume, saveResumeBuilderData } from '../../../services/api';
 import { Card, Button, Badge, Input, LoadingCard } from '../../../components/ui';
-import { PageEmptyState, PageErrorState } from '../../../components/QueryStateViews';
+import { PageErrorState } from '../../../components/QueryStateViews';
 import { useToast } from '../../../contexts/ToastContext';
 import { useInvalidateResumeData } from '../../../hooks/invalidateCandidateQueries';
-import { MOCK_API_ENABLED } from '@/lib/candidate-features';
 import { queryKeys } from '@/lib/query-keys';
-import type { ResumeVersion, ResumeTemplate } from '../../../types';
+import type { ResumeVersion, ResumeTemplate, ResumeBuilderData } from '../../../types';
 
 export default function ResumePage() {
   const { showToast } = useToast();
@@ -18,6 +17,8 @@ export default function ResumePage() {
   const [isParsing, setIsParsing] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [selectedVersionId, setSelectedVersionId] = useState<number | undefined>();
+  const [builderEdits, setBuilderEdits] = useState<ResumeBuilderData | null>(null);
   const queryClient = useQueryClient();
   const invalidateResumeData = useInvalidateResumeData();
 
@@ -35,20 +36,25 @@ export default function ResumePage() {
   const { data: versions = [] as ResumeVersion[] } = useQuery({
     queryKey: queryKeys.resumeVersions,
     queryFn: getResumeVersions,
-    enabled: MOCK_API_ENABLED,
   });
 
   const { data: templates } = useQuery({
     queryKey: queryKeys.resumeTemplates,
     queryFn: getResumeTemplates,
-    enabled: MOCK_API_ENABLED,
   });
 
+  const activeVersionId = selectedVersionId ?? versions.find((version) => version.isDefault)?.id ?? versions[0]?.id;
+
   const { data: builderData } = useQuery({
-    queryKey: queryKeys.resumeBuilder,
-    queryFn: () => getResumeBuilderData(),
-    enabled: MOCK_API_ENABLED && activeTab === 'builder',
+    queryKey: [...queryKeys.resumeBuilder, activeVersionId],
+    queryFn: () => getResumeBuilderData(activeVersionId),
+    enabled: activeTab === 'builder' && Boolean(activeVersionId),
   });
+
+  const effectiveBuilder =
+    builderEdits && builderEdits.versionId === activeVersionId
+      ? builderEdits
+      : builderData ?? null;
 
   const roleOptimizeMutation = useMutation({
     mutationFn: () => optimizeResumeForRole(targetRole),
@@ -77,7 +83,8 @@ export default function ResumePage() {
       setIsParsing(false);
       showToast('Resume parsed successfully!', 'success');
       setActiveTab('builder');
-      queryClient.invalidateQueries({ queryKey: ['resume-builder'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.resumeVersions });
+      queryClient.invalidateQueries({ queryKey: queryKeys.resumeBuilder });
     },
     onError: () => {
       setIsParsing(false);
@@ -85,10 +92,27 @@ export default function ResumePage() {
     },
   });
 
+  const saveBuilderMutation = useMutation({
+    mutationFn: (data: ResumeBuilderData) => saveResumeBuilderData(data, activeVersionId),
+    onSuccess: () => {
+      showToast('Resume saved successfully!', 'success');
+      queryClient.invalidateQueries({ queryKey: queryKeys.resumeBuilder });
+      queryClient.invalidateQueries({ queryKey: queryKeys.resumeVersions });
+      invalidateResumeData();
+    },
+    onError: () => {
+      showToast('Failed to save resume. Please try again.', 'error');
+    },
+  });
+
   const exportMutation = useMutation({
-    mutationFn: exportResume,
+    mutationFn: (format: 'pdf' | 'docx' | 'txt') => exportResume(format, activeVersionId),
     onSuccess: (result) => {
-      window.open(result.url, '_blank');
+      const link = document.createElement('a');
+      link.href = result.url;
+      link.download = result.filename ?? 'resume';
+      link.click();
+      URL.revokeObjectURL(result.url);
       showToast('Resume exported successfully!', 'success');
     },
     onError: () => {
@@ -130,7 +154,18 @@ export default function ResumePage() {
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplate(templateId);
     showToast(`Template "${templates?.find((t) => t.id === templateId)?.name}" selected`, 'success');
+    if (effectiveBuilder) {
+      setBuilderEdits({ ...effectiveBuilder, template: templateId });
+    }
     setActiveTab('builder');
+  };
+
+  const handleSaveBuilder = () => {
+    if (!effectiveBuilder || !activeVersionId) {
+      showToast('No resume version to save.', 'error');
+      return;
+    }
+    saveBuilderMutation.mutate({ ...effectiveBuilder, versionId: activeVersionId });
   };
 
   if (isLoading) {
@@ -276,28 +311,20 @@ export default function ResumePage() {
             </div>
             {file && !isParsing && (
               <div className="mt-3 flex items-center gap-2">
-                {MOCK_API_ENABLED ? (
-                  <>
-                    <Button onClick={handleUpload} size="sm" className="flex-1">
-                      Parse Resume
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setFile(null);
-                        const input = document.getElementById('resume-upload') as HTMLInputElement;
-                        if (input) input.value = '';
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </>
-                ) : (
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    PDF parsing is coming soon. Use Optimize for Role to improve your score today.
-                  </p>
-                )}
+                <Button onClick={handleUpload} size="sm" className="flex-1">
+                  Parse Resume
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setFile(null);
+                    const input = document.getElementById('resume-upload') as HTMLInputElement;
+                    if (input) input.value = '';
+                  }}
+                >
+                  Cancel
+                </Button>
               </div>
             )}
             {isParsing && (
@@ -396,12 +423,6 @@ export default function ResumePage() {
       )}
 
       {activeTab === 'templates' && (
-        !MOCK_API_ENABLED ? (
-          <PageEmptyState
-            title="Templates coming soon"
-            description="Resume templates will be available in a future release."
-          />
-        ) : (
         <div className="space-y-6">
           <div>
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
@@ -458,16 +479,9 @@ export default function ResumePage() {
             <LoadingCard />
           )}
         </div>
-        )
       )}
 
       {activeTab === 'builder' && (
-        !MOCK_API_ENABLED ? (
-          <PageEmptyState
-            title="Resume builder coming soon"
-            description="The visual resume builder will be available in a future release."
-          />
-        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Builder Sidebar */}
           <div className="lg:col-span-1 space-y-4">
@@ -476,7 +490,7 @@ export default function ResumePage() {
                 Resume Sections
               </h3>
               <div className="space-y-2">
-                {builderData?.sections.map((section) => (
+                {effectiveBuilder?.sections.map((section) => (
                   <button
                     key={section.id}
                     onClick={() => setEditingSection(editingSection === section.id ? null : section.id)}
@@ -497,6 +511,23 @@ export default function ResumePage() {
                 Quick Actions
               </h3>
               <div className="space-y-2">
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={handleSaveBuilder}
+                  isLoading={saveBuilderMutation.isPending}
+                >
+                  Save Resume
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => exportMutation.mutate('txt')}
+                  isLoading={exportMutation.isPending}
+                >
+                  Export as Text
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
@@ -525,15 +556,16 @@ export default function ResumePage() {
 
           {/* Builder Editor */}
           <div className="lg:col-span-2 space-y-4">
-            {editingSection && builderData && (
+            {editingSection && effectiveBuilder && (
               <Card>
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                  Edit {builderData.sections.find((s) => s.id === editingSection)?.title}
+                  Edit {effectiveBuilder.sections.find((s) => s.id === editingSection)?.title}
                 </h3>
                 {editingSection === 'summary' && (
                   <div className="space-y-3">
                     <textarea
-                      value={builderData.summary}
+                      value={effectiveBuilder.summary}
+                      onChange={(e) => setBuilderEdits({ ...effectiveBuilder, summary: e.target.value })}
                       rows={6}
                       className="w-full px-3 py-2 text-xs bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-900 dark:focus:ring-gray-100 focus:border-transparent"
                       placeholder="Write a compelling professional summary..."
@@ -554,49 +586,85 @@ export default function ResumePage() {
                         Get AI Suggestion
                       </Button>
                       <span className="text-[10px] text-gray-500 dark:text-gray-400">
-                        {builderData.summary.length} characters
+                        {effectiveBuilder.summary.length} characters
                       </span>
                     </div>
                   </div>
                 )}
-                {editingSection === 'personal' && builderData.personalInfo && (
+                {editingSection === 'personal' && effectiveBuilder.personalInfo && (
                   <div className="grid grid-cols-2 gap-3">
                     <Input
                       label="Full Name"
-                      value={builderData.personalInfo.name}
+                      value={effectiveBuilder.personalInfo.name}
+                      onChange={(e) =>
+                        setBuilderEdits({
+                          ...effectiveBuilder,
+                          personalInfo: { ...effectiveBuilder.personalInfo, name: e.target.value },
+                        })
+                      }
                       size="sm"
                     />
                     <Input
                       label="Email"
                       type="email"
-                      value={builderData.personalInfo.email}
+                      value={effectiveBuilder.personalInfo.email}
+                      onChange={(e) =>
+                        setBuilderEdits({
+                          ...effectiveBuilder,
+                          personalInfo: { ...effectiveBuilder.personalInfo, email: e.target.value },
+                        })
+                      }
                       size="sm"
                     />
                     <Input
                       label="Phone"
-                      value={builderData.personalInfo.phone}
+                      value={effectiveBuilder.personalInfo.phone}
+                      onChange={(e) =>
+                        setBuilderEdits({
+                          ...effectiveBuilder,
+                          personalInfo: { ...effectiveBuilder.personalInfo, phone: e.target.value },
+                        })
+                      }
                       size="sm"
                     />
                     <Input
                       label="Location"
-                      value={builderData.personalInfo.location}
+                      value={effectiveBuilder.personalInfo.location}
+                      onChange={(e) =>
+                        setBuilderEdits({
+                          ...effectiveBuilder,
+                          personalInfo: { ...effectiveBuilder.personalInfo, location: e.target.value },
+                        })
+                      }
                       size="sm"
                     />
                     <Input
                       label="LinkedIn"
-                      value={builderData.personalInfo.linkedin}
+                      value={effectiveBuilder.personalInfo.linkedin}
+                      onChange={(e) =>
+                        setBuilderEdits({
+                          ...effectiveBuilder,
+                          personalInfo: { ...effectiveBuilder.personalInfo, linkedin: e.target.value },
+                        })
+                      }
                       size="sm"
                     />
                     <Input
                       label="GitHub"
-                      value={builderData.personalInfo.github}
+                      value={effectiveBuilder.personalInfo.github}
+                      onChange={(e) =>
+                        setBuilderEdits({
+                          ...effectiveBuilder,
+                          personalInfo: { ...effectiveBuilder.personalInfo, github: e.target.value },
+                        })
+                      }
                       size="sm"
                     />
                   </div>
                 )}
                 {editingSection === 'experience' && (
                   <div className="space-y-4">
-                    {builderData.experience.map((exp, index) => (
+                    {effectiveBuilder.experience.map((exp, index) => (
                       <Card key={index} className="p-3">
                         <div className="grid grid-cols-2 gap-2 mb-2">
                           <Input label="Company" value={exp.company} size="sm" />
@@ -614,14 +682,14 @@ export default function ResumePage() {
                     ))}
                   </div>
                 )}
-                {editingSection === 'skills' && builderData.skills && (
+                {editingSection === 'skills' && effectiveBuilder.skills && (
                   <div className="space-y-3">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Technical Skills
                       </label>
                       <div className="flex flex-wrap gap-2">
-                        {builderData.skills.technical.map((skill, idx) => (
+                        {effectiveBuilder.skills.technical.map((skill, idx) => (
                           <Badge key={idx} variant="info">{skill}</Badge>
                         ))}
                       </div>
@@ -631,7 +699,7 @@ export default function ResumePage() {
                         Soft Skills
                       </label>
                       <div className="flex flex-wrap gap-2">
-                        {builderData.skills.soft.map((skill, idx) => (
+                        {effectiveBuilder.skills.soft.map((skill, idx) => (
                           <Badge key={idx} variant="default">{skill}</Badge>
                         ))}
                       </div>
@@ -661,26 +729,26 @@ export default function ResumePage() {
               </h3>
               <div className="aspect-[8.5/11] bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-4 overflow-auto">
                 <div className="space-y-3 text-xs">
-                  {builderData?.personalInfo && (
+                  {effectiveBuilder?.personalInfo && (
                     <div>
                       <h4 className="font-semibold text-gray-900 dark:text-gray-100">
-                        {builderData.personalInfo.name}
+                        {effectiveBuilder.personalInfo.name}
                       </h4>
                       <p className="text-gray-600 dark:text-gray-400">
-                        {builderData.personalInfo.email} • {builderData.personalInfo.phone}
+                        {effectiveBuilder.personalInfo.email} • {effectiveBuilder.personalInfo.phone}
                       </p>
                     </div>
                   )}
-                  {builderData?.summary && (
+                  {effectiveBuilder?.summary && (
                     <div>
                       <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-1">Summary</h5>
-                      <p className="text-gray-600 dark:text-gray-400">{builderData.summary}</p>
+                      <p className="text-gray-600 dark:text-gray-400">{effectiveBuilder.summary}</p>
                     </div>
                   )}
-                  {builderData?.experience && builderData.experience.length > 0 && (
+                  {effectiveBuilder?.experience && effectiveBuilder.experience.length > 0 && (
                     <div>
                       <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-1">Experience</h5>
-                      {builderData.experience.map((exp, idx) => (
+                      {effectiveBuilder.experience.map((exp, idx) => (
                         <div key={idx} className="mb-2">
                           <p className="font-medium text-gray-900 dark:text-gray-100">
                             {exp.title} at {exp.company}
@@ -697,16 +765,9 @@ export default function ResumePage() {
             </Card>
           </div>
         </div>
-        )
       )}
 
       {activeTab === 'analysis' && (
-        !MOCK_API_ENABLED ? (
-          <PageEmptyState
-            title="Resume analysis coming soon"
-            description="Deep ATS analysis will be available in a future release."
-          />
-        ) : (
         <div className="space-y-6">
           {/* Analysis Input */}
           <Card>
@@ -877,16 +938,9 @@ export default function ResumePage() {
             </Card>
           )}
         </div>
-        )
       )}
 
       {activeTab === 'versions' && (
-        !MOCK_API_ENABLED ? (
-          <PageEmptyState
-            title="Resume versions coming soon"
-            description="Multiple resume versions will be available in a future release."
-          />
-        ) : (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -929,10 +983,26 @@ export default function ResumePage() {
                     </div>
                   </div>
                   <div className="flex gap-2 mt-3">
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => {
+                        setSelectedVersionId(version.id);
+                        setActiveTab('builder');
+                      }}
+                    >
                       View
                     </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => {
+                        setSelectedVersionId(version.id);
+                        exportMutation.mutate('txt');
+                      }}
+                    >
                       Download
                     </Button>
                   </div>
@@ -952,7 +1022,6 @@ export default function ResumePage() {
             </Card>
           )}
         </div>
-        )
       )}
 
       {/* Role Optimization Modal */}

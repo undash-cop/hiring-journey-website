@@ -35,3 +35,6 @@ export const formatIndianCurrencyWithDecimals = (amount: number, decimals: numbe
 export const formatIndianCurrencyRange = (min: number, max: number): string => {
   return `${formatIndianCurrency(min)} - ${formatIndianCurrency(max)}`;
 };
+
+/** Format amount stored in paise (e.g. Razorpay / billing API) as INR. */
+export const formatPaiseAsInr = (paise: number): string => formatIndianCurrency(paise / 100);

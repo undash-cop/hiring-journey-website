@@ -1,16 +1,148 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getCodingChallenges } from '../../../services/api';
-import { Card, Button, Badge, Select } from '../../../components/ui';
-import type { CodingChallenge } from '../../../types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  getCodingChallenge,
+  getCodingChallenges,
+  recordCodingAttempt,
+  submitCodingSolution,
+} from '../../../services/api';
+import { Card, Button, Badge, Select, Modal } from '../../../components/ui';
+import { useToast } from '../../../contexts/ToastContext';
+import { queryKeys } from '@/lib/query-keys';
+import type { CodingChallenge, CodingChallengeDetail, CodingSubmitResult } from '../../../types';
+
+function ChallengeWorkspace({
+  challenge,
+  onClose,
+}: {
+  challenge: CodingChallengeDetail;
+  onClose: () => void;
+}) {
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
+  const [code, setCode] = useState(challenge.starterCode ?? '');
+  const [submitResult, setSubmitResult] = useState<CodingSubmitResult | null>(null);
+
+  const submitMutation = useMutation({
+    mutationFn: (solution: string) => submitCodingSolution(challenge.id, solution),
+    onSuccess: (result) => {
+      setSubmitResult(result);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.codingChallenges });
+      if (result.solved) {
+        showToast('All tests passed — challenge solved!', 'success');
+      } else {
+        showToast(`${result.passed}/${result.total} tests passed. Keep refining your solution.`, 'info');
+      }
+    },
+    onError: () => {
+      showToast('Failed to run your solution. Please try again.', 'error');
+    },
+  });
+
+  return (
+    <Modal
+      isOpen
+      onClose={onClose}
+      title={challenge.title}
+      size="xl"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
+          <Button
+            onClick={() => submitMutation.mutate(code)}
+            isLoading={submitMutation.isPending}
+            disabled={!code.trim()}
+          >
+            Run & Submit
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+          {challenge.description}
+        </p>
+        {challenge.functionName && (
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Implement <code className="font-mono">{challenge.functionName}(...)</code> in Python.
+          </p>
+        )}
+        <div>
+          <label htmlFor="coding-solution" className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Your solution
+          </label>
+          <textarea
+            id="coding-solution"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            rows={14}
+            spellCheck={false}
+            className="w-full font-mono text-xs px-3 py-2 bg-gray-950 text-gray-100 border border-gray-700 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400"
+          />
+        </div>
+        {submitResult && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {submitResult.passed}/{submitResult.total} tests passed
+              {submitResult.solved ? ' — solved!' : ''}
+            </p>
+            {submitResult.error && (
+              <p className="text-xs text-red-600 dark:text-red-400">{submitResult.error}</p>
+            )}
+            <ul className="space-y-1">
+              {submitResult.results.map((result) => (
+                <li
+                  key={result.case}
+                  className={`text-xs rounded px-2 py-1 ${
+                    result.pass
+                      ? 'bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-200'
+                      : 'bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-200'
+                  }`}
+                >
+                  Case {result.case}: {result.pass ? 'Pass' : 'Fail'}
+                  {!result.pass && result.error && ` — ${result.error}`}
+                  {!result.pass && !result.error && result.expected !== undefined && (
+                    <> — expected {JSON.stringify(result.expected)}, got {JSON.stringify(result.actual)}</>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
 
 export default function CodingArenaPage() {
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
   const [difficulty, setDifficulty] = useState<string>('all');
   const [category, setCategory] = useState<string>('all');
+  const [activeChallengeId, setActiveChallengeId] = useState<number | null>(null);
 
   const { data: challenges, isLoading } = useQuery({
-    queryKey: ['coding-challenges'],
+    queryKey: queryKeys.codingChallenges,
     queryFn: getCodingChallenges,
+  });
+
+  const { data: activeChallenge } = useQuery({
+    queryKey: [...queryKeys.codingChallenges, 'detail', activeChallengeId],
+    queryFn: () => getCodingChallenge(activeChallengeId!),
+    enabled: activeChallengeId !== null,
+  });
+
+  const attemptMutation = useMutation({
+    mutationFn: (challengeId: number) => recordCodingAttempt(challengeId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.codingChallenges });
+      showToast('Attempt recorded — keep practicing!', 'success');
+    },
+    onError: () => {
+      showToast('Failed to record attempt. Please try again.', 'error');
+    },
   });
 
   const filteredChallenges = challenges?.filter((challenge: CodingChallenge) => {
@@ -18,6 +150,18 @@ export default function CodingArenaPage() {
     if (category !== 'all' && challenge.category !== category) return false;
     return true;
   });
+
+  const handleStartChallenge = (challenge: CodingChallenge) => {
+    if (challenge.executable) {
+      setActiveChallengeId(challenge.id);
+      return;
+    }
+    attemptMutation.mutate(challenge.id);
+  };
+
+  const closeWorkspace = () => {
+    setActiveChallengeId(null);
+  };
 
   if (isLoading) {
     return <div className="p-4 sm:p-6">Loading...</div>;
@@ -74,6 +218,9 @@ export default function CodingArenaPage() {
                     {challenge.difficulty}
                   </Badge>
                   <Badge variant="info">{challenge.category}</Badge>
+                  {challenge.executable && (
+                    <Badge variant="default">Runnable</Badge>
+                  )}
                   {challenge.solved && (
                     <Badge variant="success">Solved</Badge>
                   )}
@@ -91,7 +238,13 @@ export default function CodingArenaPage() {
                   </span>
                 ))}
               </div>
-              <Button size="sm">Start Challenge</Button>
+              <Button
+                size="sm"
+                onClick={() => handleStartChallenge(challenge)}
+                isLoading={attemptMutation.isPending && !challenge.executable}
+              >
+                {challenge.executable ? 'Open Workspace' : 'Start Challenge'}
+              </Button>
             </div>
             {challenge.attempts > 0 && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
@@ -125,6 +278,14 @@ export default function CodingArenaPage() {
           </div>
         </div>
       </Card>
+
+      {activeChallenge && (
+        <ChallengeWorkspace
+          key={`${activeChallenge.id}-${activeChallenge.starterCode ?? ''}`}
+          challenge={activeChallenge}
+          onClose={closeWorkspace}
+        />
+      )}
     </div>
   );
 }

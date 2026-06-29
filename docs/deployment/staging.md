@@ -29,7 +29,6 @@ Local dev URIs: [keycloak.md](./keycloak.md) and [local-dev.md](../development/l
 ### 2. Staging API VM
 
 ```bash
-```bash
 git clone https://github.com/undash-cop/hiring-journey-backend.git /opt/hiring-journey-backend
 cd /opt/hiring-journey-backend
 cp .env.staging.example .env.staging
@@ -110,5 +109,6 @@ NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=hiringjourney-app
 
 ## Related
 
+- [staging-deploy-checklist.md](./staging-deploy-checklist.md) — repeatable deploy + smoke steps
 - [production-checklist.md](./production-checklist.md)
 - [operations/runbook.md](../operations/runbook.md)

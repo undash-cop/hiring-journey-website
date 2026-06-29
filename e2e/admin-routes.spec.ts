@@ -44,17 +44,26 @@ test.describe("Admin app routes", () => {
     await page.goto("/app/admin/plans", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: /plans & credits/i })).toBeVisible();
     await expect(page.getByText("Starter")).toBeVisible();
+    await expect(page.getByRole("button", { name: /create new plan/i })).toBeEnabled();
   });
 
-  test("settings page shows deployment-managed message", async ({ page }) => {
+  test("settings page shows editable platform settings", async ({ page }) => {
     await page.goto("/app/admin/settings", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: /^settings$/i })).toBeVisible();
-    await expect(page.getByText(/deployment-managed/i)).toBeVisible();
+    await expect(page.getByLabel(/platform display name/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /save settings/i })).toBeVisible();
   });
 
-  test("publish page renders job form", async ({ page }) => {
+  test("publish page supports save as draft", async ({ page }) => {
     await page.goto("/app/admin/publish", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: /publish job/i })).toBeVisible();
-    await expect(page.getByLabel(/job title/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /save as draft/i })).toBeEnabled();
+  });
+
+  test("jobs page edit link opens publish form", async ({ page }) => {
+    await page.goto("/app/admin/jobs", { waitUntil: "domcontentloaded" });
+    await page.getByRole("button", { name: /^edit$/i }).first().click();
+    await expect(page).toHaveURL(/\/app\/admin\/publish\?jobId=/);
+    await expect(page.getByRole("heading", { name: /edit job/i })).toBeVisible();
   });
 });

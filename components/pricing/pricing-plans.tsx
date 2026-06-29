@@ -1,150 +1,195 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { Check, ArrowRight, Sparkles } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
-import { analytics } from "@/lib/analytics";
-import { MARKETING_CTAS } from "@/lib/marketing-nav";
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { Check, ArrowRight, Sparkles } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
+import { analytics } from '@/lib/analytics';
+import { MARKETING_CTAS } from '@/lib/marketing-nav';
 
-const plans = [
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  'http://localhost:8000';
+
+const staticPlans = [
   {
-    name: "Free",
+    id: 0,
+    name: 'Free',
     price: 0,
     yearlyPrice: 0,
-    description: "Perfect for trying out Hiring Journey",
+    description: 'Perfect for trying out Hiring Journey',
     features: [
-      "Resume scan (limited)",
-      "Job discovery (view only)",
-      "Limited AI credits",
-      "Invite friends → earn credits",
-      "No auto-apply",
-      "No negotiation module",
+      'Resume scan (limited)',
+      'Job discovery (view only)',
+      'Limited AI credits',
+      'Invite friends → earn credits',
     ],
     credits: 50,
-    cta: "Start Free",
+    cta: 'Start Free',
     popular: false,
-    badge: "Invite Access",
+    badge: 'Invite Access',
+    isFree: true,
   },
   {
-    name: "Starter",
+    id: 0,
+    name: 'Starter',
     price: 299,
     yearlyPrice: 2990,
-    description: "Perfect for getting started",
-    features: [
-      "3 resume fixes per month",
-      "Smart job matching (one job title)",
-      "Limited auto-apply",
-      "Interview prep (QA + Tech)",
-      "Application tracking",
-      "Monthly AI credit cap",
-    ],
+    description: 'Perfect for getting started',
+    features: ['3 resume fixes per month', 'Smart job matching', 'Interview prep', 'Application tracking'],
     credits: 200,
-    cta: "Get Started",
+    cta: 'Get Started',
     popular: false,
+    isFree: false,
   },
   {
-    name: "Pro",
+    id: 0,
+    name: 'Pro',
     price: 699,
     yearlyPrice: 6990,
-    description: "For serious job seekers",
-    features: [
-      "Unlimited resume fixes",
-      "Smart job matching (multiple titles)",
-      "Unlimited auto-apply",
-      "Interview prep (QA + Tech)",
-      "Application tracking",
-      "Higher AI credit limits",
-    ],
+    description: 'For serious job seekers',
+    features: ['Unlimited resume fixes', 'Smart job matching', 'Unlimited auto-apply', 'Higher AI credit limits'],
     credits: 500,
-    cta: "Get Started",
+    cta: 'Get Started',
     popular: true,
+    isFree: false,
   },
   {
-    name: "Elite",
+    id: 0,
+    name: 'Elite',
     price: 1199,
     yearlyPrice: 11990,
-    description: "Complete career success",
-    features: [
-      "Unlimited auto-apply",
-      "Coding arena access",
-      "HR negotiation playbooks",
-      "Legal readiness checks",
-      "Priority AI support",
-      "Highest credit limits",
-    ],
+    description: 'Complete career success',
+    features: ['Coding arena access', 'HR negotiation playbooks', 'Legal readiness checks', 'Highest credit limits'],
     credits: 1000,
-    cta: "Go Elite",
+    cta: 'Go Elite',
     popular: false,
+    isFree: false,
   },
 ];
 
-export function PricingPlans() {
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+type DisplayPlan = (typeof staticPlans)[number];
 
-  const savings = (monthly: number, yearly: number) => {
-    const monthlyTotal = monthly * 12;
-    return Math.round(((monthlyTotal - yearly) / monthlyTotal) * 100);
+async function fetchBillingPlans(): Promise<DisplayPlan[] | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/billing/plans`);
+    if (!response.ok) {
+      return null;
+    }
+    const items: Array<{
+      id: number;
+      name: string;
+      description: string;
+      credit_limit: number;
+      price: number;
+      yearly_price: number;
+      features: string[];
+      is_free: boolean;
+      slug: string | null;
+    }> = await response.json();
+    return items.map((plan) => ({
+      id: plan.id,
+      name: plan.name,
+      price: Math.round(plan.price / 100),
+      yearlyPrice: Math.round(plan.yearly_price / 100),
+      description: plan.description,
+      features: plan.features.length ? plan.features : ['AI credits included', 'Job matching', 'Application tracking'],
+      credits: plan.credit_limit,
+      cta: plan.is_free ? 'Start Free' : 'Get Started',
+      popular: plan.slug === 'professional',
+      badge: plan.is_free ? 'Invite Access' : undefined,
+      isFree: plan.is_free,
+    }));
+  } catch {
+    return null;
+  }
+}
+
+export function PricingPlans() {
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [plans, setPlans] = useState<DisplayPlan[]>(staticPlans);
+
+  useEffect(() => {
+    void fetchBillingPlans().then((apiPlans) => {
+      if (apiPlans?.length) {
+        setPlans(apiPlans);
+      }
+    });
+  }, []);
+
+  const savings = useMemo(
+    () => (monthly: number, yearly: number) => {
+      const monthlyTotal = monthly * 12;
+      return monthlyTotal > 0 ? Math.round(((monthlyTotal - yearly) / monthlyTotal) * 100) : 0;
+    },
+    [],
+  );
+
+  const planHref = (plan: DisplayPlan) => {
+    if (plan.isFree) {
+      return MARKETING_CTAS.signup;
+    }
+    if (plan.id > 0) {
+      return `/app/login?redirect=${encodeURIComponent(`/app/credits?plan=${plan.id}`)}`;
+    }
+    return MARKETING_CTAS.signup;
   };
 
   return (
     <div className="bg-white dark:bg-gray-950 py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        {/* Billing Toggle */}
         <div className="flex justify-center mb-12">
           <div className="inline-flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1">
             <button
-              onClick={() => setBillingCycle("monthly")}
+              onClick={() => setBillingCycle('monthly')}
               className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors ${
-                billingCycle === "monthly"
-                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-600 dark:text-gray-400"
+                billingCycle === 'monthly'
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400'
               }`}
             >
               Monthly
             </button>
             <button
-              onClick={() => setBillingCycle("yearly")}
+              onClick={() => setBillingCycle('yearly')}
               className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors ${
-                billingCycle === "yearly"
-                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-600 dark:text-gray-400"
+                billingCycle === 'yearly'
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400'
               }`}
             >
               Yearly
-              <span className="ml-2 text-xs text-primary-600 dark:text-primary-400">
-                Save up to 17%
-              </span>
+              <span className="ml-2 text-xs text-primary-600 dark:text-primary-400">Save up to 17%</span>
             </button>
           </div>
         </div>
 
-        {/* Pricing Cards */}
         <div className="mx-auto grid max-w-lg grid-cols-1 gap-y-6 sm:mt-20 lg:max-w-7xl lg:grid-cols-4 lg:gap-x-8 lg:gap-y-0">
           {plans.map((plan, index) => {
-            const displayPrice = billingCycle === "yearly" ? plan.yearlyPrice : plan.price;
-            const monthlyEquivalent = billingCycle === "yearly" ? Math.round(plan.yearlyPrice / 12) : plan.price;
+            const displayPrice = billingCycle === 'yearly' ? plan.yearlyPrice : plan.price;
+            const monthlyEquivalent = billingCycle === 'yearly' ? Math.round(plan.yearlyPrice / 12) : plan.price;
             const yearlySavings = plan.price > 0 ? savings(plan.price, plan.yearlyPrice) : 0;
 
             return (
               <motion.div
-                key={plan.name}
+                key={`${plan.name}-${plan.id}`}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className={`flex flex-col justify-between rounded-3xl p-8 ring-1 ring-gray-200 dark:ring-gray-800 xl:p-10 ${
                   plan.popular
-                    ? "bg-primary-600 ring-primary-600 dark:bg-primary-700 dark:ring-primary-700 lg:z-10 lg:rounded-3xl"
-                    : "bg-white dark:bg-gray-900"
+                    ? 'bg-primary-600 ring-primary-600 dark:bg-primary-700 dark:ring-primary-700 lg:z-10 lg:rounded-3xl'
+                    : 'bg-white dark:bg-gray-900'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-x-4">
                     <h3
                       className={`text-lg font-semibold leading-8 ${
-                        plan.popular ? "text-white" : "text-gray-900 dark:text-white"
+                        plan.popular ? 'text-white' : 'text-gray-900 dark:text-white'
                       }`}
                     >
                       {plan.name}
@@ -162,7 +207,7 @@ export function PricingPlans() {
                   </div>
                   <p
                     className={`mt-4 text-sm leading-6 ${
-                      plan.popular ? "text-primary-100" : "text-gray-600 dark:text-gray-300"
+                      plan.popular ? 'text-primary-100' : 'text-gray-600 dark:text-gray-300'
                     }`}
                   >
                     {plan.description}
@@ -170,45 +215,43 @@ export function PricingPlans() {
                   <p className="mt-6 flex items-baseline gap-x-1">
                     <span
                       className={`text-4xl font-display font-bold tracking-tight ${
-                        plan.popular ? "text-white" : "text-gray-900 dark:text-white"
+                        plan.popular ? 'text-white' : 'text-gray-900 dark:text-white'
                       }`}
                     >
-                      {displayPrice === 0 ? "Free" : formatCurrency(monthlyEquivalent)}
+                      {displayPrice === 0 ? 'Free' : formatCurrency(monthlyEquivalent)}
                     </span>
                     {displayPrice > 0 && (
                       <span
                         className={`text-sm font-semibold leading-6 ${
-                          plan.popular ? "text-primary-100" : "text-gray-600 dark:text-gray-300"
+                          plan.popular ? 'text-primary-100' : 'text-gray-600 dark:text-gray-300'
                         }`}
                       >
                         /month
                       </span>
                     )}
                   </p>
-                  {billingCycle === "yearly" && plan.price > 0 && yearlySavings > 0 && (
+                  {billingCycle === 'yearly' && plan.price > 0 && yearlySavings > 0 && (
                     <p className="mt-2 text-sm text-primary-600 dark:text-primary-400">
                       Save {yearlySavings}% annually
                     </p>
                   )}
                   <div className="mt-4 flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                    <span
-                      className={plan.popular ? "text-primary-100" : "text-gray-600 dark:text-gray-300"}
-                    >
+                    <span className={plan.popular ? 'text-primary-100' : 'text-gray-600 dark:text-gray-300'}>
                       {plan.credits} AI credits/month
                     </span>
                   </div>
                   <ul
                     role="list"
                     className={`mt-8 space-y-3 text-sm leading-6 ${
-                      plan.popular ? "text-white" : "text-gray-600 dark:text-gray-300"
+                      plan.popular ? 'text-white' : 'text-gray-600 dark:text-gray-300'
                     }`}
                   >
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex gap-x-3">
                         <Check
                           className={`h-6 w-6 flex-none ${
-                            plan.popular ? "text-white" : "text-primary-600 dark:text-primary-400"
+                            plan.popular ? 'text-white' : 'text-primary-600 dark:text-primary-400'
                           }`}
                           aria-hidden="true"
                         />
@@ -218,14 +261,14 @@ export function PricingPlans() {
                   </ul>
                 </div>
                 <Link
-                  href={MARKETING_CTAS.signup}
+                  href={planHref(plan)}
                   onClick={() => analytics.planSelected(plan.name)}
                   className={`mt-8 block w-full rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 transition-colors ${
                     plan.popular
-                      ? "bg-white text-primary-600 hover:bg-primary-50"
+                      ? 'bg-white text-primary-600 hover:bg-primary-50'
                       : plan.price === 0
-                      ? "bg-primary-600 text-white hover:bg-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400"
-                      : "bg-primary-600 text-white hover:bg-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400"
+                        ? 'bg-primary-600 text-white hover:bg-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400'
+                        : 'bg-primary-600 text-white hover:bg-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400'
                   }`}
                 >
                   {plan.cta}

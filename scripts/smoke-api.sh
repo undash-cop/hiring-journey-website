@@ -19,4 +19,10 @@ echo "  /ready OK"
 curl -fsSL "${BASE}/openapi.json" | head -c 80 >/dev/null
 echo "  /openapi.json OK"
 
+curl -fsSL "${BASE}/billing/plans" | grep -q '"name"'
+echo "  /billing/plans OK"
+
+curl -fsSL "${BASE}/metrics" | head -c 40 >/dev/null
+echo "  /metrics OK"
+
 echo "API smoke test passed."

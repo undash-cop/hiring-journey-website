@@ -34,6 +34,36 @@ test.describe("Candidate app routes", () => {
     await expect(page.getByRole("button", { name: /optimize for role/i })).toBeVisible();
   });
 
+  test("resume templates tab loads catalog from API", async ({ page }) => {
+    await page.goto("/app/resume");
+    await page.getByRole("button", { name: /^templates$/i }).click();
+    await expect(page.getByText("Modern Blue")).toBeVisible();
+    await expect(page.getByText(/ats friendly/i)).toBeVisible();
+  });
+
+  test("resume builder tab loads sections and save action", async ({ page }) => {
+    await page.goto("/app/resume");
+    await page.getByRole("button", { name: /resume builder/i }).click();
+    await expect(page.getByText("Professional Summary")).toBeVisible();
+    await expect(page.getByRole("button", { name: /save resume/i })).toBeVisible();
+  });
+
+  test("resume analysis tab runs ATS analysis", async ({ page }) => {
+    await page.goto("/app/resume");
+    await page.getByRole("button", { name: /analysis & insights/i }).click();
+    await page.getByLabel(/target role for analysis/i).fill("Frontend Developer");
+    await page.getByRole("button", { name: /analyze resume/i }).click();
+    await expect(page.getByText("Overall Score")).toBeVisible();
+    await expect(page.getByText("78%")).toBeVisible();
+  });
+
+  test("resume versions tab lists saved versions", async ({ page }) => {
+    await page.goto("/app/resume");
+    await page.getByRole("button", { name: /^versions$/i }).click();
+    await expect(page.getByText("Default Resume")).toBeVisible();
+    await expect(page.getByRole("button", { name: /^view$/i })).toBeVisible();
+  });
+
   test("interview page loads from API", async ({ page }) => {
     await page.goto("/app/interview");
     await expect(page.getByRole("heading", { name: /interview prep/i })).toBeVisible();
@@ -58,10 +88,11 @@ test.describe("Candidate app routes", () => {
     await expect(page.getByRole("button", { name: /create profile/i })).toBeVisible();
   });
 
-  test("coding arena is gated by feature flag", async ({ page }) => {
+  test("coding arena loads challenges from API", async ({ page }) => {
     await page.goto("/app/coding-arena");
     await expect(page.getByRole("heading", { name: /coding arena/i })).toBeVisible();
-    await expect(page.getByText(/coming soon|not available/i)).toBeVisible();
+    await expect(page.getByText("Two Sum")).toBeVisible();
+    await expect(page.getByRole("button", { name: /start challenge/i })).toBeVisible();
   });
 
   test("profile and settings pages load", async ({ page }) => {
@@ -74,10 +105,13 @@ test.describe("Candidate app routes", () => {
     await expect(page.getByText(/notification preferences/i)).toBeVisible();
   });
 
-  test("credits page shows usage from API", async ({ page }) => {
+  test("credits page shows usage and billing from API", async ({ page }) => {
     await page.goto("/app/credits");
-    await expect(page.getByRole("heading", { name: /credits/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /credits & billing/i })).toBeVisible();
     await expect(page.getByText("120")).toBeVisible();
     await expect(page.getByText("Usage Breakdown")).toBeVisible();
+    await expect(page.getByText("Basic")).toBeVisible();
+    await expect(page.getByText("Billing History")).toBeVisible();
+    await expect(page.getByText("INV-2026-00001")).toBeVisible();
   });
 });

@@ -63,6 +63,72 @@ export const mockResumeResponse = {
   skills_gap: ["TypeScript"],
 };
 
+export const mockResumeVersionsResponse = {
+  items: [
+    {
+      id: 1,
+      name: "Default Resume",
+      target_role: "Frontend Developer",
+      created_at: "2026-06-01T00:00:00Z",
+      score: 72,
+      is_default: true,
+      template_id: "modern-blue",
+    },
+  ],
+};
+
+export const mockResumeTemplatesResponse = {
+  items: [
+    {
+      id: "modern-blue",
+      name: "Modern Blue",
+      category: "modern",
+      description: "Clean and contemporary design perfect for tech roles",
+      preview: "modern-blue-preview.jpg",
+      ats_friendly: true,
+      is_popular: true,
+    },
+  ],
+};
+
+export const mockResumeBuilderResponse = {
+  version_id: 1,
+  template: "modern-blue",
+  sections: [
+    { id: "personal", type: "personal", title: "Personal Information", content: "", order: 1, is_visible: true },
+    { id: "summary", type: "summary", title: "Professional Summary", content: "", order: 2, is_visible: true },
+  ],
+  personal_info: {
+    name: "E2E User",
+    email: "e2e@example.com",
+    phone: "",
+    location: "",
+    linkedin: "",
+    github: "",
+    portfolio: "",
+  },
+  summary: "Experienced developer ready for new opportunities.",
+  experience: [],
+  education: [],
+  skills: { technical: ["TypeScript"], soft: [], languages: [] },
+  certifications: [],
+  projects: [],
+};
+
+export const mockResumeAnalysisResponse = {
+  overall_score: 78,
+  ats_score: 75,
+  keyword_match: 70,
+  formatting_score: 85,
+  content_score: 72,
+  strengths: ["Professional summary is present"],
+  weaknesses: ["Add at least one work experience entry"],
+  missing_keywords: ["react"],
+  skills_gap: ["react"],
+  recommendations: [],
+  parsed_data: mockResumeBuilderResponse,
+};
+
 export const mockJobsResponse = {
   items: [
     {
@@ -101,6 +167,66 @@ export const mockCreditsResponse = {
     negotiation: 15,
   },
 };
+
+export const mockBillingPlansResponse = [
+  {
+    id: 1,
+    name: "Free",
+    slug: "free",
+    description: "Perfect for trying out Hiring Journey",
+    credit_limit: 50,
+    price: 0,
+    yearly_price: 0,
+    features: ["Resume scan (limited)", "Job discovery"],
+    is_free: true,
+    sort_order: 1,
+  },
+  {
+    id: 2,
+    name: "Basic",
+    slug: "basic",
+    description: "Essential tools",
+    credit_limit: 100,
+    price: 29000,
+    yearly_price: 290000,
+    features: ["100 AI credits/month"],
+    is_free: false,
+    sort_order: 2,
+  },
+];
+
+export const mockBillingSubscriptionResponse = {
+  subscription: {
+    id: 1,
+    plan_id: 2,
+    plan_name: "Basic",
+    plan_slug: "basic",
+    status: "active",
+    billing_cycle: "monthly",
+    current_period_start: "2026-06-01T00:00:00Z",
+    current_period_end: "2026-07-01T00:00:00Z",
+    cancel_at_period_end: false,
+    pending_plan_id: null,
+    pending_plan_name: null,
+    provider: "mock",
+  },
+};
+
+export const mockBillingInvoicesResponse = [
+  {
+    id: 1,
+    invoice_number: "INV-2026-00001",
+    plan_id: 2,
+    plan_name: "Basic",
+    amount: 29000,
+    currency: "INR",
+    status: "paid",
+    billing_cycle: "monthly",
+    failure_reason: null,
+    paid_at: "2026-06-01T00:00:00Z",
+    created_at: "2026-06-01T00:00:00Z",
+  },
+];
 
 export async function seedAdminSession(page: Page): Promise<void> {
   await page.addInitScript(seedAuthStorageScript("admin", "E2E Admin", "admin@example.com", "e2e-admin"));
@@ -179,6 +305,15 @@ export const mockAdminPlansResponse = [
   },
 ];
 
+export const mockAdminPlatformSettingsResponse = {
+  platform_display_name: "Hiring Journey",
+  support_email: "support@hiringjourney.com",
+  default_candidate_credits: 200,
+  linkedin_integration_enabled: false,
+  indeed_integration_enabled: false,
+  updated_at: "2026-06-01T00:00:00Z",
+};
+
 export const mockAdminAuditLogsResponse = [
   {
     id: 1,
@@ -201,11 +336,33 @@ export async function mockAdminApis(page: Page): Promise<void> {
     }),
   );
   await page.route("**/admin/jobs**", (route) => {
+    const url = route.request().url();
+    if (route.request().method() === "GET" && /\/admin\/jobs\/\d+/.test(url)) {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockAdminJobsResponse[0]),
+      });
+    }
     if (route.request().method() === "GET") {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify(mockAdminJobsResponse),
+      });
+    }
+    if (route.request().method() === "POST" && url.includes("/publish")) {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ success: true, external_posting_ids: { linkedin: "ln_1" } }),
+      });
+    }
+    if (route.request().method() === "PATCH") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ success: true }),
       });
     }
     return route.continue();
@@ -230,13 +387,33 @@ export async function mockAdminApis(page: Page): Promise<void> {
     }
     return route.continue();
   });
-  await page.route("**/admin/plans**", (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(mockAdminPlansResponse),
-    }),
-  );
+  await page.route("**/admin/plans**", (route) => {
+    if (route.request().method() === "GET") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockAdminPlansResponse),
+      });
+    }
+    if (route.request().method() === "POST" || route.request().method() === "PATCH") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockAdminPlansResponse[0]),
+      });
+    }
+    return route.continue();
+  });
+  await page.route("**/admin/platform-settings**", (route) => {
+    if (route.request().method() === "GET" || route.request().method() === "PUT") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockAdminPlatformSettingsResponse),
+      });
+    }
+    return route.continue();
+  });
   await page.route("**/admin/audit-logs**", (route) =>
     route.fulfill({
       status: 200,
@@ -250,8 +427,75 @@ export async function mockCandidateApis(page: Page): Promise<void> {
   await page.route("**/dashboard/candidate**", (route) =>
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(mockDashboardResponse) }),
   );
-  await page.route("**/resume**", (route) => {
-    if (route.request().method() === "GET") {
+  await page.route("**/resume**", async (route) => {
+    const url = route.request().url();
+    const method = route.request().method();
+
+    if (url.includes("/resume/templates") && method === "GET") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockResumeTemplatesResponse),
+      });
+    }
+    if (url.includes("/resume/versions") && method === "GET" && !url.includes("/builder") && !url.includes("/export")) {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockResumeVersionsResponse),
+      });
+    }
+    if (url.includes("/resume/versions") && url.includes("/builder") && method === "GET") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockResumeBuilderResponse),
+      });
+    }
+    if (url.includes("/resume/versions") && url.includes("/builder") && method === "PUT") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockResumeBuilderResponse),
+      });
+    }
+    if (url.includes("/resume/analysis") && method === "GET") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockResumeAnalysisResponse),
+      });
+    }
+    if (url.includes("/resume/suggestions") && method === "GET") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ items: ["Experienced developer with proven outcomes."] }),
+      });
+    }
+    if (url.includes("/resume/parse") && method === "POST") {
+      const { version_id: _ignored, ...parsedPayload } = mockResumeBuilderResponse;
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          version_id: 1,
+          ...parsedPayload,
+        }),
+      });
+    }
+    if (url.includes("/resume/versions") && url.includes("/export") && method === "POST") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          content: "Default Resume\nSUMMARY\nExperienced developer.",
+          filename: "Default Resume.txt",
+          mime_type: "text/plain",
+        }),
+      });
+    }
+    if (url.endsWith("/resume") && method === "GET") {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -319,6 +563,68 @@ export async function mockCandidateApis(page: Page): Promise<void> {
       body: JSON.stringify(mockCreditsResponse),
     }),
   );
+  await page.route("**/billing/plans**", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(mockBillingPlansResponse),
+    }),
+  );
+  await page.route("**/billing/subscription**", (route) => {
+    if (route.request().method() === "GET") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockBillingSubscriptionResponse),
+      });
+    }
+    if (route.request().method() === "PATCH") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          subscription: { ...mockBillingSubscriptionResponse.subscription, cancel_at_period_end: true },
+        }),
+      });
+    }
+    return route.continue();
+  });
+  await page.route("**/billing/invoices**", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(mockBillingInvoicesResponse),
+    }),
+  );
+  await page.route("**/billing/checkout**", (route) => {
+    if (route.request().method() === "POST" && route.request().url().includes("confirm")) {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ success: true, subscription: mockBillingSubscriptionResponse.subscription }),
+      });
+    }
+    if (route.request().method() === "POST") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          checkout_session_id: 99,
+          invoice_id: 99,
+          order_id: "order_mock_e2e",
+          amount: 29000,
+          currency: "INR",
+          plan_id: 2,
+          plan_name: "Basic",
+          billing_cycle: "monthly",
+          mock: true,
+          free: false,
+        }),
+      });
+    }
+    return route.continue();
+  });
   await page.route("**/interview/questions**", (route) =>
     route.fulfill({
       status: 200,
@@ -362,12 +668,103 @@ export async function mockCandidateApis(page: Page): Promise<void> {
       }),
     }),
   );
-  await page.route("**/legal/documents**", (route) => {
-    if (route.request().method() === "GET") {
+  await page.route("**/legal/documents**", async (route) => {
+    const method = route.request().method();
+    const url = route.request().url();
+    if (method === "GET" && !url.includes("/download")) {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({ items: [] }),
+      });
+    }
+    if (method === "POST" && !url.includes("/validate")) {
+      return route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: 1,
+          type: "offer-letter",
+          name: "Offer_Letter.docx",
+          status: "pending",
+          uploaded_at: "2026-06-01T00:00:00Z",
+          has_file: true,
+          size_bytes: 1024,
+        }),
+      });
+    }
+    return route.continue();
+  });
+  await page.route("**/coding/challenges**", (route) => {
+    const url = route.request().url();
+    const method = route.request().method();
+    const detailMatch = url.match(/\/coding\/challenges\/(\d+)(?:\?|$)/);
+
+    if (method === "GET" && detailMatch) {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: 1,
+          title: "Two Sum",
+          description:
+            "Given an array of integers, return indices of the two numbers such that they add up to a target.",
+          difficulty: "easy",
+          category: "arrays",
+          tags: ["hash-table", "arrays"],
+          solved: false,
+          attempts: 0,
+          executable: true,
+          starter_code: "def two_sum(nums, target):\n    pass\n",
+          function_name: "two_sum",
+        }),
+      });
+    }
+    if (method === "GET") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          items: [
+            {
+              id: 1,
+              title: "Two Sum",
+              description:
+                "Given an array of integers, return indices of the two numbers such that they add up to a target.",
+              difficulty: "easy",
+              category: "arrays",
+              tags: ["hash-table", "arrays"],
+              solved: false,
+              attempts: 0,
+              executable: true,
+            },
+          ],
+        }),
+      });
+    }
+    if (method === "POST" && url.includes("/submit")) {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          challenge_id: 1,
+          passed: 3,
+          total: 3,
+          results: [
+            { case: 1, pass: true },
+            { case: 2, pass: true },
+            { case: 3, pass: true },
+          ],
+          solved: true,
+          attempts: 1,
+        }),
+      });
+    }
+    if (method === "POST") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ challenge_id: 1, solved: false, attempts: 1 }),
       });
     }
     return route.continue();

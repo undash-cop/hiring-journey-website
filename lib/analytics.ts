@@ -17,6 +17,16 @@ export const trackEvent = (
       value: value,
     });
   }
+
+  if (typeof window !== "undefined" && window.plausible) {
+    window.plausible(action, {
+      props: {
+        category,
+        ...(label ? { label } : {}),
+        ...(value != null ? { value: String(value) } : {}),
+      },
+    });
+  }
 };
 
 // Page view tracking (handled automatically by GA, but can be used for custom tracking)
@@ -81,5 +91,9 @@ declare global {
       config?: Record<string, unknown>
     ) => void;
     dataLayer?: unknown[];
+    plausible?: (
+      eventName: string,
+      options?: { props?: Record<string, string> },
+    ) => void;
   }
 }

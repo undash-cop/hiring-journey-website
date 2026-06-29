@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { closeJob, getAdminJobs } from '../../../services/api';
+import { closeJob, getAdminJobs, updateJobStatus } from '../../../services/api';
 import { Card, Button, StatusBadge, Table, TableHead, TableBody, TableRow, TableHeader, TableCell, Pagination, LoadingTable } from '../../../components/ui';
 import ConfirmActionModal from '../../../components/ConfirmActionModal';
 import type { Job } from '../../../types';
@@ -29,6 +29,17 @@ export default function AdminJobsPage() {
   }, [jobs, currentPage, itemsPerPage]);
 
   const totalPages = Math.ceil((jobs?.length || 0) / itemsPerPage);
+
+  const publishDraftMutation = useMutation({
+    mutationFn: (jobId: number) => updateJobStatus(jobId, 'published'),
+    onSuccess: () => {
+      invalidateAdminData();
+      showToast('Job published successfully.', 'success');
+    },
+    onError: () => {
+      showToast('Failed to publish job.', 'error');
+    },
+  });
 
   const closeJobMutation = useMutation({
     mutationFn: closeJob,
@@ -108,9 +119,21 @@ export default function AdminJobsPage() {
                 <TableCell>{new Date(job.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" disabled title="Job editing is not available yet">
-                      Edit
-                    </Button>
+                    <Link href={`/app/admin/publish?jobId=${job.id}`}>
+                      <Button variant="ghost" size="sm">
+                        Edit
+                      </Button>
+                    </Link>
+                    {job.status === 'draft' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => publishDraftMutation.mutate(job.id)}
+                        disabled={publishDraftMutation.isPending}
+                      >
+                        Publish
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"

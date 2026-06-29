@@ -15,6 +15,7 @@ import { clearAuthSession, ensureKeycloakInit } from '@/lib/keycloak-init';
 import { redirectToLogin } from '@/lib/keycloak';
 import { getLogoutRedirectUri } from '@/lib/keycloak-oauth-redirect';
 import { reportAuthError } from '@/lib/auth-errors';
+import { setMonitoringUser } from '@/lib/monitoring';
 import { useAuthStore } from '../store/authStore';
 import type { User, UserRole } from '../types';
 
@@ -115,6 +116,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             refreshToken: keycloak.refreshToken,
             user: profileToUser(profile, keycloak.tokenParsed?.sub),
           });
+          setMonitoringUser({
+            id: keycloak.tokenParsed?.sub ?? profile.id ?? 'unknown',
+            email: profile.email ?? undefined,
+            username: profile.username ?? undefined,
+          });
         } catch {
           if (cancelled) {
             return;
@@ -136,6 +142,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 ? 'admin'
                 : 'candidate',
             },
+          });
+          setMonitoringUser({
+            id: (keycloak.tokenParsed?.sub as string | undefined) ?? 'unknown',
+            email: keycloak.tokenParsed?.email as string | undefined,
+            username: keycloak.tokenParsed?.preferred_username as string | undefined,
           });
         }
       })
@@ -199,6 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    setMonitoringUser(null);
     clearAuthSession();
     if (typeof keycloak.logout === 'function') {
       void keycloak.logout({ redirectUri: getLogoutRedirectUri() });

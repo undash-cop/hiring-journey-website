@@ -43,7 +43,7 @@ export const TARGET_USERS = [
 /** Product feature toggles — gate routes and mock-only APIs until backend support ships. */
 export const FEATURE_FLAGS = {
   GOOGLE_OAUTH: false,
-  CODING_ARENA: false,
+  CODING_ARENA: true,
   AUTO_APPLY: true,
 } as const;
 

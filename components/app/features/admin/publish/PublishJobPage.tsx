@@ -1,80 +1,139 @@
+'use client';
+
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { publishJob } from '../../../services/api';
+import { useSearchParams } from 'next/navigation';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { getAdminJob, publishJob, updateAdminJob } from '../../../services/api';
 import { Card, Button, Input, Select } from '../../../components/ui';
 import { useToast } from '../../../contexts/ToastContext';
 import { useInvalidateAdminData } from '../../../hooks/invalidateAdminQueries';
+import { adminQueryKeys } from '@/lib/admin-query-keys';
+import type { Job, PublishJobData } from '../../../types';
 
-export default function PublishJobPage() {
+const emptyForm = {
+  title: '',
+  description: '',
+  skills: '',
+  location: '',
+  salaryMin: '',
+  salaryMax: '',
+  employmentType: '',
+  publishTo: [] as string[],
+};
+
+function jobToForm(job: Job) {
+  return {
+    title: job.title,
+    description: job.description,
+    skills: job.skills.join(', '),
+    location: job.location,
+    salaryMin: String(job.salaryRange.min),
+    salaryMax: String(job.salaryRange.max),
+    employmentType: job.employmentType,
+    publishTo: ['internal'] as string[],
+  };
+}
+
+function formToPayload(formData: typeof emptyForm, status: 'draft' | 'published'): PublishJobData {
+  return {
+    title: formData.title,
+    description: formData.description,
+    skills: formData.skills.split(',').map((s) => s.trim()).filter(Boolean),
+    location: formData.location,
+    salaryRange: {
+      min: parseInt(formData.salaryMin, 10),
+      max: parseInt(formData.salaryMax, 10),
+    },
+    employmentType: formData.employmentType as PublishJobData['employmentType'],
+    publishTo: formData.publishTo as PublishJobData['publishTo'],
+    status,
+  };
+}
+
+type JobFormState = typeof emptyForm;
+
+function PublishJobForm({
+  initialForm,
+  isEditMode,
+  editJobId,
+  existingJobStatus,
+}: {
+  initialForm: JobFormState;
+  isEditMode: boolean;
+  editJobId: number | null;
+  existingJobStatus?: Job['status'];
+}) {
   const { showToast } = useToast();
   const invalidateAdminData = useInvalidateAdminData();
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    skills: '',
-    location: '',
-    salaryMin: '',
-    salaryMax: '',
-    employmentType: '',
-    publishTo: [] as string[],
-  });
+  const [formData, setFormData] = useState(initialForm);
 
   const publishMutation = useMutation({
     mutationFn: publishJob,
-    onSuccess: (data) => {
-      const linkedin = data.externalPostingIds?.linkedin ?? 'N/A';
-      const indeed = data.externalPostingIds?.indeed ?? 'N/A';
-      showToast(`Job published (LinkedIn: ${linkedin}, Indeed: ${indeed})`, 'success');
+    onSuccess: (data, variables) => {
+      if (variables.status === 'draft') {
+        showToast('Job saved as draft.', 'success');
+      } else {
+        const linkedin = data.externalPostingIds?.linkedin ?? 'N/A';
+        const indeed = data.externalPostingIds?.indeed ?? 'N/A';
+        showToast(`Job published (LinkedIn: ${linkedin}, Indeed: ${indeed})`, 'success');
+      }
       invalidateAdminData();
-      setFormData({
-        title: '',
-        description: '',
-        skills: '',
-        location: '',
-        salaryMin: '',
-        salaryMax: '',
-        employmentType: '',
-        publishTo: [],
-      });
+      if (!isEditMode) {
+        setFormData(emptyForm);
+      }
     },
     onError: () => {
-      showToast('Failed to publish job. Please try again.', 'error');
+      showToast('Failed to save job. Please try again.', 'error');
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    publishMutation.mutate({
-      title: formData.title,
-      description: formData.description,
-      skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean),
-      location: formData.location,
-      salaryRange: {
-        min: parseInt(formData.salaryMin),
-        max: parseInt(formData.salaryMax),
-      },
-      employmentType: formData.employmentType as 'full-time' | 'part-time' | 'contract' | 'internship',
-      publishTo: formData.publishTo as ('internal' | 'linkedin' | 'indeed')[],
-    });
-  };
+  const updateMutation = useMutation({
+    mutationFn: ({ status }: { status: 'draft' | 'published' }) =>
+      updateAdminJob(editJobId!, { ...formToPayload(formData, status), status }),
+    onSuccess: (_, variables) => {
+      showToast(
+        variables.status === 'draft' ? 'Draft updated.' : 'Job updated and published.',
+        'success',
+      );
+      invalidateAdminData();
+    },
+    onError: () => {
+      showToast('Failed to update job. Please try again.', 'error');
+    },
+  });
 
   const handlePublishToChange = (platform: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       publishTo: prev.publishTo.includes(platform)
-        ? prev.publishTo.filter(p => p !== platform)
+        ? prev.publishTo.filter((p) => p !== platform)
         : [...prev.publishTo, platform],
     }));
   };
 
-  return (
-    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold gradient-text">Publish Job</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">Create and publish a new job posting</p>
-      </div>
+  const handleSaveDraft = () => {
+    const payload = formToPayload(formData, 'draft');
+    if (isEditMode) {
+      updateMutation.mutate({ status: 'draft' });
+      return;
+    }
+    publishMutation.mutate(payload);
+  };
 
-      <form onSubmit={handleSubmit}>
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = formToPayload(formData, 'published');
+    if (isEditMode) {
+      updateMutation.mutate({ status: 'published' });
+      return;
+    }
+    publishMutation.mutate(payload);
+  };
+
+  const isSaving = publishMutation.isPending || updateMutation.isPending;
+
+  return (
+    <form onSubmit={handleSubmit}>
         <Card>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Job Details</h2>
           <div className="space-y-4">
@@ -165,14 +224,54 @@ export default function PublishJobPage() {
         </Card>
 
         <div className="flex justify-end gap-3 mt-6">
-          <Button type="button" variant="outline" disabled title="Draft saving is not available yet">
+          <Button type="button" variant="outline" onClick={handleSaveDraft} isLoading={isSaving}>
             Save as Draft
           </Button>
-          <Button type="submit" isLoading={publishMutation.isPending}>
-            Publish Job
+          <Button type="submit" isLoading={isSaving}>
+            {isEditMode && existingJobStatus === 'draft' ? 'Publish Job' : isEditMode ? 'Save Changes' : 'Publish Job'}
           </Button>
         </div>
-      </form>
+    </form>
+  );
+}
+
+export default function PublishJobPage() {
+  const searchParams = useSearchParams();
+  const jobIdParam = searchParams.get('jobId');
+  const editJobId = jobIdParam ? Number(jobIdParam) : null;
+  const isEditMode = editJobId != null && !Number.isNaN(editJobId);
+
+  const { data: existingJob, isLoading: isLoadingJob } = useQuery({
+    queryKey: [...adminQueryKeys.jobs, editJobId],
+    queryFn: () => getAdminJob(editJobId!),
+    enabled: isEditMode,
+  });
+
+  if (isEditMode && isLoadingJob) {
+    return <div className="p-4 sm:p-6">Loading job...</div>;
+  }
+
+  const formKey = isEditMode && existingJob ? String(existingJob.id) : 'new';
+  const initialForm = existingJob ? jobToForm(existingJob) : emptyForm;
+
+  return (
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold gradient-text">
+          {isEditMode ? 'Edit Job' : 'Publish Job'}
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-1">
+          {isEditMode ? 'Update an existing job posting' : 'Create and publish a new job posting'}
+        </p>
+      </div>
+
+      <PublishJobForm
+        key={formKey}
+        initialForm={initialForm}
+        isEditMode={isEditMode}
+        editJobId={editJobId}
+        existingJobStatus={existingJob?.status}
+      />
     </div>
   );
 }

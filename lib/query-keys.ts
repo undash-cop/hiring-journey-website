@@ -17,7 +17,18 @@ export const queryKeys = {
   interviewQuestions: ['interview-questions'] as const,
   interviewSessions: ['interview-sessions'] as const,
   codingChallenges: ['coding-challenges'] as const,
+  billingPlans: ['billing-plans'] as const,
+  billingSubscription: ['billing-subscription'] as const,
+  billingInvoices: ['billing-invoices'] as const,
 } as const;
+
+/** Invalidate credits and billing after subscription changes. */
+export const billingMutationInvalidations = [
+  queryKeys.creditUsage,
+  queryKeys.billingSubscription,
+  queryKeys.billingInvoices,
+  queryKeys.candidateDashboard,
+] as const;
 
 /** Invalidate dashboard, tracker, and credits after job/application mutations. */
 export const applicationMutationInvalidations = [

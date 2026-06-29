@@ -5,6 +5,7 @@ export const adminQueryKeys = {
   applications: ['admin-applications'] as const,
   candidates: ['admin-candidates'] as const,
   plans: ['admin-plans'] as const,
+  settings: ['admin-settings'] as const,
   auditLogs: ['admin-audit-logs'] as const,
 } as const;
 
@@ -14,5 +15,7 @@ export const adminMutationInvalidations = [
   adminQueryKeys.jobs,
   adminQueryKeys.applications,
   adminQueryKeys.candidates,
+  adminQueryKeys.plans,
+  adminQueryKeys.settings,
   adminQueryKeys.auditLogs,
 ] as const;

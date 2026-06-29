@@ -50,6 +50,25 @@ curl -fsSL https://api.hiringjourney.com/ready
 curl -fsSL https://api.hiringjourney.com/openapi.json | head -c 200
 ```
 
+### Legal document storage (Cloudflare R2)
+
+1. Create R2 bucket (e.g. `hiring-journey-legal`) in Cloudflare dashboard.
+2. Create API token with **Object Read & Write** on that bucket.
+3. Add to API `.env.production`:
+
+```env
+R2_ACCOUNT_ID=<cloudflare_account_id>
+R2_ACCESS_KEY_ID=<r2_access_key_id>
+R2_SECRET_ACCESS_KEY=<r2_secret_access_key>
+R2_BUCKET_NAME=hiring-journey-legal
+R2_LEGAL_PREFIX=legal
+```
+
+4. Redeploy API (`docker compose ... up -d --build`).
+5. Smoke test: upload a PDF on `/app/legal`, validate, download.
+
+Without R2 vars, the API falls back to `UPLOAD_DIR` on the VM disk (not recommended for production).
+
 ## 2. Netlify (frontend)
 
 Set environment variables (Site settings → Environment variables):
@@ -97,5 +116,7 @@ Deploy: push to `main` or trigger deploy in Netlify UI.
 ## 5. Post-launch
 
 - [ ] Configure analytics ([analytics.md](../development/analytics.md))
-- [ ] Enable error monitoring (Sentry or equivalent)
+- [ ] Configure error monitoring ([observability.md](../development/observability.md))
+- [ ] Complete [security-privacy-checklist.md](../development/security-privacy-checklist.md)
+- [ ] Use [release-readiness.md](./release-readiness.md) for M4+ launches
 - [ ] Document rollback: revert Netlify deploy + API image tag
