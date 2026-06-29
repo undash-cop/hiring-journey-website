@@ -1,4 +1,5 @@
 # Next.js on Netlify: @netlify/plugin-nextjs manages output; do not set publish to .next.
+# API is hosted separately at api.hiringjourney.com (not in this repo).
 [build]
   command = "npm run build"
 

@@ -5,14 +5,22 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   frontend-ci:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+
+      - name: Checkout backend (env parity + OpenAPI contract)
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          repository: undash-cop/hiring-journey-backend
+          path: backend
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -55,10 +63,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: [frontend-ci]
     steps:
-      - name: Checkout
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+
+      - name: Checkout backend
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          repository: undash-cop/hiring-journey-backend
+          path: backend
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -99,10 +112,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [frontend-ci]
     steps:
-      - name: Checkout
+      - name: Checkout frontend
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Setup Node
         uses: actions/setup-node@v4

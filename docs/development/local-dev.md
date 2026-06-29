@@ -5,14 +5,13 @@ Quick setup for Sprint 1 auth and API work on your machine.
 ## Prerequisites
 
 - Node.js 22+
-- Python 3.11+ (for backend submodule)
-- Git submodules initialized: `git submodule update --init --recursive`
+- Python 3.11+ (for local API — run `./scripts/clone-backend-dev.sh` first)
 - Keycloak client redirect URIs for your dev origin (see [keycloak.md](../deployment/keycloak.md))
 
 ## Frontend
 
 ```bash
-git clone --recurse-submodules https://github.com/undash-cop/hiring-journey-website.git
+git clone https://github.com/undash-cop/hiring-journey-website.git
 cd hiring-journey-website
 cp .env.example .env.local
 # Edit Keycloak + API URLs; set NEXT_PUBLIC_APP_URL to your dev port (3000 or 3001)
@@ -29,6 +28,7 @@ If port 3000 is in use, Next.js may bind to **3001**. Update:
 ## Backend
 
 ```bash
+./scripts/clone-backend-dev.sh   # once, if backend/ is not present
 cd backend
 python -m venv .venv
 source .venv/bin/activate

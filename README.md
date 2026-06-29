@@ -7,26 +7,30 @@ Production web app for [Hiring Journey](https://hiringjourney.com) by Undash-cop
 | Repo | Path | Deploy target |
 |------|------|---------------|
 | **Frontend** (this repo) | `hiring-journey-website/` | Netlify → `hiringjourney.com` |
-| **Backend** (submodule) | `backend/` → [hiring-journey-backend](https://github.com/undash-cop/hiring-journey-backend) | VM/Docker → `api.hiringjourney.com` |
+| **Backend** (separate repo) | [hiring-journey-backend](https://github.com/undash-cop/hiring-journey-backend) | VM/Docker → `api.hiringjourney.com` |
 
-The API is a **separate GitHub repository** linked as a git submodule at `backend/`.
+The API is a **separate GitHub repository**. For local full-stack dev, clone it into `backend/`:
+
+```bash
+./scripts/clone-backend-dev.sh
+```
 
 ## Quick start
 
 ### Frontend
 
 ```bash
-git clone --recurse-submodules https://github.com/undash-cop/hiring-journey-website.git
+git clone https://github.com/undash-cop/hiring-journey-website.git
 cd hiring-journey-website
 npm install
 cp .env.example .env.local
 npm run dev
 ```
 
-If you already cloned without submodules:
+For API work locally:
 
 ```bash
-git submodule update --init --recursive
+./scripts/clone-backend-dev.sh
 ```
 
 ### Backend
@@ -45,7 +49,7 @@ Or clone the API repo standalone: [hiring-journey-backend](https://github.com/un
 ## Tech stack
 
 - **Frontend:** Next.js 16, React 19, TypeScript, Tailwind, Keycloak JS
-- **Backend:** FastAPI, SQLAlchemy, Alembic (submodule)
+- **Backend:** FastAPI, SQLAlchemy, Alembic ([separate repo](https://github.com/undash-cop/hiring-journey-backend))
 - **Deploy:** Netlify (frontend), Docker Compose (API)
 
 ## Documentation
@@ -58,7 +62,7 @@ Or clone the API repo standalone: [hiring-journey-backend](https://github.com/un
 | Architecture | [docs/architecture.md](docs/architecture.md) |
 | Roadmap | [docs/roadmap.md](docs/roadmap.md) |
 | Deploy frontend | [docs/deployment/frontend.md](docs/deployment/frontend.md) |
-| Deploy API | [backend/docs/deployment.md](backend/docs/deployment.md) |
+| Deploy API | [hiring-journey-backend deployment](https://github.com/undash-cop/hiring-journey-backend/blob/main/docs/deployment.md) |
 | Production checklist | [docs/deployment/production-checklist.md](docs/deployment/production-checklist.md) |
 
 ## Scripts

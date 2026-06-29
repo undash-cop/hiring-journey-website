@@ -18,6 +18,14 @@ Deploy the Next.js app to Netlify. The API is deployed separately — see [backe
 
 Do **not** set `publish = ".next"` — the Netlify Next.js plugin manages output.
 
+## Backend (separate repo — not deployed on Netlify)
+
+The API lives in [hiring-journey-backend](https://github.com/undash-cop/hiring-journey-backend) and runs on your VM. This frontend repo does **not** include backend code for Netlify builds.
+
+If your site still has a `backend/` git submodule in the repo, Netlify will try to clone it **before** the build. A **private** backend repo causes deploy failure unless you add Netlify’s deploy key to that backend repo (Site configuration → Build & deploy → Deploy key).
+
+**Recommended:** remove the submodule from this repo (see `scripts/clone-backend-dev.sh` for local API checkout).
+
 ## Required environment variables
 
 ```env
@@ -46,12 +54,13 @@ Add redirect URIs and web origins for each deployed host. See [keycloak.md](./ke
 
 ## Deploy methods
 
-### Netlify UI (first time)
+### Netlify continuous deployment (recommended)
 
-1. Netlify → Add site → Import from Git
-2. Verify build command and Node 22
-3. Add environment variables
-4. Deploy
+1. Netlify → Add site → Import from Git → `undash-cop/hiring-journey-website`
+2. Build command: `npm run build` (from `netlify.toml`)
+3. Node version: `22`
+4. Add environment variables (see above)
+5. Push to `main` → Netlify deploys automatically
 
 ### Netlify CLI
 
@@ -71,8 +80,8 @@ netlify deploy --prod
 
 ## Continuous deployment
 
-- Push to `main` → production deploy
-- Pull requests → deploy previews (add preview URLs to Keycloak)
+- Push to `main` → Netlify production deploy
+- Pull requests → Netlify deploy previews (add preview URLs to Keycloak)
 
 ## Post-deploy checks
 

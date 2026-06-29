@@ -17,6 +17,9 @@
 # production
 /build
 
+# API repo (clone separately — see scripts/clone-backend-dev.sh)
+/backend/
+
 # misc
 .DS_Store
 *.pem

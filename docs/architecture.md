@@ -6,16 +6,18 @@ Two GitHub repositories:
 
 | Repository | Contents | Deploy |
 |------------|----------|--------|
-| [hiring-journey-website](https://github.com/undash-cop/hiring-journey-website) | Next.js frontend + `backend/` submodule pointer | Netlify |
+| [hiring-journey-website](https://github.com/undash-cop/hiring-journey-website) | Next.js frontend only | Netlify |
 | [hiring-journey-backend](https://github.com/undash-cop/hiring-journey-backend) | FastAPI API (full source) | Docker VM |
 
-Clone the frontend with submodules:
+Clone the frontend, then optionally clone the API for local full-stack work:
 
 ```bash
-git clone --recurse-submodules https://github.com/undash-cop/hiring-journey-website.git
+git clone https://github.com/undash-cop/hiring-journey-website.git
+cd hiring-journey-website
+./scripts/clone-backend-dev.sh
 ```
 
-The `backend/` folder in the frontend repo is a **git submodule** pointing at `hiring-journey-backend`.
+The API is **not** part of the Netlify deploy; the browser calls `https://api.hiringjourney.com` via `NEXT_PUBLIC_API_URL`.
 
 ## Single web app on `/app`
 
