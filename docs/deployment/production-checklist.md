@@ -68,7 +68,7 @@ Deploy: push to `main` or trigger deploy in Netlify UI.
 
 - [ ] Valid redirect URIs include `https://hiringjourney.com/auth/callback` and `/app/login`
 - [ ] Web origins include `https://hiringjourney.com`
-- [ ] Post-logout redirect URIs include `https://hiringjourney.com` and `/app/login`
+- [ ] Post-logout redirect URIs include `https://hiringjourney.com` and `https://hiringjourney.com/`
 - [ ] Silent SSO: `https://hiringjourney.com/silent-check-sso.html`
 
 ## 4. Smoke tests (production)
@@ -86,7 +86,7 @@ Deploy: push to `main` or trigger deploy in Netlify UI.
 - [ ] `/app/login` redirects to Keycloak
 - [ ] Successful login lands on `/app/dashboard`
 - [ ] `/app/signup` starts Keycloak registration
-- [ ] Logout returns to `/app/login`
+- [ ] Logout returns to `/` (marketing home)
 
 ### Product shell
 

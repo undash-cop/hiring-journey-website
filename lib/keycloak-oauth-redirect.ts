@@ -24,6 +24,17 @@ export function getAuthCallbackRedirectUri(): string {
   return `${getOAuthRedirectOrigin()}/auth/callback`;
 }
 
+/** Post-logout landing — marketing home (must be in Keycloak post-logout redirect URIs). */
+export function getLogoutRedirectUri(): string {
+  const origin =
+    getOAuthRedirectOrigin() ||
+    (typeof window !== "undefined" ? window.location.origin.replace(/\/$/, "") : "") ||
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
+    process.env.NEXT_PUBLIC_AUTH_URL?.replace(/\/$/, "") ||
+    "http://localhost:3000";
+  return `${origin}/`;
+}
+
 export function getSilentCheckSsoAbsoluteUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_KEYCLOAK_SILENT_CHECK_SSO_URI?.trim();
   if (explicit) return explicit;

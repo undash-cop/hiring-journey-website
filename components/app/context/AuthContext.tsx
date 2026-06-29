@@ -13,6 +13,7 @@ import type { KeycloakProfile } from 'keycloak-js';
 import { keycloak } from '@/lib/keycloak';
 import { clearAuthSession, ensureKeycloakInit } from '@/lib/keycloak-init';
 import { redirectToLogin } from '@/lib/keycloak';
+import { getLogoutRedirectUri } from '@/lib/keycloak-oauth-redirect';
 import { reportAuthError } from '@/lib/auth-errors';
 import { useAuthStore } from '../store/authStore';
 import type { User, UserRole } from '../types';
@@ -25,18 +26,6 @@ const AUTH_ENTRY_PATHS = new Set([
 
 function isAuthEntryPath(pathname: string | null): boolean {
   return pathname != null && AUTH_ENTRY_PATHS.has(pathname);
-}
-
-/** Post-logout landing (must be allowed in Keycloak post-logout redirect URIs). */
-function getLogoutRedirectUri(): string {
-  if (typeof window !== 'undefined') {
-    return `${window.location.origin}/app/login`;
-  }
-  return (
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ||
-    process.env.NEXT_PUBLIC_AUTH_URL?.replace(/\/$/, '') ||
-    'http://localhost:3000/app/login'
-  );
 }
 
 const REFRESH_INTERVAL_MS = 50_000;

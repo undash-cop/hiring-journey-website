@@ -19,6 +19,10 @@ cd hiring-journey-website
 
 The API is **not** part of the Netlify deploy; the browser calls `https://api.hiringjourney.com` via `NEXT_PUBLIC_API_URL`.
 
+## User provisioning (Keycloak → database)
+
+Keycloak holds identity; Postgres holds product data (`user_profiles`, `user_credits`, …). On the **first authenticated API request** for a non-admin user, the API creates profile + default credits (200) automatically via `get_current_user` → `provision_user_on_auth`. No separate signup webhook is required.
+
 ## Single web app on `/app`
 
 - Marketing: `https://hiringjourney.com` (`/`, `/pricing`, `/features`, …)

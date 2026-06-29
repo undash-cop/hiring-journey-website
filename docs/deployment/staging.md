@@ -21,7 +21,7 @@ In realm **hiringjourney** → client **hiringjourney-app**:
 |---------|--------|
 | Valid redirect URIs | `https://staging.hiringjourney.com/auth/callback`, `https://staging.hiringjourney.com/app/login`, Netlify preview URLs if used |
 | Web origins | `https://staging.hiringjourney.com` |
-| Post-logout redirect URIs | `https://staging.hiringjourney.com`, `https://staging.hiringjourney.com/app/login` |
+| Post-logout redirect URIs | `https://staging.hiringjourney.com`, `https://staging.hiringjourney.com/` |
 | Silent SSO | `https://staging.hiringjourney.com/silent-check-sso.html` |
 
 Local dev URIs: [keycloak.md](./keycloak.md) and [local-dev.md](../development/local-dev.md).

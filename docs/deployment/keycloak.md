@@ -42,24 +42,24 @@ Run `npm run validate:env:parity` before deploy to confirm frontend/backend stag
 
 ## Valid post logout redirect URIs
 
-Must match what you pass to `keycloak.logout({ redirectUri })` — this codebase uses **`NEXT_PUBLIC_APP_URL`** (and optionally `NEXT_PUBLIC_AUTH_URL` as fallback).
+Must match what you pass to `keycloak.logout({ redirectUri })` — the app uses the marketing home URL (`NEXT_PUBLIC_APP_URL` + `/`, e.g. `https://hiringjourney.com/`).
 
 ### Production
 
 - `https://hiringjourney.com`
-- `https://hiringjourney.com/app/login`
+- `https://hiringjourney.com/`
 
 ### Staging
 
 - `https://staging.hiringjourney.com`
-- `https://staging.hiringjourney.com/app/login`
+- `https://staging.hiringjourney.com/`
 
 ### Local development
 
 - `http://localhost:3000`
-- `http://localhost:3000/app/login`
+- `http://localhost:3000/`
 - `http://localhost:3001`
-- `http://localhost:3001/app/login`
+- `http://localhost:3001/`
 
 ## Silent check SSO
 
