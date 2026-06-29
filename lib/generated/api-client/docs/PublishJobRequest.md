@@ -11,7 +11,8 @@ Name | Type | Description | Notes
 **location** | **string** |  | [default to undefined]
 **salary_range** | **{ [key: string]: number; }** |  | [default to undefined]
 **employment_type** | **string** |  | [default to undefined]
-**publish_to** | **Array&lt;string&gt;** |  | [default to undefined]
+**publish_to** | **Array&lt;string&gt;** |  | [optional] [default to undefined]
+**status** | **string** |  | [optional] [default to StatusEnum_Published]
 
 ## Example
 
@@ -26,6 +27,7 @@ const instance: PublishJobRequest = {
     salary_range,
     employment_type,
     publish_to,
+    status,
 };
 ```
 

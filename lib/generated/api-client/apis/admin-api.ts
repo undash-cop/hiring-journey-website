@@ -32,9 +32,13 @@ import type { AdminJobItem } from '../models';
 // @ts-ignore
 import type { AdminStatsResponse } from '../models';
 // @ts-ignore
+import type { CreatePlanRequest } from '../models';
+// @ts-ignore
 import type { HTTPValidationError } from '../models';
 // @ts-ignore
 import type { PlanItem } from '../models';
+// @ts-ignore
+import type { PlatformSettingsResponse } from '../models';
 // @ts-ignore
 import type { PublishJobRequest } from '../models';
 // @ts-ignore
@@ -46,12 +50,57 @@ import type { UpdateCandidateCreditsRequest } from '../models';
 // @ts-ignore
 import type { UpdateCandidateStatusRequest } from '../models';
 // @ts-ignore
+import type { UpdateJobRequest } from '../models';
+// @ts-ignore
 import type { UpdateJobStatusRequest } from '../models';
+// @ts-ignore
+import type { UpdatePlanRequest } from '../models';
+// @ts-ignore
+import type { UpdatePlatformSettingsRequest } from '../models';
 /**
  * AdminApi - axios parameter creator
  */
 export const AdminApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
+        /**
+         * 
+         * @summary Create Admin Plan
+         * @param {CreatePlanRequest} createPlanRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createAdminPlanAdminPlansPost: async (createPlanRequest: CreatePlanRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'createPlanRequest' is not null or undefined
+            assertParamExists('createAdminPlanAdminPlansPost', 'createPlanRequest', createPlanRequest)
+            const localVarPath = `/admin/plans`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication HTTPBearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(createPlanRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
         /**
          * 
          * @summary Get Admin Applications
@@ -186,6 +235,44 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Get Admin Job
+         * @param {number} jobId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAdminJobAdminJobsJobIdGet: async (jobId: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'jobId' is not null or undefined
+            assertParamExists('getAdminJobAdminJobsJobIdGet', 'jobId', jobId)
+            const localVarPath = `/admin/jobs/{job_id}`
+                .replace(`{${"job_id"}}`, encodeURIComponent(String(jobId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication HTTPBearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get Admin Jobs
          * @param {number} [limit] 
          * @param {number} [offset] 
@@ -298,6 +385,40 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Get Platform Settings
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getPlatformSettingsAdminPlatformSettingsGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/admin/platform-settings`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication HTTPBearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Publish Job
          * @param {PublishJobRequest} publishJobRequest 
          * @param {*} [options] Override http request option.
@@ -329,6 +450,92 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             localVarRequestOptions.data = serializeDataIfNeeded(publishJobRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Update Admin Job
+         * @param {number} jobId 
+         * @param {UpdateJobRequest} updateJobRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateAdminJobAdminJobsJobIdPatch: async (jobId: number, updateJobRequest: UpdateJobRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'jobId' is not null or undefined
+            assertParamExists('updateAdminJobAdminJobsJobIdPatch', 'jobId', jobId)
+            // verify required parameter 'updateJobRequest' is not null or undefined
+            assertParamExists('updateAdminJobAdminJobsJobIdPatch', 'updateJobRequest', updateJobRequest)
+            const localVarPath = `/admin/jobs/{job_id}`
+                .replace(`{${"job_id"}}`, encodeURIComponent(String(jobId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication HTTPBearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updateJobRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Update Admin Plan
+         * @param {number} planId 
+         * @param {UpdatePlanRequest} updatePlanRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateAdminPlanAdminPlansPlanIdPatch: async (planId: number, updatePlanRequest: UpdatePlanRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'planId' is not null or undefined
+            assertParamExists('updateAdminPlanAdminPlansPlanIdPatch', 'planId', planId)
+            // verify required parameter 'updatePlanRequest' is not null or undefined
+            assertParamExists('updateAdminPlanAdminPlansPlanIdPatch', 'updatePlanRequest', updatePlanRequest)
+            const localVarPath = `/admin/plans/{plan_id}`
+                .replace(`{${"plan_id"}}`, encodeURIComponent(String(planId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication HTTPBearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updatePlanRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -507,6 +714,45 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Update Platform Settings
+         * @param {UpdatePlatformSettingsRequest} updatePlatformSettingsRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updatePlatformSettingsAdminPlatformSettingsPut: async (updatePlatformSettingsRequest: UpdatePlatformSettingsRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'updatePlatformSettingsRequest' is not null or undefined
+            assertParamExists('updatePlatformSettingsAdminPlatformSettingsPut', 'updatePlatformSettingsRequest', updatePlatformSettingsRequest)
+            const localVarPath = `/admin/platform-settings`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication HTTPBearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updatePlatformSettingsRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -516,6 +762,19 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
 export const AdminApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = AdminApiAxiosParamCreator(configuration)
     return {
+        /**
+         * 
+         * @summary Create Admin Plan
+         * @param {CreatePlanRequest} createPlanRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createAdminPlanAdminPlansPost(createPlanRequest: CreatePlanRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PlanItem>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createAdminPlanAdminPlansPost(createPlanRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AdminApi.createAdminPlanAdminPlansPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
         /**
          * 
          * @summary Get Admin Applications
@@ -560,6 +819,19 @@ export const AdminApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get Admin Job
+         * @param {number} jobId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getAdminJobAdminJobsJobIdGet(jobId: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminJobItem>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getAdminJobAdminJobsJobIdGet(jobId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AdminApi.getAdminJobAdminJobsJobIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Get Admin Jobs
          * @param {number} [limit] 
          * @param {number} [offset] 
@@ -598,6 +870,18 @@ export const AdminApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get Platform Settings
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getPlatformSettingsAdminPlatformSettingsGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PlatformSettingsResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getPlatformSettingsAdminPlatformSettingsGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AdminApi.getPlatformSettingsAdminPlatformSettingsGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Publish Job
          * @param {PublishJobRequest} publishJobRequest 
          * @param {*} [options] Override http request option.
@@ -607,6 +891,34 @@ export const AdminApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.publishJobAdminJobsPublishPost(publishJobRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AdminApi.publishJobAdminJobsPublishPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Update Admin Job
+         * @param {number} jobId 
+         * @param {UpdateJobRequest} updateJobRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async updateAdminJobAdminJobsJobIdPatch(jobId: number, updateJobRequest: UpdateJobRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminJobItem>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.updateAdminJobAdminJobsJobIdPatch(jobId, updateJobRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AdminApi.updateAdminJobAdminJobsJobIdPatch']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Update Admin Plan
+         * @param {number} planId 
+         * @param {UpdatePlanRequest} updatePlanRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async updateAdminPlanAdminPlansPlanIdPatch(planId: number, updatePlanRequest: UpdatePlanRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PlanItem>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.updateAdminPlanAdminPlansPlanIdPatch(planId, updatePlanRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AdminApi.updateAdminPlanAdminPlansPlanIdPatch']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -665,6 +977,19 @@ export const AdminApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['AdminApi.updateJobStatusAdminJobsJobIdStatusPatch']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * 
+         * @summary Update Platform Settings
+         * @param {UpdatePlatformSettingsRequest} updatePlatformSettingsRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async updatePlatformSettingsAdminPlatformSettingsPut(updatePlatformSettingsRequest: UpdatePlatformSettingsRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PlatformSettingsResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.updatePlatformSettingsAdminPlatformSettingsPut(updatePlatformSettingsRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AdminApi.updatePlatformSettingsAdminPlatformSettingsPut']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -674,6 +999,16 @@ export const AdminApiFp = function(configuration?: Configuration) {
 export const AdminApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = AdminApiFp(configuration)
     return {
+        /**
+         * 
+         * @summary Create Admin Plan
+         * @param {AdminApiCreateAdminPlanAdminPlansPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createAdminPlanAdminPlansPost(requestParameters: AdminApiCreateAdminPlanAdminPlansPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<PlanItem> {
+            return localVarFp.createAdminPlanAdminPlansPost(requestParameters.createPlanRequest, options).then((request) => request(axios, basePath));
+        },
         /**
          * 
          * @summary Get Admin Applications
@@ -706,6 +1041,16 @@ export const AdminApiFactory = function (configuration?: Configuration, basePath
         },
         /**
          * 
+         * @summary Get Admin Job
+         * @param {AdminApiGetAdminJobAdminJobsJobIdGetRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAdminJobAdminJobsJobIdGet(requestParameters: AdminApiGetAdminJobAdminJobsJobIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminJobItem> {
+            return localVarFp.getAdminJobAdminJobsJobIdGet(requestParameters.jobId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Get Admin Jobs
          * @param {AdminApiGetAdminJobsAdminJobsGetRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -734,6 +1079,15 @@ export const AdminApiFactory = function (configuration?: Configuration, basePath
         },
         /**
          * 
+         * @summary Get Platform Settings
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getPlatformSettingsAdminPlatformSettingsGet(options?: RawAxiosRequestConfig): AxiosPromise<PlatformSettingsResponse> {
+            return localVarFp.getPlatformSettingsAdminPlatformSettingsGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Publish Job
          * @param {AdminApiPublishJobAdminJobsPublishPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -741,6 +1095,26 @@ export const AdminApiFactory = function (configuration?: Configuration, basePath
          */
         publishJobAdminJobsPublishPost(requestParameters: AdminApiPublishJobAdminJobsPublishPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<PublishJobResponse> {
             return localVarFp.publishJobAdminJobsPublishPost(requestParameters.publishJobRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Update Admin Job
+         * @param {AdminApiUpdateAdminJobAdminJobsJobIdPatchRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateAdminJobAdminJobsJobIdPatch(requestParameters: AdminApiUpdateAdminJobAdminJobsJobIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminJobItem> {
+            return localVarFp.updateAdminJobAdminJobsJobIdPatch(requestParameters.jobId, requestParameters.updateJobRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Update Admin Plan
+         * @param {AdminApiUpdateAdminPlanAdminPlansPlanIdPatchRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateAdminPlanAdminPlansPlanIdPatch(requestParameters: AdminApiUpdateAdminPlanAdminPlansPlanIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<PlanItem> {
+            return localVarFp.updateAdminPlanAdminPlansPlanIdPatch(requestParameters.planId, requestParameters.updatePlanRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -782,8 +1156,25 @@ export const AdminApiFactory = function (configuration?: Configuration, basePath
         updateJobStatusAdminJobsJobIdStatusPatch(requestParameters: AdminApiUpdateJobStatusAdminJobsJobIdStatusPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<{ [key: string]: boolean; }> {
             return localVarFp.updateJobStatusAdminJobsJobIdStatusPatch(requestParameters.jobId, requestParameters.updateJobStatusRequest, options).then((request) => request(axios, basePath));
         },
+        /**
+         * 
+         * @summary Update Platform Settings
+         * @param {AdminApiUpdatePlatformSettingsAdminPlatformSettingsPutRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updatePlatformSettingsAdminPlatformSettingsPut(requestParameters: AdminApiUpdatePlatformSettingsAdminPlatformSettingsPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<PlatformSettingsResponse> {
+            return localVarFp.updatePlatformSettingsAdminPlatformSettingsPut(requestParameters.updatePlatformSettingsRequest, options).then((request) => request(axios, basePath));
+        },
     };
 };
+
+/**
+ * Request parameters for createAdminPlanAdminPlansPost operation in AdminApi.
+ */
+export interface AdminApiCreateAdminPlanAdminPlansPostRequest {
+    readonly createPlanRequest: CreatePlanRequest
+}
 
 /**
  * Request parameters for getAdminApplicationsAdminApplicationsGet operation in AdminApi.
@@ -813,6 +1204,13 @@ export interface AdminApiGetAdminCandidatesAdminCandidatesGetRequest {
 }
 
 /**
+ * Request parameters for getAdminJobAdminJobsJobIdGet operation in AdminApi.
+ */
+export interface AdminApiGetAdminJobAdminJobsJobIdGetRequest {
+    readonly jobId: number
+}
+
+/**
  * Request parameters for getAdminJobsAdminJobsGet operation in AdminApi.
  */
 export interface AdminApiGetAdminJobsAdminJobsGetRequest {
@@ -826,6 +1224,24 @@ export interface AdminApiGetAdminJobsAdminJobsGetRequest {
  */
 export interface AdminApiPublishJobAdminJobsPublishPostRequest {
     readonly publishJobRequest: PublishJobRequest
+}
+
+/**
+ * Request parameters for updateAdminJobAdminJobsJobIdPatch operation in AdminApi.
+ */
+export interface AdminApiUpdateAdminJobAdminJobsJobIdPatchRequest {
+    readonly jobId: number
+
+    readonly updateJobRequest: UpdateJobRequest
+}
+
+/**
+ * Request parameters for updateAdminPlanAdminPlansPlanIdPatch operation in AdminApi.
+ */
+export interface AdminApiUpdateAdminPlanAdminPlansPlanIdPatchRequest {
+    readonly planId: number
+
+    readonly updatePlanRequest: UpdatePlanRequest
 }
 
 /**
@@ -865,9 +1281,27 @@ export interface AdminApiUpdateJobStatusAdminJobsJobIdStatusPatchRequest {
 }
 
 /**
+ * Request parameters for updatePlatformSettingsAdminPlatformSettingsPut operation in AdminApi.
+ */
+export interface AdminApiUpdatePlatformSettingsAdminPlatformSettingsPutRequest {
+    readonly updatePlatformSettingsRequest: UpdatePlatformSettingsRequest
+}
+
+/**
  * AdminApi - object-oriented interface
  */
 export class AdminApi extends BaseAPI {
+    /**
+     * 
+     * @summary Create Admin Plan
+     * @param {AdminApiCreateAdminPlanAdminPlansPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public createAdminPlanAdminPlansPost(requestParameters: AdminApiCreateAdminPlanAdminPlansPostRequest, options?: RawAxiosRequestConfig) {
+        return AdminApiFp(this.configuration).createAdminPlanAdminPlansPost(requestParameters.createPlanRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * 
      * @summary Get Admin Applications
@@ -903,6 +1337,17 @@ export class AdminApi extends BaseAPI {
 
     /**
      * 
+     * @summary Get Admin Job
+     * @param {AdminApiGetAdminJobAdminJobsJobIdGetRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public getAdminJobAdminJobsJobIdGet(requestParameters: AdminApiGetAdminJobAdminJobsJobIdGetRequest, options?: RawAxiosRequestConfig) {
+        return AdminApiFp(this.configuration).getAdminJobAdminJobsJobIdGet(requestParameters.jobId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
      * @summary Get Admin Jobs
      * @param {AdminApiGetAdminJobsAdminJobsGetRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -934,6 +1379,16 @@ export class AdminApi extends BaseAPI {
 
     /**
      * 
+     * @summary Get Platform Settings
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public getPlatformSettingsAdminPlatformSettingsGet(options?: RawAxiosRequestConfig) {
+        return AdminApiFp(this.configuration).getPlatformSettingsAdminPlatformSettingsGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
      * @summary Publish Job
      * @param {AdminApiPublishJobAdminJobsPublishPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -941,6 +1396,28 @@ export class AdminApi extends BaseAPI {
      */
     public publishJobAdminJobsPublishPost(requestParameters: AdminApiPublishJobAdminJobsPublishPostRequest, options?: RawAxiosRequestConfig) {
         return AdminApiFp(this.configuration).publishJobAdminJobsPublishPost(requestParameters.publishJobRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Update Admin Job
+     * @param {AdminApiUpdateAdminJobAdminJobsJobIdPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public updateAdminJobAdminJobsJobIdPatch(requestParameters: AdminApiUpdateAdminJobAdminJobsJobIdPatchRequest, options?: RawAxiosRequestConfig) {
+        return AdminApiFp(this.configuration).updateAdminJobAdminJobsJobIdPatch(requestParameters.jobId, requestParameters.updateJobRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Update Admin Plan
+     * @param {AdminApiUpdateAdminPlanAdminPlansPlanIdPatchRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public updateAdminPlanAdminPlansPlanIdPatch(requestParameters: AdminApiUpdateAdminPlanAdminPlansPlanIdPatchRequest, options?: RawAxiosRequestConfig) {
+        return AdminApiFp(this.configuration).updateAdminPlanAdminPlansPlanIdPatch(requestParameters.planId, requestParameters.updatePlanRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -985,6 +1462,17 @@ export class AdminApi extends BaseAPI {
      */
     public updateJobStatusAdminJobsJobIdStatusPatch(requestParameters: AdminApiUpdateJobStatusAdminJobsJobIdStatusPatchRequest, options?: RawAxiosRequestConfig) {
         return AdminApiFp(this.configuration).updateJobStatusAdminJobsJobIdStatusPatch(requestParameters.jobId, requestParameters.updateJobStatusRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Update Platform Settings
+     * @param {AdminApiUpdatePlatformSettingsAdminPlatformSettingsPutRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public updatePlatformSettingsAdminPlatformSettingsPut(requestParameters: AdminApiUpdatePlatformSettingsAdminPlatformSettingsPutRequest, options?: RawAxiosRequestConfig) {
+        return AdminApiFp(this.configuration).updatePlatformSettingsAdminPlatformSettingsPut(requestParameters.updatePlatformSettingsRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

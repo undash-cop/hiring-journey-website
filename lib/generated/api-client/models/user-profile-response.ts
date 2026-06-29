@@ -21,5 +21,8 @@ export interface UserProfileResponse {
     'full_name'?: string | null;
     'headline'?: string | null;
     'updated_at': string;
+    'applications_count'?: number;
+    'interviews_count'?: number;
+    'credits_remaining'?: number;
 }
 

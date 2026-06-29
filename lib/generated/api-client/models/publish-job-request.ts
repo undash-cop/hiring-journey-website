@@ -21,6 +21,15 @@ export interface PublishJobRequest {
     'location': string;
     'salary_range': { [key: string]: number; };
     'employment_type': string;
-    'publish_to': Array<string>;
+    'publish_to'?: Array<string>;
+    'status'?: PublishJobRequestStatusEnum;
 }
+
+export const PublishJobRequestStatusEnum = {
+    Draft: 'draft',
+    Published: 'published',
+} as const;
+
+export type PublishJobRequestStatusEnum = typeof PublishJobRequestStatusEnum[keyof typeof PublishJobRequestStatusEnum];
+
 

@@ -11,6 +11,9 @@ Name | Type | Description | Notes
 **full_name** | **string** |  | [optional] [default to undefined]
 **headline** | **string** |  | [optional] [default to undefined]
 **updated_at** | **string** |  | [default to undefined]
+**applications_count** | **number** |  | [optional] [default to 0]
+**interviews_count** | **number** |  | [optional] [default to 0]
+**credits_remaining** | **number** |  | [optional] [default to 0]
 
 ## Example
 
@@ -24,6 +27,9 @@ const instance: UserProfileResponse = {
     full_name,
     headline,
     updated_at,
+    applications_count,
+    interviews_count,
+    credits_remaining,
 };
 ```
 
