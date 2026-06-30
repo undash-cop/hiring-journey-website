@@ -1,11 +1,18 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, Button, Input, Select, Badge } from '../../../components/ui';
+import { Card, Button, Input, Select, Badge, Modal } from '../../../components/ui';
 import { useToast } from '../../../contexts/ToastContext';
-import { getAutoApplyProfiles, createAutoApplyProfile, updateAutoApplyProfile, deleteAutoApplyProfile } from '../../../services/api';
+import {
+  getAutoApplyProfiles,
+  createAutoApplyProfile,
+  updateAutoApplyProfile,
+  deleteAutoApplyProfile,
+  getCreditUsage,
+} from '../../../services/api';
 import { LoadingCard } from '../../../components/ui/Loading';
 import { PageErrorState } from '../../../components/QueryStateViews';
 import { queryKeys } from '@/lib/query-keys';
+import { CREDIT_COSTS } from '@/lib/constants';
 import type { AutoApplyProfile } from '../../../types';
 
 export default function AutoApplyPage() {
@@ -13,6 +20,7 @@ export default function AutoApplyPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'profiles' | 'create'>('profiles');
   const [editingProfile, setEditingProfile] = useState<AutoApplyProfile | null>(null);
+  const [activationConfirm, setActivationConfirm] = useState<AutoApplyProfile | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -31,6 +39,11 @@ export default function AutoApplyPage() {
   const { data: profiles, isLoading, isError } = useQuery({
     queryKey: queryKeys.autoApplyProfiles,
     queryFn: getAutoApplyProfiles,
+  });
+
+  const { data: creditUsage } = useQuery({
+    queryKey: queryKeys.creditUsage,
+    queryFn: getCreditUsage,
   });
 
   const createMutation = useMutation({
@@ -144,11 +157,47 @@ export default function AutoApplyPage() {
   };
 
   const handleToggleProfile = (profile: AutoApplyProfile) => {
-    updateMutation.mutate({
-      id: profile.id,
-      data: { isActive: !profile.isActive },
-    });
+    if (profile.isActive) {
+      updateMutation.mutate({
+        id: profile.id,
+        data: { isActive: false },
+      });
+      return;
+    }
+
+    const remaining = creditUsage?.remaining ?? 0;
+    if (remaining < CREDIT_COSTS.AUTO_APPLY) {
+      showToast(
+        `Not enough credits to activate auto-apply. Each application costs ${CREDIT_COSTS.AUTO_APPLY} credits.`,
+        'error',
+      );
+      return;
+    }
+
+    setActivationConfirm(profile);
   };
+
+  const confirmActivation = () => {
+    if (!activationConfirm) return;
+    updateMutation.mutate(
+      {
+        id: activationConfirm.id,
+        data: { isActive: true },
+      },
+      {
+        onSuccess: () => setActivationConfirm(null),
+      },
+    );
+  };
+
+  const activationPreview = activationConfirm
+    ? {
+        dailyLimit: activationConfirm.dailyApplyLimit,
+        costPerApply: CREDIT_COSTS.AUTO_APPLY,
+        maxDailyCost: activationConfirm.dailyApplyLimit * CREDIT_COSTS.AUTO_APPLY,
+        remaining: creditUsage?.remaining ?? 0,
+      }
+    : null;
 
   if (isLoading) {
     return (
@@ -477,6 +526,41 @@ export default function AutoApplyPage() {
           </Card>
         </div>
       )}
+      <Modal
+        isOpen={activationConfirm != null}
+        onClose={() => setActivationConfirm(null)}
+        title="Activate auto-apply profile?"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setActivationConfirm(null)} disabled={updateMutation.isPending}>
+              Cancel
+            </Button>
+            <Button onClick={confirmActivation} isLoading={updateMutation.isPending}>
+              Activate Profile
+            </Button>
+          </>
+        }
+      >
+        {activationPreview && (
+          <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+            <p>
+              Activating <span className="font-medium text-gray-900 dark:text-gray-100">{activationConfirm?.name}</span>{' '}
+              will allow automated applications up to your daily limit.
+            </p>
+            <ul className="space-y-1">
+              <li>Daily apply limit: {activationPreview.dailyLimit} applications</li>
+              <li>Cost per application: {activationPreview.costPerApply} credits</li>
+              <li>Max daily credit cost: {activationPreview.maxDailyCost} credits</li>
+              <li>Your remaining credits: {activationPreview.remaining}</li>
+            </ul>
+            {activationPreview.remaining < activationPreview.maxDailyCost && (
+              <p className="text-orange-700 dark:text-orange-300">
+                Your balance may not cover a full day at the daily limit. Auto-apply will stop when credits run out.
+              </p>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

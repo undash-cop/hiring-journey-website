@@ -19,6 +19,15 @@ type FeedbackState = {
   improvements: string[];
 };
 
+type SessionAnswer = {
+  question: string;
+  answer: string;
+  score: number;
+  feedback: string;
+  strengths: string[];
+  improvements: string[];
+};
+
 export default function InterviewPage() {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
@@ -28,7 +37,8 @@ export default function InterviewPage() {
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [sessionScores, setSessionScores] = useState<number[]>([]);
+  const [expandedSessionId, setExpandedSessionId] = useState<number | null>(null);
+  const [sessionAnswers, setSessionAnswers] = useState<Record<number, SessionAnswer>>({});
 
   const {
     data: questions = [],
@@ -54,7 +64,17 @@ export default function InterviewPage() {
     onSuccess: (result) => {
       analytics.mockInterviewFeedback(type, result.score);
       setFeedback(result);
-      setSessionScores((prev) => [...prev, result.score]);
+      setSessionAnswers((prev) => ({
+        ...prev,
+        [currentQuestion]: {
+          question: questions[currentQuestion] ?? '',
+          answer,
+          score: result.score,
+          feedback: result.feedback,
+          strengths: result.strengths,
+          improvements: result.improvements,
+        },
+      }));
     },
     onError: (err: unknown) => {
       const status =
@@ -90,20 +110,44 @@ export default function InterviewPage() {
     });
   };
 
-  const finishSession = async (scores: number[]) => {
-    if (scores.length === 0) return;
-    const averageScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  const loadQuestionState = (index: number) => {
+    const saved = sessionAnswers[index];
+    setCurrentQuestion(index);
+    setAnswer(saved?.answer ?? '');
+    setFeedback(
+      saved
+        ? {
+            score: saved.score,
+            feedback: saved.feedback,
+            strengths: saved.strengths,
+            improvements: saved.improvements,
+          }
+        : null,
+    );
+  };
+
+  const finishSession = async () => {
+    const answers = Object.entries(sessionAnswers)
+      .sort(([a], [b]) => Number(a) - Number(b))
+      .map(([, item]) => ({
+        question: item.question,
+        answer: item.answer,
+        score: item.score,
+      }));
+    if (answers.length === 0) return;
+    const averageScore = Math.round(answers.reduce((sum, item) => sum + item.score, 0) / answers.length);
     await saveSessionMutation.mutateAsync({
       interviewType: type,
       score: averageScore,
-      questionsAnswered: scores.length,
+      questionsAnswered: answers.length,
+      answers,
     });
     showToast('Interview session saved!', 'success');
     setSessionStarted(false);
     setCurrentQuestion(0);
     setAnswer('');
     setFeedback(null);
-    setSessionScores([]);
+    setSessionAnswers({});
   };
 
   if (questionsLoading || sessionsLoading) {
@@ -157,7 +201,7 @@ export default function InterviewPage() {
                   setAnswer('');
                   setFeedback(null);
                   setSessionStarted(false);
-                  setSessionScores([]);
+                  setSessionAnswers({});
                 }}
                 options={[
                   { value: 'hr', label: 'HR Interview' },
@@ -255,20 +299,26 @@ export default function InterviewPage() {
                   </div>
                 )}
 
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-wrap">
                   <Button
                     variant="outline"
                     onClick={() => {
                       if (currentQuestion > 0) {
-                        setCurrentQuestion(currentQuestion - 1);
-                        setAnswer('');
-                        setFeedback(null);
+                        loadQuestionState(currentQuestion - 1);
                       }
                     }}
                     disabled={currentQuestion === 0}
                   >
                     Previous
                   </Button>
+                  {feedback && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setFeedback(null)}
+                    >
+                      Retry Question
+                    </Button>
+                  )}
                   {currentQuestion < questions.length - 1 ? (
                     <Button
                       onClick={() => {
@@ -276,9 +326,7 @@ export default function InterviewPage() {
                           handleSubmit();
                           return;
                         }
-                        setCurrentQuestion(currentQuestion + 1);
-                        setAnswer('');
-                        setFeedback(null);
+                        loadQuestionState(currentQuestion + 1);
                       }}
                       isLoading={feedbackMutation.isPending}
                       className="flex-1"
@@ -292,8 +340,7 @@ export default function InterviewPage() {
                           handleSubmit();
                           return;
                         }
-                        const scores = sessionScores;
-                        await finishSession(scores);
+                        await finishSession();
                       }}
                       isLoading={feedbackMutation.isPending || saveSessionMutation.isPending}
                       className="flex-1"
@@ -338,18 +385,42 @@ export default function InterviewPage() {
                       key={session.id}
                       className="p-3 border border-gray-200 dark:border-gray-800 rounded-lg"
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <Badge variant={session.type === 'hr' ? 'info' : 'warning'}>
-                          {session.type === 'hr' ? 'HR' : 'Technical'}
-                        </Badge>
-                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                          {session.score}/100
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {session.questionsAnswered} questions •{' '}
-                        {new Date(session.date).toLocaleDateString()}
-                      </p>
+                      <button
+                        type="button"
+                        className="w-full text-left"
+                        onClick={() =>
+                          setExpandedSessionId((prev) => (prev === session.id ? null : session.id))
+                        }
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <Badge variant={session.type === 'hr' ? 'info' : 'warning'}>
+                            {session.type === 'hr' ? 'HR' : 'Technical'}
+                          </Badge>
+                          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            {session.score}/100
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {session.questionsAnswered} questions •{' '}
+                          {new Date(session.date).toLocaleDateString()}
+                          {session.answers.length > 0 ? ' • tap to view Q&A' : ''}
+                        </p>
+                      </button>
+                      {expandedSessionId === session.id && session.answers.length > 0 && (
+                        <div className="mt-3 space-y-3 border-t border-gray-200 dark:border-gray-700 pt-3">
+                          {session.answers.map((item, index) => (
+                            <div key={`${session.id}-${index}`} className="text-xs space-y-1">
+                              <p className="font-medium text-gray-900 dark:text-gray-100">
+                                Q{index + 1}: {item.question}
+                              </p>
+                              <p className="text-gray-600 dark:text-gray-400 line-clamp-3">
+                                A: {item.answer}
+                              </p>
+                              <p className="text-gray-500 dark:text-gray-500">Score: {item.score}/100</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

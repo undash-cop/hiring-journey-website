@@ -1253,7 +1253,14 @@ export const getInterviewQuestions = async (type: 'hr' | 'technical'): Promise<s
 };
 
 export const getInterviewSessions = async (): Promise<{
-  items: Array<{ id: number; type: 'hr' | 'technical'; score: number; date: string; questionsAnswered: number }>;
+  items: Array<{
+    id: number;
+    type: 'hr' | 'technical';
+    score: number;
+    date: string;
+    questionsAnswered: number;
+    answers: Array<{ question: string; answer: string; score: number }>;
+  }>;
   averageScore: number;
   totalSessions: number;
 }> => {
@@ -1264,6 +1271,7 @@ export const getInterviewSessions = async (): Promise<{
       score: number;
       date: string;
       questions_answered: number;
+      answers: Array<{ question: string; answer: string; score: number }>;
     }>;
     average_score: number;
     total_sessions: number;
@@ -1275,6 +1283,7 @@ export const getInterviewSessions = async (): Promise<{
       score: item.score,
       date: item.date,
       questionsAnswered: item.questions_answered,
+      answers: item.answers ?? [],
     })),
     averageScore: data.average_score,
     totalSessions: data.total_sessions,
@@ -1297,11 +1306,13 @@ export const createInterviewSession = async (payload: {
   interviewType: 'hr' | 'technical';
   score: number;
   questionsAnswered: number;
+  answers?: Array<{ question: string; answer: string; score: number }>;
 }): Promise<void> => {
   await apiRequest('post', '/interview/sessions', {
     interview_type: payload.interviewType,
     score: payload.score,
     questions_answered: payload.questionsAnswered,
+    answers: payload.answers ?? [],
   });
 };
 
