@@ -144,11 +144,16 @@ export async function redirectToRegister(): Promise<void> {
   }
 }
 
+export type AuthCallbackResult = {
+  href: string;
+  event: "signup" | "login";
+};
+
 /**
  * Handles Keycloak OIDC redirect on `/auth/callback` (`?code=...`).
  * Returns post-login path on success; throws on failure.
  */
-export async function exchangeKeycloakCallback(): Promise<string> {
+export async function exchangeKeycloakCallback(): Promise<AuthCallbackResult> {
   if (typeof window === "undefined") {
     throw new Error("exchangeKeycloakCallback requires a browser environment");
   }
@@ -162,10 +167,11 @@ export async function exchangeKeycloakCallback(): Promise<string> {
   }
 
   const handledKey = `hj_kc_handled_${state}`;
+  const target = window.sessionStorage.getItem(KC_POST_AUTH_TARGET_KEY);
+  const mode = target === "onboarding" ? "onboarding" : "dashboard";
+  const authEvent = mode === "onboarding" ? "signup" : "login";
   if (window.sessionStorage.getItem(handledKey)) {
-    const target = window.sessionStorage.getItem(KC_POST_AUTH_TARGET_KEY);
-    const mode = target === "onboarding" ? "onboarding" : "dashboard";
-    return resolvePostLoginHref(mode);
+    return { href: resolvePostLoginHref(mode), event: authEvent };
   }
   window.sessionStorage.setItem(handledKey, "1");
 
@@ -188,8 +194,6 @@ export async function exchangeKeycloakCallback(): Promise<string> {
   adoptKeycloakSession(kc);
   syncAuthStoreFromKeycloak(kc);
 
-  const target = window.sessionStorage.getItem(KC_POST_AUTH_TARGET_KEY);
   window.sessionStorage.removeItem(KC_POST_AUTH_TARGET_KEY);
-  const mode = target === "onboarding" ? "onboarding" : "dashboard";
-  return resolvePostLoginHref(mode);
+  return { href: resolvePostLoginHref(mode), event: authEvent };
 }

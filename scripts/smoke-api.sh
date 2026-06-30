@@ -25,4 +25,10 @@ echo "  /billing/plans OK"
 curl -fsSL "${BASE}/metrics" | head -c 40 >/dev/null
 echo "  /metrics OK"
 
+curl -fsSL -X POST "${BASE}/contact" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Smoke Test","email":"smoke@example.com","subject":"API smoke check","message":"Automated smoke test submission."}' \
+  | grep -q '"id"'
+echo "  POST /contact OK"
+
 echo "API smoke test passed."

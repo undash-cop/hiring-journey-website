@@ -22,7 +22,7 @@ Baseline standards for each route (met for shipped phases; revisit when adding n
 - [x] Real API/data wiring complete (no placeholder or hardcoded demo state in production)
 - [x] Loading, empty, error, and success states implemented on live routes
 - [x] Primary user actions work end-to-end for shipped modules
-- [ ] Basic analytics instrumentation added (GA4/Plausible — configure per environment)
+- [ ] Basic analytics instrumentation added (GA4/Plausible — configure per environment; events wired in `lib/analytics.ts`)
 - [x] Accessibility baseline on marketing and core app flows (ongoing audits on new UI)
 - [x] Route-level QA test coverage exists (Playwright + route validators in CI)
 
@@ -134,6 +134,6 @@ NEXT_PUBLIC_API_URL=
 
 Not required for M4 release; track if product scope expands:
 
-- [ ] More coding-arena challenges with executable test harnesses (only Two Sum today)
-- [ ] Transactional email (contact form, notifications)
-- [ ] Per-page analytics events beyond global shell instrumentation
+- [x] More coding-arena challenges with executable test harnesses (Two Sum, Valid Parentheses, Best Time to Buy/Sell)
+- [x] Transactional email (contact form API + optional SMTP; submissions stored in DB)
+- [x] Per-page analytics events beyond global shell instrumentation

@@ -16,6 +16,7 @@ import { redirectToLogin } from '@/lib/keycloak';
 import { getLogoutRedirectUri } from '@/lib/keycloak-oauth-redirect';
 import { reportAuthError } from '@/lib/auth-errors';
 import { setMonitoringUser } from '@/lib/monitoring';
+import { analytics } from '@/lib/analytics';
 import { useAuthStore } from '../store/authStore';
 import type { User, UserRole } from '../types';
 
@@ -210,6 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    analytics.logout();
     setMonitoringUser(null);
     clearAuthSession();
     if (typeof keycloak.logout === 'function') {

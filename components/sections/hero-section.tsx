@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, Target, Zap, Shield, TrendingUp } from "lucide-react";
 import { MARKETING_CTAS } from "@/lib/marketing-nav";
 import { MARKETING_ROUTES } from "@/lib/marketing-routes";
+import { MarketingCtaLink } from "@/components/analytics/marketing-cta-link";
 
 export function HeroSection() {
   return (
@@ -43,19 +43,23 @@ export function HeroSection() {
               with AI-powered tools that get you hired faster.
             </p>
             <div className="mt-10 flex items-center gap-x-6">
-              <Link
+              <MarketingCtaLink
                 href={MARKETING_CTAS.signup}
+                source="hero"
+                kind="signup"
                 className="rounded-md bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors flex items-center gap-2"
               >
                 Start Free
                 <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
+              </MarketingCtaLink>
+              <MarketingCtaLink
                 href={MARKETING_ROUTES.pricing}
+                source="hero"
+                kind="pricing"
                 className="text-sm font-semibold leading-6 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
               >
                 View Pricing <span aria-hidden="true">→</span>
-              </Link>
+              </MarketingCtaLink>
             </div>
             <div className="mt-10 flex items-center gap-x-8 text-sm text-gray-600 dark:text-gray-400">
               <div className="flex items-center gap-x-2">

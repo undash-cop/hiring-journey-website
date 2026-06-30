@@ -9,6 +9,7 @@ import {
 import { Card, Button, Badge, Select, Modal } from '../../../components/ui';
 import { useToast } from '../../../contexts/ToastContext';
 import { queryKeys } from '@/lib/query-keys';
+import { analytics } from '@/lib/analytics';
 import type { CodingChallenge, CodingChallengeDetail, CodingSubmitResult } from '../../../types';
 
 function ChallengeWorkspace({
@@ -29,6 +30,7 @@ function ChallengeWorkspace({
       setSubmitResult(result);
       void queryClient.invalidateQueries({ queryKey: queryKeys.codingChallenges });
       if (result.solved) {
+        analytics.codingChallengeSolved(challenge.id);
         showToast('All tests passed — challenge solved!', 'success');
       } else {
         showToast(`${result.passed}/${result.total} tests passed. Keep refining your solution.`, 'info');

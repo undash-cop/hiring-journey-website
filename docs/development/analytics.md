@@ -56,51 +56,53 @@ Plausible is a privacy-friendly, GDPR-compliant analytics solution that doesn't 
    - Visit your website
    - Check Plausible dashboard for real-time stats
 
-## Automatic Tracking
+## Wired product events
 
-The following events are automatically tracked:
+Events fire from `lib/analytics.ts` after the underlying action succeeds (not on click alone, except navigation CTAs):
 
-### Page Views
-- All page navigations are automatically tracked
-- No additional code needed
+| Event | Trigger |
+|-------|---------|
+| `sign_up` / `login` | Keycloak `/auth/callback` success |
+| `logout` | User signs out from app shell |
+| `click_signup` / `click_login` | Marketing header + hero/CTA sections (`MarketingCtaLink`) |
+| `click_pricing` / `click_features` / `click_blog` / `click_about` | Marketing nav |
+| `resume_upload` | Resume PDF parse succeeds |
+| `resume_analysis` | Role optimization succeeds |
+| `job_application` | Job apply API succeeds |
+| `mock_interview_start` / `mock_interview_feedback` | Interview session start and feedback |
+| `coding_challenge_solved` | All coding tests pass |
+| `checkout_started` / `credit_purchase` / `subscription_started` | Billing checkout funnel |
+| `contact_form_submit` | Contact API returns 201 |
+| `plan_selected` | Pricing page plan CTA |
+| Blog related clicks | `trackBlogRelatedClick` helpers |
 
-### User Actions
-- **Signup**: When users create an account
-- **Login**: When users log in
-- **Contact Form**: When contact form is submitted
+Page views are handled by the GA / Plausible shell in `components/analytics/`.
 
-### Feature Usage
-- **Resume Upload**: When users upload a resume
-- **Resume Analysis**: When resume analysis is requested
-- **Job Application**: When users apply to jobs
-- **Mock Interview**: When users start mock interviews
-- **Auto-Apply**: When auto-apply is activated
+## GA4 conversion goals (recommended)
 
-### Navigation
-- **Pricing Clicks**: When users click on pricing plans
-- **Feature Page Views**: When users visit features page
-- **Blog Views**: When users view blog posts
+In GA4 → **Admin → Events**, mark these as conversions once they appear in realtime:
 
-### Conversions
-- **Plan Selection**: When users select a pricing plan
-- **Credit Purchase**: When users purchase credits
-- **Subscription Started**: When users start a subscription
+| Event | Funnel stage |
+|-------|----------------|
+| `sign_up` | Acquisition |
+| `click_signup` | Top-of-funnel intent |
+| `resume_upload` | Activation |
+| `job_application` | Core value |
+| `checkout_started` | Monetization intent |
+| `subscription_started` | Revenue |
+| `contact_form_submit` | Lead gen |
 
-## Custom Event Tracking
+Create an **Exploration → Funnel** report: `click_signup` → `sign_up` → `resume_upload` → `job_application` → `checkout_started` → `subscription_started`.
 
-You can track custom events using the analytics utility:
+For Plausible, add matching **Goals** for the same event names in Site settings.
+
+## Custom event tracking
 
 ```typescript
-import { analytics } from "@/lib/analytics";
+import { analytics, trackEvent } from "@/lib/analytics";
 
-// Track a custom event
-analytics.trackEvent("button_click", "engagement", "header_cta");
-
-// Track plan selection
+trackEvent("button_click", "engagement", "header_cta");
 analytics.planSelected("Pro");
-
-// Track feature usage
-analytics.resumeUpload();
 ```
 
 ## Available Analytics Functions

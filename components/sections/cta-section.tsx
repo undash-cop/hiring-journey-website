@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, CheckCircle } from "lucide-react";
 import { TrustBadges } from "@/components/sections/trust-badges";
 import { MARKETING_CTAS } from "@/lib/marketing-nav";
 import { MARKETING_ROUTES } from "@/lib/marketing-routes";
+import { MarketingCtaLink } from "@/components/analytics/marketing-cta-link";
 
 export function CTASection() {
   return (
@@ -78,19 +78,23 @@ export function CTASection() {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-x-6 gap-y-4"
             >
-              <Link
+              <MarketingCtaLink
                 href={MARKETING_CTAS.signup}
+                source="cta_section"
+                kind="signup"
                 className="rounded-md bg-white px-8 py-3 text-sm font-semibold text-primary-600 shadow-lg hover:bg-primary-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-all hover:scale-105 flex items-center gap-2"
               >
                 Start Free
                 <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
+              </MarketingCtaLink>
+              <MarketingCtaLink
                 href={MARKETING_ROUTES.pricing}
+                source="cta_section"
+                kind="pricing"
                 className="rounded-md bg-white/10 px-8 py-3 text-sm font-semibold text-white ring-1 ring-inset ring-white/20 hover:bg-white/20 transition-all"
               >
                 View Pricing
-              </Link>
+              </MarketingCtaLink>
             </motion.div>
           </div>
         </div>

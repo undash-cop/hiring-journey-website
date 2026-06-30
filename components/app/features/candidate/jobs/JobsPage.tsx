@@ -8,6 +8,7 @@ import { queryKeys } from '@/lib/query-keys';
 import { useToast } from '../../../contexts/ToastContext';
 import { formatIndianCurrencyRange } from '../../../utils/currency';
 import { getRelativeTime } from '../../../utils/date';
+import { analytics } from '@/lib/analytics';
 import type { Job } from '../../../types';
 
 const jobBoardColors: Record<string, string> = {
@@ -55,7 +56,8 @@ export default function JobsPage() {
 
   const applyMutation = useMutation({
     mutationFn: applyToJob,
-    onSuccess: () => {
+    onSuccess: (_result, jobId) => {
+      analytics.jobApplication(jobId);
       invalidateApplicationData();
       showToast('Application submitted successfully!', 'success');
     },
@@ -81,9 +83,14 @@ export default function JobsPage() {
       );
       return results;
     },
-    onSuccess: (results) => {
+    onSuccess: (results, jobIds) => {
       const successful = results.filter((r) => r.status === 'fulfilled').length;
       const failed = results.filter((r) => r.status === 'rejected').length;
+      jobIds.forEach((id, index) => {
+        if (results[index]?.status === 'fulfilled') {
+          analytics.jobApplication(id);
+        }
+      });
       invalidateApplicationData();
       setSelectedJobs(new Set());
       setShowBulkActions(false);

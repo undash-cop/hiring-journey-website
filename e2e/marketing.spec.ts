@@ -91,4 +91,29 @@ test.describe("Marketing pages", () => {
     await page.getByRole("button", { name: /send message/i }).click();
     await expect(page.getByText(/name must be at least/i)).toBeVisible();
   });
+
+  test("contact form submits successfully", async ({ page }) => {
+    await page.route("**/contact", async (route) => {
+      if (route.request().method() !== "POST") {
+        await route.continue();
+        return;
+      }
+      await route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: 1,
+          message: "Thank you for your message. We will get back to you within one business day.",
+        }),
+      });
+    });
+
+    await page.goto("/contact");
+    await page.getByLabel(/^name$/i).fill("Jane Doe");
+    await page.getByLabel(/^email$/i).fill("jane@example.com");
+    await page.getByLabel(/^subject$/i).fill("Product question");
+    await page.getByLabel(/^message$/i).fill("I would like to learn more about enterprise plans.");
+    await page.getByRole("button", { name: /send message/i }).click();
+    await expect(page.getByText(/thank you/i)).toBeVisible();
+  });
 });

@@ -36,6 +36,8 @@ docker compose -f docker-compose.prod.yml --env-file .env.staging up -d --build
 | `LLM_API_BASE_URL` | Optional | Default `https://openrouter.ai/api/v1` |
 | `LLM_MODEL` | Optional | Default `openai/gpt-4o-mini` |
 | `SENTRY_DSN` | Recommended | API error monitoring |
+| `CONTACT_NOTIFY_EMAIL` | Optional | Inbox for contact form submissions |
+| `SMTP_*` | Optional | Email delivery when contact form is submitted |
 
 ### API smoke (from laptop or VM)
 
@@ -49,6 +51,7 @@ Confirm smoke hits new routes:
 
 - [ ] `GET /billing/plans` → 200
 - [ ] `GET /metrics` → 200 (Prometheus text)
+- [ ] `POST /contact` → 201 (included in `npm run smoke:api`)
 
 ## 2. Keycloak
 

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Check, ArrowRight } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { MARKETING_CTAS } from "@/lib/marketing-nav";
+import { MarketingCtaLink } from "@/components/analytics/marketing-cta-link";
 
 const plans = [
   {
@@ -183,8 +184,10 @@ export function PricingPreviewSection() {
                   ))}
                 </ul>
               </div>
-              <Link
+              <MarketingCtaLink
                 href={MARKETING_CTAS.signup}
+                source={`pricing_preview_${plan.name.toLowerCase()}`}
+                kind="signup"
                 className={`mt-8 block rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 transition-colors ${
                   plan.popular
                     ? "bg-white text-primary-600 hover:bg-primary-50"
@@ -193,7 +196,7 @@ export function PricingPreviewSection() {
               >
                 {plan.cta}
                 <ArrowRight className="inline-block ml-2 h-4 w-4" />
-              </Link>
+              </MarketingCtaLink>
             </motion.div>
           ))}
         </div>

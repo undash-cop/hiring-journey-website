@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { MARKETING_CTAS } from "@/lib/marketing-nav";
+import { MarketingCtaLink } from "@/components/analytics/marketing-cta-link";
 import { GraduationCap, FileText, Search, MessageSquare, CheckCircle, ArrowRight, Sparkles } from "lucide-react";
 
 const fresherSteps = [
@@ -141,13 +141,15 @@ export function FresherJourney() {
           transition={{ duration: 0.5, delay: 0.7 }}
           className="mt-12 text-center"
         >
-          <Link
+          <MarketingCtaLink
             href={MARKETING_CTAS.signup}
+            source="fresher_journey"
+            kind="signup"
             className="inline-flex items-center gap-2 rounded-md bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-colors"
           >
             Start as a Fresher
             <ArrowRight className="h-4 w-4" />
-          </Link>
+          </MarketingCtaLink>
         </motion.div>
       </div>
     </div>

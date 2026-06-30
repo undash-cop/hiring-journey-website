@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { exchangeKeycloakCallback } from "@/lib/keycloak";
 import { reportAuthError } from "@/lib/auth-errors";
+import { analytics } from "@/lib/analytics";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -11,7 +12,12 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     void exchangeKeycloakCallback()
-      .then((href) => {
+      .then(({ href, event }) => {
+        if (event === "signup") {
+          analytics.signup();
+        } else {
+          analytics.login();
+        }
         router.replace(href);
       })
       .catch((error: unknown) => {

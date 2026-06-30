@@ -6,6 +6,7 @@ import { PageErrorState } from '../../../components/QueryStateViews';
 import { useToast } from '../../../contexts/ToastContext';
 import { useInvalidateResumeData } from '../../../hooks/invalidateCandidateQueries';
 import { queryKeys } from '@/lib/query-keys';
+import { analytics } from '@/lib/analytics';
 import type { ResumeVersion, ResumeTemplate, ResumeBuilderData } from '../../../types';
 
 export default function ResumePage() {
@@ -59,6 +60,7 @@ export default function ResumePage() {
   const roleOptimizeMutation = useMutation({
     mutationFn: () => optimizeResumeForRole(targetRole),
     onSuccess: (result) => {
+      analytics.resumeAnalysis(targetRole);
       invalidateResumeData();
       setShowRoleOptimization(false);
       showToast(`Resume optimized for ${targetRole}! Score: ${result.roleSpecificScore}`, 'success');
@@ -80,6 +82,7 @@ export default function ResumePage() {
   const parseMutation = useMutation({
     mutationFn: parseResume,
     onSuccess: () => {
+      analytics.resumeUpload();
       setIsParsing(false);
       showToast('Resume parsed successfully!', 'success');
       setActiveTab('builder');

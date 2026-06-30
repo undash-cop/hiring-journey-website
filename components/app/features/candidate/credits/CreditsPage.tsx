@@ -61,18 +61,19 @@ export default function CreditsPage() {
     }
   };
 
-  const handleCheckoutSuccess = () => {
+  const handleCheckoutSuccess = (planName?: string) => {
     invalidateBilling();
     setCheckoutPlanId(null);
     showToast('Subscription updated successfully.', 'success');
-    analytics.subscriptionStarted(subscription?.planName ?? 'plan');
+    analytics.subscriptionStarted(planName ?? subscription?.planName ?? 'plan');
   };
 
   const checkoutMutation = useMutation({
     mutationFn: async (plan: BillingPlan) => {
+      analytics.checkoutStarted(plan.name);
       const session = await startBillingCheckout(plan.id, billingCycle);
       if (session.free) {
-        handleCheckoutSuccess();
+        handleCheckoutSuccess(plan.name);
         return;
       }
       if (!session.invoiceId) {
@@ -80,7 +81,7 @@ export default function CreditsPage() {
       }
       if (session.mock) {
         await confirmBillingCheckout(session.invoiceId, `pay_mock_${session.invoiceId}`, 'mock');
-        handleCheckoutSuccess();
+        handleCheckoutSuccess(plan.name);
         return;
       }
       if (!session.orderId || !session.keyId) {
@@ -95,7 +96,8 @@ export default function CreditsPage() {
         onSuccess: async (paymentId, signature) => {
           try {
             await confirmBillingCheckout(session.invoiceId!, paymentId, signature);
-            handleCheckoutSuccess();
+            analytics.creditPurchase(session.amount ?? plan.price);
+            handleCheckoutSuccess(plan.name);
           } catch {
             showToast('Payment succeeded but confirmation failed. Contact support if credits do not update.', 'error');
           }
@@ -116,7 +118,7 @@ export default function CreditsPage() {
       }
       if (session.mock) {
         await confirmBillingCheckout(session.invoiceId, `pay_mock_${session.invoiceId}`, 'mock');
-        handleCheckoutSuccess();
+        handleCheckoutSuccess(session.planName ?? 'Subscription');
         return;
       }
       if (!session.orderId || !session.keyId) {
@@ -130,7 +132,7 @@ export default function CreditsPage() {
         planName: session.planName ?? 'Subscription',
         onSuccess: async (paymentId, signature) => {
           await confirmBillingCheckout(session.invoiceId!, paymentId, signature);
-          handleCheckoutSuccess();
+          handleCheckoutSuccess(session.planName ?? 'Subscription');
         },
       });
     },

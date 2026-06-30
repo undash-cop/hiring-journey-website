@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Logo } from "@/components/logo";
 import { HEADER_NAV, MARKETING_CTAS } from "@/lib/marketing-nav";
 import { MARKETING_ROUTES } from "@/lib/marketing-routes";
+import { analytics } from "@/lib/analytics";
 
 export function Header() {
   const pathname = usePathname();
@@ -47,6 +48,12 @@ export function Header() {
             <Link
               key={item.name}
               href={item.href}
+              onClick={() => {
+                if (item.href.includes("/pricing")) analytics.clickPricing();
+                else if (item.href.includes("/features")) analytics.clickFeatures();
+                else if (item.href.includes("/blog")) analytics.clickBlog();
+                else if (item.href.includes("/about")) analytics.clickAbout();
+              }}
               className={cn(
                 "text-sm font-semibold leading-6 transition-colors",
                 pathname === item.href
@@ -72,12 +79,14 @@ export function Header() {
           </button>
           <Link
             href={MARKETING_CTAS.login}
+            onClick={() => analytics.clickLogin("header")}
             className="text-sm font-semibold leading-6 text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
           >
             Log in
           </Link>
           <Link
             href={MARKETING_CTAS.signup}
+            onClick={() => analytics.clickSignup("header")}
             className="rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-colors"
           >
             Start Free

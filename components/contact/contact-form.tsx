@@ -7,6 +7,7 @@ import { z } from "zod";
 import { ArrowRight, Mail, User, MessageSquare } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { analytics } from "@/lib/analytics";
+import { submitContactForm } from "@/lib/contact-api";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -36,12 +37,21 @@ export function ContactForm() {
   });
 
   const onSubmit = async (data: ContactFormData) => {
+    if (data.root?.trim()) {
+      addToast("Thank you! We'll get back to you within one business day.", "success");
+      reset();
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // TODO: Integrate with backend API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // Track form submission
+      await submitContactForm({
+        name: data.name,
+        email: data.email,
+        subject: data.subject,
+        message: data.message,
+      });
+
       analytics.contactFormSubmit();
       
       addToast("Thank you! We'll get back to you within one business day.", "success");
@@ -138,6 +148,15 @@ export function ContactForm() {
           <p className="mt-2 text-sm text-red-600 dark:text-red-400">{errors.message.message}</p>
         )}
       </div>
+
+      <input
+        {...register("root")}
+        type="text"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="hidden"
+      />
 
       {errors.root && (
         <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">

@@ -10,6 +10,7 @@ import { Card, Button, Select, Badge, LoadingCard } from '../../../components/ui
 import { PageEmptyState, PageErrorState } from '../../../components/QueryStateViews';
 import { useToast } from '../../../contexts/ToastContext';
 import { queryKeys } from '@/lib/query-keys';
+import { analytics } from '@/lib/analytics';
 
 type FeedbackState = {
   score: number;
@@ -51,6 +52,7 @@ export default function InterviewPage() {
   const feedbackMutation = useMutation({
     mutationFn: submitInterviewFeedback,
     onSuccess: (result) => {
+      analytics.mockInterviewFeedback(type, result.score);
       setFeedback(result);
       setSessionScores((prev) => [...prev, result.score]);
     },
@@ -172,7 +174,10 @@ export default function InterviewPage() {
                   Start a mock interview session to practice {type === 'hr' ? 'HR' : 'Technical'} questions
                 </p>
                 <Button
-                  onClick={() => setSessionStarted(true)}
+                  onClick={() => {
+                    analytics.mockInterviewStart(type);
+                    setSessionStarted(true);
+                  }}
                   disabled={questions.length === 0}
                 >
                   Start Mock Interview Session

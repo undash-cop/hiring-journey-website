@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import {
   trackBlogRelatedCategoryClick,
   trackBlogRelatedClick,
-} from "@/lib/analytics-events";
+} from "@/lib/analytics";
 
 type RelatedPostLinkProps = {
   href: string;
