@@ -46,6 +46,12 @@ test.describe("Admin app routes", () => {
     await expect(page.getByText("jane@example.com")).toBeVisible();
   });
 
+  test("newsletter page lists subscribers", async ({ page }) => {
+    await page.goto("/app/admin/newsletter", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: /newsletter subscribers/i })).toBeVisible();
+    await expect(page.getByText("subscriber@example.com")).toBeVisible();
+  });
+
   test("plans page shows plan cards", async ({ page }) => {
     await page.goto("/app/admin/plans", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: /plans & credits/i })).toBeVisible();

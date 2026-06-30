@@ -338,6 +338,58 @@ export const mockAdminContactSubmissionsResponse = [
   },
 ];
 
+export const mockAdminNewsletterSubscribersResponse = [
+  {
+    id: 1,
+    email: "subscriber@example.com",
+    source: "footer",
+    created_at: "2026-06-01T00:00:00Z",
+  },
+];
+
+export const mockInterviewSessionsResponse = {
+  items: [
+    {
+      id: 1,
+      type: "hr",
+      score: 84,
+      date: "2026-06-01T00:00:00Z",
+      questions_answered: 1,
+      answers: [
+        {
+          question: "Tell me about yourself.",
+          answer: "I am a frontend engineer with React experience.",
+          score: 84,
+        },
+      ],
+    },
+  ],
+  average_score: 84,
+  total_sessions: 1,
+};
+
+export const mockAutoApplyProfilesResponse = {
+  items: [
+    {
+      id: 1,
+      name: "Frontend Remote",
+      is_active: false,
+      min_salary: 1000000,
+      locations: ["Remote"],
+      job_types: ["full-time"],
+      required_skills: ["React"],
+      skill_match_threshold: 70,
+      job_boards: ["linkedin"],
+      exclude_companies: [],
+      exclude_keywords: [],
+      daily_apply_limit: 10,
+      apply_schedule: "daily",
+      applied_count: 0,
+      created_at: "2026-06-01T00:00:00Z",
+    },
+  ],
+};
+
 export async function mockAdminApis(page: Page): Promise<void> {
   await page.route("**/admin/stats**", (route) =>
     route.fulfill({
@@ -437,6 +489,13 @@ export async function mockAdminApis(page: Page): Promise<void> {
       status: 200,
       contentType: "application/json",
       body: JSON.stringify(mockAdminContactSubmissionsResponse),
+    }),
+  );
+  await page.route("**/admin/newsletter-subscribers**", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(mockAdminNewsletterSubscribersResponse),
     }),
   );
 }
@@ -650,13 +709,46 @@ export async function mockCandidateApis(page: Page): Promise<void> {
       body: JSON.stringify({ items: ["Tell me about yourself."] }),
     }),
   );
-  await page.route("**/interview/sessions**", (route) =>
+  await page.route("**/interview/feedback**", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ items: [], average_score: 0, total_sessions: 0 }),
+      body: JSON.stringify({
+        score: 78,
+        feedback: "Clear structure with relevant experience.",
+        strengths: ["Concise opening"],
+        improvements: ["Add a measurable outcome"],
+        source: "heuristic",
+      }),
     }),
   );
+  await page.route("**/interview/sessions**", async (route) => {
+    if (route.request().method() === "POST") {
+      return route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: 2,
+          type: "hr",
+          score: 78,
+          date: "2026-06-02T00:00:00Z",
+          questions_answered: 1,
+          answers: [
+            {
+              question: "Tell me about yourself.",
+              answer: "I build accessible React interfaces.",
+              score: 78,
+            },
+          ],
+        }),
+      });
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(mockInterviewSessionsResponse),
+    });
+  });
   await page.route("**/negotiation/frameworks**", (route) =>
     route.fulfill({
       status: 200,
@@ -787,12 +879,26 @@ export async function mockCandidateApis(page: Page): Promise<void> {
     }
     return route.continue();
   });
+  let autoApplyActive = false;
   await page.route("**/auto-apply/profiles**", (route) => {
-    if (route.request().method() === "GET") {
+    const method = route.request().method();
+    const profile = {
+      ...mockAutoApplyProfilesResponse.items[0],
+      is_active: autoApplyActive,
+    };
+    if (method === "GET") {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ items: [] }),
+        body: JSON.stringify({ items: [profile] }),
+      });
+    }
+    if (method === "PATCH") {
+      autoApplyActive = true;
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ...profile, is_active: true }),
       });
     }
     return route.continue();

@@ -7,6 +7,7 @@ export const ADMIN_SECTIONS = [
   'analytics',
   'audit',
   'contact',
+  'newsletter',
   'plans',
   'settings',
 ] as const;

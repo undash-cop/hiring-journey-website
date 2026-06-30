@@ -6,7 +6,7 @@ import {
   submitInterviewFeedback,
   createInterviewSession,
 } from '../../../services/api';
-import { Card, Button, Select, Badge, LoadingCard } from '../../../components/ui';
+import { Card, Button, Select, Badge, LoadingCard, Modal } from '../../../components/ui';
 import { PageEmptyState, PageErrorState } from '../../../components/QueryStateViews';
 import { useToast } from '../../../contexts/ToastContext';
 import { queryKeys } from '@/lib/query-keys';
@@ -37,7 +37,7 @@ export default function InterviewPage() {
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [expandedSessionId, setExpandedSessionId] = useState<number | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
   const [sessionAnswers, setSessionAnswers] = useState<Record<number, SessionAnswer>>({});
 
   const {
@@ -180,6 +180,7 @@ export default function InterviewPage() {
   }
 
   const sessionHistory = sessionsData?.items ?? [];
+  const selectedSession = sessionHistory.find((session) => session.id === selectedSessionId) ?? null;
 
   return (
     <div className="p-8 space-y-6">
@@ -385,41 +386,27 @@ export default function InterviewPage() {
                       key={session.id}
                       className="p-3 border border-gray-200 dark:border-gray-800 rounded-lg"
                     >
-                      <button
-                        type="button"
-                        className="w-full text-left"
-                        onClick={() =>
-                          setExpandedSessionId((prev) => (prev === session.id ? null : session.id))
-                        }
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <Badge variant={session.type === 'hr' ? 'info' : 'warning'}>
-                            {session.type === 'hr' ? 'HR' : 'Technical'}
-                          </Badge>
-                          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                            {session.score}/100
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {session.questionsAnswered} questions •{' '}
-                          {new Date(session.date).toLocaleDateString()}
-                          {session.answers.length > 0 ? ' • tap to view Q&A' : ''}
-                        </p>
-                      </button>
-                      {expandedSessionId === session.id && session.answers.length > 0 && (
-                        <div className="mt-3 space-y-3 border-t border-gray-200 dark:border-gray-700 pt-3">
-                          {session.answers.map((item, index) => (
-                            <div key={`${session.id}-${index}`} className="text-xs space-y-1">
-                              <p className="font-medium text-gray-900 dark:text-gray-100">
-                                Q{index + 1}: {item.question}
-                              </p>
-                              <p className="text-gray-600 dark:text-gray-400 line-clamp-3">
-                                A: {item.answer}
-                              </p>
-                              <p className="text-gray-500 dark:text-gray-500">Score: {item.score}/100</p>
-                            </div>
-                          ))}
-                        </div>
+                      <div className="flex items-center justify-between mb-1">
+                        <Badge variant={session.type === 'hr' ? 'info' : 'warning'}>
+                          {session.type === 'hr' ? 'HR' : 'Technical'}
+                        </Badge>
+                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {session.score}/100
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {session.questionsAnswered} questions •{' '}
+                        {new Date(session.date).toLocaleDateString()}
+                      </p>
+                      {session.answers.length > 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-3"
+                          onClick={() => setSelectedSessionId(session.id)}
+                        >
+                          View Q&A
+                        </Button>
                       )}
                     </div>
                   ))}
@@ -429,6 +416,49 @@ export default function InterviewPage() {
           )}
         </div>
       </div>
+
+      <Modal
+        isOpen={selectedSession != null}
+        onClose={() => setSelectedSessionId(null)}
+        title={
+          selectedSession
+            ? `${selectedSession.type === 'hr' ? 'HR' : 'Technical'} session • ${selectedSession.score}/100`
+            : 'Session details'
+        }
+        size="lg"
+        footer={
+          <Button variant="outline" onClick={() => setSelectedSessionId(null)}>
+            Close
+          </Button>
+        }
+      >
+        {selectedSession && (
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {selectedSession.questionsAnswered} questions answered on{' '}
+              {new Date(selectedSession.date).toLocaleString()}
+            </p>
+            {selectedSession.answers.map((item, index) => (
+              <div
+                key={`${selectedSession.id}-${index}`}
+                className="rounded-lg border border-gray-200 dark:border-gray-800 p-4 space-y-2"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    Question {index + 1}
+                  </p>
+                  <Badge variant="info">{item.score}/100</Badge>
+                </div>
+                <p className="text-sm text-gray-900 dark:text-gray-100">{item.question}</p>
+                <div>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Your answer</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{item.answer}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

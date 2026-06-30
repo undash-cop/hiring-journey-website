@@ -10,6 +10,7 @@ import CandidatesPage from "@/components/app/features/admin/candidates/Candidate
 import AnalyticsPage from "@/components/app/features/admin/analytics/AnalyticsPage";
 import AuditLogsPage from "@/components/app/features/admin/audit/AuditLogsPage";
 import ContactSubmissionsPage from "@/components/app/features/admin/contact/ContactSubmissionsPage";
+import NewsletterSubscribersPage from "@/components/app/features/admin/newsletter/NewsletterSubscribersPage";
 import PlansPage from "@/components/app/features/admin/plans/PlansPage";
 import AdminSettingsPage from "@/components/app/features/admin/settings/SettingsPage";
 
@@ -22,6 +23,7 @@ const adminRouteMap: Record<string, ComponentType> = {
   analytics: AnalyticsPage,
   audit: AuditLogsPage,
   contact: ContactSubmissionsPage,
+  newsletter: NewsletterSubscribersPage,
   plans: PlansPage,
   settings: AdminSettingsPage,
 };

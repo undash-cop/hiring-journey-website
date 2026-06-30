@@ -40,6 +40,7 @@ import type {
   ResumeBuilderData,
   AdminAuditLog,
   ContactSubmission,
+  NewsletterSubscriber,
   BillingPlan,
   UserSubscription,
   BillingInvoice,
@@ -996,6 +997,21 @@ export const getAdminContactSubmissions = async (limit: number = 50): Promise<Co
     email: item.email,
     subject: item.subject,
     message: item.message,
+    createdAt: item.created_at,
+  }));
+};
+
+export const getAdminNewsletterSubscribers = async (limit: number = 50): Promise<NewsletterSubscriber[]> => {
+  const data = await apiRequest<Array<{
+    id: number;
+    email: string;
+    source: string;
+    created_at: string;
+  }>>('get', `/admin/newsletter-subscribers?limit=${limit}`);
+  return data.map((item) => ({
+    id: item.id,
+    email: item.email,
+    source: item.source,
     createdAt: item.created_at,
   }));
 };

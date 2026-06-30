@@ -457,6 +457,13 @@ export interface ContactSubmission {
   createdAt: string;
 }
 
+export interface NewsletterSubscriber {
+  id: number;
+  email: string;
+  source: string;
+  createdAt: string;
+}
+
 export interface AutoApplyProfile {
   id: number;
   name: string;

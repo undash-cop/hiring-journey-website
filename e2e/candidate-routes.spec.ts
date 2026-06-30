@@ -85,7 +85,39 @@ test.describe("Candidate app routes", () => {
   test("auto-apply page loads profiles", async ({ page }) => {
     await page.goto("/app/auto-apply");
     await expect(page.getByRole("heading", { name: /auto-apply/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /create profile/i })).toBeVisible();
+    await expect(page.getByText("Frontend Remote")).toBeVisible();
+  });
+
+  test("auto-apply activation shows credit confirmation modal", async ({ page }) => {
+    await page.goto("/app/auto-apply");
+    await page.getByRole("checkbox").click();
+    await expect(page.getByRole("heading", { name: /activate auto-apply profile/i })).toBeVisible();
+    await expect(page.getByText(/cost per application: 5 credits/i)).toBeVisible();
+    await page.getByRole("button", { name: /activate profile/i }).click();
+    await expect(page.getByRole("heading", { name: /activate auto-apply profile/i })).toBeHidden();
+  });
+
+  test("interview retry clears feedback but keeps answer", async ({ page }) => {
+    await page.goto("/app/interview");
+    await page.getByRole("button", { name: /start mock interview session/i }).click();
+    await page.getByPlaceholder(/type your answer here/i).fill("I build accessible React interfaces.");
+    await page.getByRole("button", { name: /submit answer/i }).click();
+    await expect(page.getByText(/ai feedback/i)).toBeVisible();
+    await page.getByRole("button", { name: /retry question/i }).click();
+    await expect(page.getByText(/ai feedback/i)).toBeHidden();
+    await expect(page.getByPlaceholder(/type your answer here/i)).toHaveValue(
+      "I build accessible React interfaces.",
+    );
+  });
+
+  test("interview history opens full Q&A detail modal", async ({ page }) => {
+    await page.goto("/app/interview");
+    await page.getByRole("button", { name: /show history/i }).click();
+    await page.getByRole("button", { name: /view q&a/i }).click();
+    await expect(page.getByText("Tell me about yourself.")).toBeVisible();
+    await expect(page.getByText("I am a frontend engineer with React experience.")).toBeVisible();
+    await page.getByRole("button", { name: /^close$/i }).click();
+    await expect(page.getByText("I am a frontend engineer with React experience.")).toBeHidden();
   });
 
   test("coding arena loads challenges from API", async ({ page }) => {
