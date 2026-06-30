@@ -71,3 +71,25 @@ The file `public/silent-check-sso.html` is loaded in a hidden iframe. Allow its 
 - `http://localhost:3001/silent-check-sso.html`
 
 Optional override: `NEXT_PUBLIC_KEYCLOAK_SILENT_CHECK_SSO_URI`.
+
+## Google sign-in (optional)
+
+The app can show **Continue with Google** on `/app/login` and `/app/signup` when enabled.
+
+### Keycloak (realm admin)
+
+1. **Identity providers** → **Add provider** → **Google**.
+2. Set **Alias** to `google` (or match `NEXT_PUBLIC_KEYCLOAK_GOOGLE_IDP_ALIAS`).
+3. Add Google Cloud OAuth client ID/secret (authorized redirect URI: Keycloak broker endpoint).
+4. Enable the provider and save.
+
+### Netlify / frontend env
+
+```env
+NEXT_PUBLIC_FEATURE_GOOGLE_OAUTH=true
+NEXT_PUBLIC_KEYCLOAK_GOOGLE_IDP_ALIAS=google
+```
+
+When `NEXT_PUBLIC_FEATURE_GOOGLE_OAUTH` is unset or `false`, `/app/login` and `/app/signup` redirect straight to Keycloak (email/password) as before.
+
+Google auth uses Keycloak `idpHint` — no extra redirect URIs beyond the existing `/auth/callback` entries.

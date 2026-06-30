@@ -91,8 +91,12 @@ In GA4 → **Admin → Events**, mark these as conversions once they appear in r
 | `checkout_started` | Monetization intent |
 | `subscription_started` | Revenue |
 | `contact_form_submit` | Lead gen |
+| `newsletter_subscribe` | Lead gen |
+| `google_sign_up` | Acquisition (when Google OAuth enabled) |
 
 Create an **Exploration → Funnel** report: `click_signup` → `sign_up` → `resume_upload` → `job_application` → `checkout_started` → `subscription_started`.
+
+**Operator checklist:** [ga4-setup-checklist.md](../deployment/ga4-setup-checklist.md) — conversions, funnel, and dashboard steps in the GA4 UI.
 
 For Plausible, add matching **Goals** for the same event names in Site settings.
 
@@ -221,12 +225,9 @@ analytics.planSelected("Pro");
 
 ## Next Steps
 
-1. Set up Google Analytics account
-2. Add Measurement ID to environment variables
-3. Deploy and verify tracking
-4. Set up custom dashboards in GA4
-5. Configure conversion goals
-6. Set up email reports
+1. Set `NEXT_PUBLIC_GA_ID` on Netlify (see `.env.prod.local` for production ID).
+2. Complete the [GA4 setup checklist](../deployment/ga4-setup-checklist.md) in the GA4 admin UI.
+3. Optional: enable [Google sign-in](../deployment/keycloak.md#google-sign-in-optional) via Keycloak + `NEXT_PUBLIC_FEATURE_GOOGLE_OAUTH=true`.
 
 ---
 

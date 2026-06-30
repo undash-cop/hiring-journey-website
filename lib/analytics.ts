@@ -111,6 +111,8 @@ export const analytics = {
   clickAbout: () => trackEvent("click_about", "navigation", "about_page"),
   clickSignup: (source: string) => trackEvent("click_signup", "navigation", source),
   clickLogin: (source: string) => trackEvent("click_login", "navigation", source),
+  googleSignIn: () => trackEvent("google_sign_in", "auth", "google"),
+  googleSignUp: () => trackEvent("google_sign_up", "auth", "google"),
 
   planSelected: (planName: string) => trackEvent("plan_selected", "conversion", planName),
   checkoutStarted: (planName: string) =>

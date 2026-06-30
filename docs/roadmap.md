@@ -141,5 +141,5 @@ Not required for M4 release; track if product scope expands:
 - [x] Interview Q&A persistence, retry UX, and auto-apply activation guardrails (Sprint B)
 - [x] Admin newsletter subscriber list, interview session detail modal, and E2E hardening (Sprint C)
 - [x] Transactional email beyond contact: apply confirmations, low-credit alerts, billing receipts (Sprint D)
-- [ ] GA4 conversion goals and dashboards (manual setup in GA4 UI)
-- [ ] Google OAuth (`FEATURE_FLAGS.GOOGLE_OAUTH`)
+- [x] GA4 conversion goals and dashboards — [operator checklist](./deployment/ga4-setup-checklist.md); `NEXT_PUBLIC_GA_ID` on Netlify
+- [x] Google OAuth — Keycloak Google IdP + `NEXT_PUBLIC_FEATURE_GOOGLE_OAUTH` (see [keycloak.md](./deployment/keycloak.md#google-sign-in-optional))

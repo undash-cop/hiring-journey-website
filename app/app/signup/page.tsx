@@ -1,12 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { redirectToRegister } from "@/lib/keycloak";
+import { AuthEntryScreen } from "@/components/auth/auth-entry-screen";
 
 export default function AppSignupPage() {
-  useEffect(() => {
-    void redirectToRegister();
-  }, []);
-
-  return null;
+  return <AuthEntryScreen mode="signup" />;
 }

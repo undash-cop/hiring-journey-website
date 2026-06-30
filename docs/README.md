@@ -16,6 +16,7 @@ All project documentation lives under `docs/`. Start with the [repository README
 | [development/local-dev.md](./development/local-dev.md) | Frontend + backend on your machine |
 | [development/troubleshooting.md](./development/troubleshooting.md) | Common dev issues |
 | [development/analytics.md](./development/analytics.md) | GA4 / Plausible setup |
+| [deployment/ga4-setup-checklist.md](./deployment/ga4-setup-checklist.md) | GA4 conversions, funnel, dashboard (operator) |
 | [development/observability.md](./development/observability.md) | Sentry, metrics, alerting |
 | [development/security-privacy-checklist.md](./development/security-privacy-checklist.md) | Security & privacy baseline |
 | [development/api-client-sync.md](./development/api-client-sync.md) | OpenAPI spec → TypeScript client |

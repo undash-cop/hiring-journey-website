@@ -122,6 +122,30 @@ export async function redirectToLogin(): Promise<void> {
 }
 
 /**
+ * Sends the user to Keycloak via the Google identity provider (requires Google IdP in the realm).
+ */
+export async function redirectToGoogleAuth(mode: "login" | "signup"): Promise<void> {
+  if (typeof window === "undefined") return;
+  assertKeycloakConfigured(keycloakServerConfig);
+  const { getGoogleIdpAlias } = await import("@/lib/feature-flags");
+  const { resetKeycloakInit } = await import("@/lib/keycloak-init");
+  resetKeycloakInit();
+  window.sessionStorage.setItem(KC_POST_AUTH_TARGET_KEY, mode === "signup" ? "onboarding" : "dashboard");
+  const kc = newKeycloakClient();
+  await kc.init({
+    adapter: makePkceMirrorAdapter(kc),
+    redirectUri: getCallbackUrl(),
+    pkceMethod: "S256",
+    responseMode: "query",
+    checkLoginIframe: false,
+  });
+  await kc.login({
+    idpHint: getGoogleIdpAlias(),
+    redirectUri: getCallbackUrl(),
+  });
+}
+
+/**
  * Sends the user to Keycloak registration (`kc_action=register` via register endpoint). After `/auth/callback`,
  * they are redirected to app onboarding.
  */

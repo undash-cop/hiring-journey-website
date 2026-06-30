@@ -1,4 +1,4 @@
-import { FEATURE_FLAGS, type FeatureFlagKey } from "@/lib/constants";
+import { FEATURE_FLAGS, type FeatureFlagKey } from "@/lib/feature-flags";
 
 export const MOCK_API_ENABLED = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
 

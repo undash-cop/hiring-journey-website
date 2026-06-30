@@ -1,12 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { redirectToLogin } from "@/lib/keycloak";
+import { AuthEntryScreen } from "@/components/auth/auth-entry-screen";
 
 export default function AppLoginPage() {
-  useEffect(() => {
-    void redirectToLogin();
-  }, []);
-
-  return null;
+  return <AuthEntryScreen mode="login" />;
 }

@@ -41,7 +41,7 @@ npm run smoke:api          # against running API
 
 - [ ] `NEXT_PUBLIC_SENTRY_DSN` + `SENTRY_DSN` on Netlify
 - [ ] `SENTRY_DSN` on API VM
-- [ ] GA4 and/or Plausible configured ([analytics.md](../development/analytics.md))
+- [ ] GA4 and/or Plausible configured ([analytics.md](../development/analytics.md), [ga4-setup-checklist.md](./ga4-setup-checklist.md))
 - [ ] Uptime monitors on `/health` and `https://hiringjourney.com`
 - [ ] Prometheus scrape or equivalent for `/metrics` ([observability.md](../development/observability.md))
 
@@ -51,8 +51,9 @@ Complete [security-privacy-checklist.md](../development/security-privacy-checkli
 
 ## Deploy sequence
 
-1. API: `alembic upgrade head` → rebuild container → `npm run smoke:api` against staging/prod URL
-2. Frontend: push `main` → Netlify build → verify `/` and `/app/login`
+1. API: `alembic upgrade head` (includes `0014` contact, `0015` newsletter, `0016` interview Q&A) → rebuild container → `npm run smoke:api`
+2. API env: set `SMTP_*`, `CONTACT_NOTIFY_EMAIL`, `LOW_CREDIT_ALERT_THRESHOLD` for transactional email ([backend `.env.example`](../../backend/.env.example))
+3. Frontend: push `main` → Netlify build → verify `/` and `/app/login`
 3. Keycloak: redirect URIs unchanged unless domain changed
 4. Razorpay: webhook URL points to `https://api.hiringjourney.com/billing/webhook`
 5. R2: legal upload/download smoke on `/app/legal`
