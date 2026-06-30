@@ -140,6 +140,6 @@ Not required for M4 release; track if product scope expands:
 - [x] Admin contact inbox and footer newsletter signup (Sprint A)
 - [x] Interview Q&A persistence, retry UX, and auto-apply activation guardrails (Sprint B)
 - [x] Admin newsletter subscriber list, interview session detail modal, and E2E hardening (Sprint C)
+- [x] Transactional email beyond contact: apply confirmations, low-credit alerts, billing receipts (Sprint D)
 - [ ] GA4 conversion goals and dashboards (manual setup in GA4 UI)
-- [ ] Transactional email beyond contact (apply confirmations, low-credit alerts, billing receipts)
 - [ ] Google OAuth (`FEATURE_FLAGS.GOOGLE_OAUTH`)
