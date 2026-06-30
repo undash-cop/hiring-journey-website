@@ -116,4 +116,23 @@ test.describe("Marketing pages", () => {
     await page.getByRole("button", { name: /send message/i }).click();
     await expect(page.getByText(/thank you/i)).toBeVisible();
   });
+
+  test("footer newsletter signup succeeds", async ({ page }) => {
+    await page.route("**/newsletter/subscribe", async (route) => {
+      if (route.request().method() !== "POST") {
+        await route.continue();
+        return;
+      }
+      await route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify({ message: "Thanks for subscribing!" }),
+      });
+    });
+
+    await page.goto("/");
+    await page.getByLabel(/email address/i).fill("reader@example.com");
+    await page.getByRole("button", { name: /^subscribe$/i }).click();
+    await expect(page.getByText(/thanks for subscribing/i)).toBeVisible();
+  });
 });

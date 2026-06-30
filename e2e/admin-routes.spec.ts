@@ -40,6 +40,12 @@ test.describe("Admin app routes", () => {
     await expect(page.getByText("Conversion Rates")).toBeVisible();
   });
 
+  test("contact page lists submissions", async ({ page }) => {
+    await page.goto("/app/admin/contact", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: /contact submissions/i })).toBeVisible();
+    await expect(page.getByText("jane@example.com")).toBeVisible();
+  });
+
   test("plans page shows plan cards", async ({ page }) => {
     await page.goto("/app/admin/plans", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: /plans & credits/i })).toBeVisible();

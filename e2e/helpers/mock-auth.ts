@@ -327,6 +327,17 @@ export const mockAdminAuditLogsResponse = [
   },
 ];
 
+export const mockAdminContactSubmissionsResponse = [
+  {
+    id: 1,
+    name: "Jane Doe",
+    email: "jane@example.com",
+    subject: "Enterprise pricing",
+    message: "We would like to learn more about team plans.",
+    created_at: "2026-06-01T00:00:00Z",
+  },
+];
+
 export async function mockAdminApis(page: Page): Promise<void> {
   await page.route("**/admin/stats**", (route) =>
     route.fulfill({
@@ -419,6 +430,13 @@ export async function mockAdminApis(page: Page): Promise<void> {
       status: 200,
       contentType: "application/json",
       body: JSON.stringify(mockAdminAuditLogsResponse),
+    }),
+  );
+  await page.route("**/admin/contact-submissions**", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(mockAdminContactSubmissionsResponse),
     }),
   );
 }

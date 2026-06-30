@@ -6,6 +6,7 @@ export const ADMIN_SECTIONS = [
   'candidates',
   'analytics',
   'audit',
+  'contact',
   'plans',
   'settings',
 ] as const;

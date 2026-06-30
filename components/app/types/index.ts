@@ -448,6 +448,15 @@ export interface AdminAuditLog {
   createdAt: string;
 }
 
+export interface ContactSubmission {
+  id: number;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  createdAt: string;
+}
+
 export interface AutoApplyProfile {
   id: number;
   name: string;

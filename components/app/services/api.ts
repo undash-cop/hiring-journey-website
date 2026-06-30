@@ -39,6 +39,7 @@ import type {
   ResumeTemplate,
   ResumeBuilderData,
   AdminAuditLog,
+  ContactSubmission,
   BillingPlan,
   UserSubscription,
   BillingInvoice,
@@ -976,6 +977,25 @@ export const getAdminAuditLogs = async (limit: number = 50): Promise<AdminAuditL
     resourceId: item.resource_id,
     oldValue: item.old_value || undefined,
     newValue: item.new_value || undefined,
+    createdAt: item.created_at,
+  }));
+};
+
+export const getAdminContactSubmissions = async (limit: number = 50): Promise<ContactSubmission[]> => {
+  const data = await apiRequest<Array<{
+    id: number;
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    created_at: string;
+  }>>('get', `/admin/contact-submissions?limit=${limit}`);
+  return data.map((item) => ({
+    id: item.id,
+    name: item.name,
+    email: item.email,
+    subject: item.subject,
+    message: item.message,
     createdAt: item.created_at,
   }));
 };

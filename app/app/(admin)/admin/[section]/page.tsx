@@ -9,6 +9,7 @@ import ApplicationsPage from "@/components/app/features/admin/applications/Appli
 import CandidatesPage from "@/components/app/features/admin/candidates/CandidatesPage";
 import AnalyticsPage from "@/components/app/features/admin/analytics/AnalyticsPage";
 import AuditLogsPage from "@/components/app/features/admin/audit/AuditLogsPage";
+import ContactSubmissionsPage from "@/components/app/features/admin/contact/ContactSubmissionsPage";
 import PlansPage from "@/components/app/features/admin/plans/PlansPage";
 import AdminSettingsPage from "@/components/app/features/admin/settings/SettingsPage";
 
@@ -20,6 +21,7 @@ const adminRouteMap: Record<string, ComponentType> = {
   candidates: CandidatesPage,
   analytics: AnalyticsPage,
   audit: AuditLogsPage,
+  contact: ContactSubmissionsPage,
   plans: PlansPage,
   settings: AdminSettingsPage,
 };

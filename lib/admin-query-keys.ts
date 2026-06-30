@@ -7,6 +7,7 @@ export const adminQueryKeys = {
   plans: ['admin-plans'] as const,
   settings: ['admin-settings'] as const,
   auditLogs: ['admin-audit-logs'] as const,
+  contactSubmissions: ['admin-contact-submissions'] as const,
 } as const;
 
 /** Invalidate dashboards and lists after admin mutations. */

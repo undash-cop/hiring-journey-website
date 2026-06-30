@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Github, Twitter, Linkedin, Mail } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { NewsletterSignup } from "@/components/marketing/newsletter-signup";
 import { FOOTER_NAV } from "@/lib/marketing-nav";
 import type { NavLink } from "@/lib/marketing-nav";
 
@@ -88,6 +89,9 @@ export function Footer() {
                     </li>
                   ))}
                 </ul>
+              </div>
+              <div className="mt-10 md:mt-0">
+                <NewsletterSignup />
               </div>
             </div>
           </div>
